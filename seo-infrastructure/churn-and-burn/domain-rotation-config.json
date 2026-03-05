@@ -1,0 +1,51 @@
+{
+  "strategy": "Churn and Burn Domain Rotation",
+  "description": "When primary domain gets penalized, rotate to backup domain. Keep main brand domain clean.",
+  "primary_domain": "uspostaltracking.com",
+  "backup_domains": [
+    "uspspackagetracker.com",
+    "trackuspspackage.net",
+    "uspsdeliverytracker.com",
+    "uspostaltrackingtool.com",
+    "trackusps.net",
+    "uspsshipmenttracker.com",
+    "uspspackagefinder.com",
+    "uspsrealtracking.com",
+    "uspsdeliverystatus.net",
+    "trackingusps.com"
+  ],
+  "mfa_domains": [
+    "usps-tracking-status.com",
+    "usps-package-status.net",
+    "usps-delivery-tracker.com",
+    "usps-tracking-tool.net",
+    "usps-package-tracker.com",
+    "usps-tracking-number.net",
+    "usps-shipment-tracker.com",
+    "usps-tracking-check.com",
+    "usps-package-locator.net",
+    "usps-tracking-live.com"
+  ],
+  "rotation_triggers": [
+    "Google manual penalty received",
+    "Organic traffic drops >50% in 7 days",
+    "Domain removed from Google index",
+    "Core algorithm update causes >40% traffic loss",
+    "Negative SEO attack detected"
+  ],
+  "rotation_procedure": [
+    "1. Deploy backup domain with identical content (already backed up)",
+    "2. Update DNS to point backup domain to same hosting",
+    "3. Set 301 redirect from penalized domain to backup domain",
+    "4. Submit backup domain to IndexNow API",
+    "5. Begin link building campaign for backup domain",
+    "6. Monitor backup domain rankings",
+    "7. When backup domain ranks, start fresh primary domain",
+    "8. Repeat cycle"
+  ],
+  "content_backup": {
+    "frequency": "daily",
+    "storage": ["GitHub repository", "AWS S3", "Google Drive"],
+    "includes": ["all HTML files", "sitemap.xml", "robots.txt", "all assets"]
+  }
+}

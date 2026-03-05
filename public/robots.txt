@@ -1,0 +1,29 @@
+# robots.txt for https://uspostaltracking.com
+
+# ── All bots ──
+User-agent: *
+Allow: /
+Allow: /tracking/
+Allow: /tracking
+Allow: /usps-tracking/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /tracking-number/
+
+# ── Semrush Bot — full access ──
+User-agent: SemrushBot
+Allow: /
+
+# ── Googlebot — no delay ──
+User-agent: Googlebot
+Allow: /
+
+# ── Bingbot ──
+User-agent: bingbot
+Allow: /
+
+# ── Sitemap (submit THIS to Google Search Console) ──
+Sitemap: https://uspostaltracking.com/sitemap.xml
+
+# Host
+Host: https://uspostaltracking.com

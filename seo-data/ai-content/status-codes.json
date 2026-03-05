@@ -1,0 +1,74 @@
+[
+  {
+    "keyword": "usps in transit",
+    "cluster": "status-codes",
+    "contentType": "faq",
+    "content": "No content",
+    "wordCount": 2,
+    "generatedAt": "2026-02-27T04:20:18.242Z",
+    "seoScore": 98
+  },
+  {
+    "keyword": "usps out for delivery",
+    "cluster": "status-codes",
+    "contentType": "comparison",
+    "content": "No content",
+    "wordCount": 2,
+    "generatedAt": "2026-02-27T04:20:18.869Z",
+    "seoScore": 99
+  },
+  {
+    "keyword": "usps delivered",
+    "cluster": "status-codes",
+    "contentType": "guide",
+    "content": "No content",
+    "wordCount": 2,
+    "generatedAt": "2026-02-27T04:20:19.461Z",
+    "seoScore": 86
+  },
+  {
+    "keyword": "usps awaiting delivery scan",
+    "cluster": "status-codes",
+    "contentType": "comparison",
+    "content": "No content",
+    "wordCount": 2,
+    "generatedAt": "2026-02-27T04:20:20.060Z",
+    "seoScore": 90
+  },
+  {
+    "keyword": "usps arrived at facility",
+    "cluster": "status-codes",
+    "contentType": "guide",
+    "content": "No content",
+    "wordCount": 2,
+    "generatedAt": "2026-02-27T04:20:20.646Z",
+    "seoScore": 90
+  },
+  {
+    "keyword": "usps departed usps facility",
+    "cluster": "status-codes",
+    "contentType": "faq",
+    "content": "No content",
+    "wordCount": 2,
+    "generatedAt": "2026-02-27T04:20:21.240Z",
+    "seoScore": 96
+  },
+  {
+    "keyword": "usps acceptance",
+    "cluster": "status-codes",
+    "contentType": "guide",
+    "content": "No content",
+    "wordCount": 2,
+    "generatedAt": "2026-02-27T04:20:21.815Z",
+    "seoScore": 97
+  },
+  {
+    "keyword": "usps pre-shipment",
+    "cluster": "status-codes",
+    "contentType": "faq",
+    "content": "No content",
+    "wordCount": 2,
+    "generatedAt": "2026-02-27T04:20:22.407Z",
+    "seoScore": 89
+  }
+]

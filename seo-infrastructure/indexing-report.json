@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-02-27T04:07:12.669Z",
+  "totalUrls": 3254,
+  "sitemapCount": 12,
+  "sitemaps": [
+    {
+      "valid": true,
+      "urlCount": 127,
+      "fileSize": "24 KB",
+      "file": "sitemap-articles.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 105,
+      "fileSize": "19 KB",
+      "file": "sitemap-cities.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 4,
+      "fileSize": "1 KB",
+      "file": "sitemap-core.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 10,
+      "fileSize": "1 KB",
+      "file": "sitemap-index.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 1332,
+      "fileSize": "234 KB",
+      "file": "sitemap-locations.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 600,
+      "fileSize": "117 KB",
+      "file": "sitemap-programmatic.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 450,
+      "fileSize": "84 KB",
+      "file": "sitemap-routes-2.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 500,
+      "fileSize": "96 KB",
+      "file": "sitemap-routes.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 50,
+      "fileSize": "9 KB",
+      "file": "sitemap-states.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 51,
+      "fileSize": "9 KB",
+      "file": "sitemap-status.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 18,
+      "fileSize": "4 KB",
+      "file": "sitemap-tracking.xml"
+    },
+    {
+      "valid": true,
+      "urlCount": 7,
+      "fileSize": "1 KB",
+      "file": "sitemap.xml"
+    }
+  ],
+  "status": "completed"
+}

@@ -1,0 +1,63 @@
+# US Postal Tracking
+
+> Free USPS package tracking tool. Track USPS packages, mail, and shipments by tracking number. Real-time delivery status updates for all USPS services.
+
+## About
+
+US Postal Tracking (uspostaltracking.com) is a free, independent package tracking platform that provides real-time delivery status updates for USPS and 200+ carriers worldwide. No registration required.
+
+## Main Pages
+
+- [Track Package](https://uspostaltracking.com/): Enter your USPS tracking number for instant real-time status updates
+- [All Carriers](https://uspostaltracking.com/tracking): Track packages from 200+ carriers worldwide including FedEx, UPS, DHL
+- [USPS Locations](https://uspostaltracking.com/locations): Find USPS post offices, collection boxes, and service locations near you
+- [Shipping Guides](https://uspostaltracking.com/guides): Comprehensive USPS shipping and tracking guides
+- [Knowledge Center](https://uspostaltracking.com/knowledge-center): In-depth articles on shipping, customs, and carrier comparisons
+
+## Guides
+
+- [Tracking Number Format](https://uspostaltracking.com/guides/tracking-number-format): Complete guide to every USPS tracking number format
+- [Informed Delivery](https://uspostaltracking.com/guides/informed-delivery): How to use USPS Informed Delivery
+- [International Shipping Rates](https://uspostaltracking.com/guides/international-shipping-rates): Compare international shipping rates
+- [Tracking Not Updating](https://uspostaltracking.com/guides/tracking-not-updating): What to do when tracking stops updating
+- [Track Without Number](https://uspostaltracking.com/guides/track-without-tracking-number): How to find your package without a tracking number
+- [Mobile Tracking](https://uspostaltracking.com/guides/usps-mobile-tracking): Track USPS packages on your phone
+
+## Knowledge Center
+
+- [Customs Clearance Guide](https://uspostaltracking.com/knowledge-center/customs-clearance-guide): Navigate international customs clearance
+- [International Shipping Guide](https://uspostaltracking.com/knowledge-center/international-shipping-guide): Compare carriers for international shipping
+- [Lost Package Guide](https://uspostaltracking.com/knowledge-center/lost-package-guide): Steps to find and claim lost packages
+- [Tracking Number Formats](https://uspostaltracking.com/knowledge-center/tracking-number-formats): All carrier tracking number formats explained
+- [Delivery Times by Carrier](https://uspostaltracking.com/knowledge-center/delivery-times-by-carrier): Compare delivery speeds across carriers
+- [Customs Duties & Taxes](https://uspostaltracking.com/knowledge-center/customs-duties-taxes): Understanding import duties and taxes
+- [Shipping Restrictions](https://uspostaltracking.com/knowledge-center/shipping-restrictions): What you can and cannot ship
+- [Best Shipping Carriers 2026](https://uspostaltracking.com/knowledge-center/best-shipping-carriers): Top carriers compared
+
+## Tracking Status Pages
+
+- [In Transit](https://uspostaltracking.com/status/in-transit): Package is moving through the USPS network
+- [Out for Delivery](https://uspostaltracking.com/status/out-for-delivery): Package is on the delivery vehicle
+- [Delivered](https://uspostaltracking.com/status/delivered): Package has been delivered
+- [Delivery Attempted](https://uspostaltracking.com/status/delivery-attempted): Delivery was attempted but unsuccessful
+- [Pre-Shipment](https://uspostaltracking.com/status/pre-shipment): Label created, awaiting USPS acceptance
+- [Customs Clearance](https://uspostaltracking.com/status/customs-clearance): Package is in customs processing
+- [Return to Sender](https://uspostaltracking.com/status/return-to-sender): Package is being returned
+- [Alert](https://uspostaltracking.com/status/alert): Action needed on your shipment
+- [Label Created](https://uspostaltracking.com/status/label-created): Shipping label has been created
+
+## USPS Service Tools
+
+- [Where Is My Package?](https://uspostaltracking.com/where-is-my-package): Find your USPS package location
+- [USPS Delivery Time](https://uspostaltracking.com/usps-delivery-time): Estimated delivery times for all USPS services
+- [USPS Lost Package](https://uspostaltracking.com/usps-lost-package): Report and recover lost USPS packages
+- [Schedule Pickup](https://uspostaltracking.com/usps-schedule-pickup): Schedule a USPS package pickup
+- [Hold for Pickup](https://uspostaltracking.com/usps-hold-for-pickup): Hold your package at the post office
+- [Change Address](https://uspostaltracking.com/usps-change-address): Update your USPS mailing address
+- [Package Not Delivered](https://uspostaltracking.com/usps-package-not-delivered): What to do when your package isn't delivered
+- [Shipping Calculator](https://uspostaltracking.com/usps-shipping-calculator): Calculate USPS shipping costs
+
+## Contact
+
+- Website: https://uspostaltracking.com
+- Support: support@uspostaltracking.com

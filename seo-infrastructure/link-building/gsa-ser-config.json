@@ -1,0 +1,140 @@
+{
+  "_comment": "GSA Search Engine Ranker Configuration for uspostaltracking.com",
+  "_usage": "Import this config into GSA SER. Replace proxy list with your residential proxies.",
+  "_warning": "Use Tier 2 URLs as targets, NOT uspostaltracking.com directly",
+  
+  "project_name": "USPS Tracking - Tier 2 Link Building",
+  "target_urls": [
+    "PASTE_YOUR_MEDIUM_ARTICLE_URLS_HERE",
+    "PASTE_YOUR_GOOGLE_SITES_URLS_HERE",
+    "PASTE_YOUR_WORDPRESS_COM_URLS_HERE",
+    "PASTE_YOUR_BLOGGER_URLS_HERE",
+    "PASTE_YOUR_TUMBLR_URLS_HERE"
+  ],
+  
+  "anchor_texts": {
+    "exact_match": [
+      "usps tracking",
+      "usps package tracking",
+      "track usps package",
+      "usps tracking number"
+    ],
+    "partial_match": [
+      "usps tracking tool",
+      "track my usps package",
+      "usps package status",
+      "usps delivery tracking",
+      "usps tracking not updating",
+      "usps in transit meaning",
+      "usps out for delivery"
+    ],
+    "branded": [
+      "US Postal Tracking",
+      "uspostaltracking.com",
+      "USPostalTracking"
+    ],
+    "generic": [
+      "click here",
+      "learn more",
+      "visit this site",
+      "read more",
+      "check it out",
+      "find out more",
+      "this website",
+      "this tool"
+    ],
+    "long_tail": [
+      "free usps package tracking tool",
+      "track usps priority mail package",
+      "usps tracking number lookup",
+      "usps package tracking status",
+      "how to track usps package",
+      "usps first class package tracking",
+      "usps ground advantage tracking"
+    ]
+  },
+  
+  "anchor_distribution": {
+    "exact_match_percent": 15,
+    "partial_match_percent": 35,
+    "branded_percent": 20,
+    "generic_percent": 20,
+    "long_tail_percent": 10
+  },
+  
+  "platforms_enabled": {
+    "web_2_0": true,
+    "article_directories": true,
+    "social_bookmarks": true,
+    "forum_profiles": true,
+    "blog_comments": true,
+    "image_sharing": true,
+    "video_sharing": true,
+    "document_sharing": true,
+    "rss_aggregators": true,
+    "microblog": true,
+    "classified_ads": true,
+    "question_answer": true,
+    "wiki": true,
+    "coupon": false,
+    "guestbook": true,
+    "indexer": true
+  },
+  
+  "settings": {
+    "threads": 100,
+    "timeout_seconds": 120,
+    "max_links_per_domain": 1,
+    "min_pr": 0,
+    "max_obl": 200,
+    "skip_nofollow": false,
+    "use_proxies": true,
+    "proxy_type": "residential",
+    "rotate_proxies": true,
+    "use_captcha_service": true,
+    "captcha_service": "2captcha",
+    "post_verification": true,
+    "verify_after_days": 7,
+    "delete_unverified": false
+  },
+  
+  "content": {
+    "use_spintax": true,
+    "article_spintax": "{USPS tracking|Track USPS packages|USPS package tracking} is {easy|simple|straightforward} with {the right tools|uspostaltracking.com|a good tracker}. {Learn how to|Find out how to|Discover how to} track your {USPS package|USPS shipment|postal package} {in real-time|instantly|for free}.",
+    "bio_spintax": "{I am|I'm} a {shipping|logistics|postal} {enthusiast|expert|professional} who {loves|enjoys|specializes in} helping people {track|find|locate} their {USPS packages|postal shipments|mail}.",
+    "keywords": [
+      "usps tracking",
+      "usps package tracking",
+      "track usps package",
+      "usps tracking number",
+      "usps delivery status",
+      "usps in transit",
+      "usps out for delivery",
+      "usps priority mail tracking"
+    ]
+  },
+  
+  "schedule": {
+    "links_per_day": 200,
+    "run_hours": [9, 10, 11, 14, 15, 16, 20, 21],
+    "pause_on_weekends": false,
+    "ramp_up": {
+      "day_1": 50,
+      "day_7": 100,
+      "day_14": 200,
+      "day_30": 300
+    }
+  },
+  
+  "proxies": {
+    "type": "residential",
+    "recommended_providers": [
+      "Bright Data (brightdata.com)",
+      "Oxylabs (oxylabs.io)",
+      "Smartproxy (smartproxy.com)",
+      "IPRoyal (iproyal.com)"
+    ],
+    "format": "ip:port:username:password",
+    "rotation": "per_request"
+  }
+}

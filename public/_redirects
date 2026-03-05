@@ -1,0 +1,50 @@
+# Netlify _redirects file for USPostalTracking.com
+# 301 Redirects for SEO — Expired Domain Juice + URL Normalization
+
+# ============================================================
+# LEGACY URL REDIRECTS (301 permanent)
+# ============================================================
+
+# Old tracking URL formats → canonical
+# NOTE: /tracking/:param REMOVED — conflicts with /tracking/:carrierId (200+ carrier pages)
+/track-package/*        /t/:splat      301
+/usps-track/*           /t/:splat      301
+/package/*              /t/:splat      301
+/track/:number          /t/:number     301
+
+# Old city URL formats → canonical
+/location/:city         /city/:city    301
+
+# Old article URL formats → canonical
+/blog/:slug             /article/:slug 301
+/guide/:slug            /article/:slug 301
+# NOTE: /guides/:slug removed — real guide pages exist at /guides/*
+/help/:slug             /article/:slug 301
+
+# Old status URL formats → canonical
+/tracking-status/:status  /status/:status  301
+/usps-status/:status      /status/:status  301
+
+# ============================================================
+# KEYWORD ALIAS REDIRECTS (Capture variation traffic)
+# ============================================================
+
+/usps-tracking-number/*  /t/:splat      301
+/check-tracking/*        /t/:splat      301
+/usps-package-tracking   /              301
+/usps-tracking-tool      /              301
+/free-usps-tracking      /              301
+# /usps-tracker has its own page — removed redirect
+
+# ============================================================
+# TRAILING SLASH NORMALIZATION
+# Removed — static files in public/city/slug/index.html are served
+# automatically by Netlify. Trailing slash redirects cause
+# "redirect" issues in sitemap crawlers.
+# ============================================================
+
+# ============================================================
+# SPA FALLBACK (Must be last — Required for React Router)
+# ============================================================
+
+/*  /index.html  200

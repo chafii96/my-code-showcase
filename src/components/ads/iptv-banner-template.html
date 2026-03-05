@@ -1,0 +1,206 @@
+<!-- 
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  IPTV SUBSCRIPTION BANNER - SwiftTrack Hub                      ║
+  ║  كيفية الاستخدام:                                               ║
+  ║  1. انسخ الكود أدناه                                            ║
+  ║  2. اذهب إلى Admin Dashboard → تبويب الإعلانات                 ║
+  ║  3. اختر أي موقع إعلاني (مثل: وسط المحتوى)                    ║
+  ║  4. اختر نوع "HTML مخصص"                                       ║
+  ║  5. الصق الكود في مربع HTML                                     ║
+  ║  6. غيّر YOUR_LINK بالرابط الحقيقي لموقع IPTV الخاص بك        ║
+  ║  7. اضغط حفظ                                                    ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- BANNER 1: بانر كبير (728×90) - مناسب للهيدر والفوتر -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div style="
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+  border:2px solid #7c3aed;
+  border-radius:12px;
+  padding:12px 20px;
+  max-width:728px;
+  margin:10px auto;
+  font-family:'Segoe UI',Arial,sans-serif;
+  box-shadow:0 0 20px rgba(124,58,237,0.4);
+  cursor:pointer;
+  text-decoration:none;
+" onclick="window.open('YOUR_LINK','_blank')">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="font-size:32px">📺</div>
+    <div>
+      <div style="color:#fff;font-weight:700;font-size:16px;margin-bottom:2px">🔥 IPTV Premium — 20,000+ قناة</div>
+      <div style="color:#a78bfa;font-size:12px">أفلام • مسلسلات • رياضة • عربي • عالمي</div>
+    </div>
+  </div>
+  <div style="
+    background:linear-gradient(135deg,#7c3aed,#db2777);
+    color:#fff;
+    padding:8px 18px;
+    border-radius:8px;
+    font-weight:700;
+    font-size:14px;
+    white-space:nowrap;
+    box-shadow:0 4px 15px rgba(219,39,119,0.4);
+  ">اشترك الآن ←</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- BANNER 2: بانر مربع (300×250) - مناسب للشريط الجانبي -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div style="
+  background:linear-gradient(180deg,#0f0c29 0%,#1a1040 100%);
+  border:2px solid #7c3aed;
+  border-radius:16px;
+  padding:24px 20px;
+  max-width:300px;
+  margin:10px auto;
+  font-family:'Segoe UI',Arial,sans-serif;
+  box-shadow:0 0 30px rgba(124,58,237,0.5);
+  text-align:center;
+  cursor:pointer;
+" onclick="window.open('YOUR_LINK','_blank')">
+  <div style="font-size:48px;margin-bottom:8px">📺</div>
+  <div style="color:#fff;font-weight:800;font-size:20px;margin-bottom:4px">IPTV Premium</div>
+  <div style="color:#a78bfa;font-size:13px;margin-bottom:16px">20,000+ قناة • HD & 4K</div>
+  <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+    <div style="color:#10b981;font-size:13px">✅ أفلام ومسلسلات بلا حدود</div>
+    <div style="color:#10b981;font-size:13px">✅ قنوات رياضية مباشرة</div>
+    <div style="color:#10b981;font-size:13px">✅ قنوات عربية وعالمية</div>
+    <div style="color:#10b981;font-size:13px">✅ يعمل على كل الأجهزة</div>
+  </div>
+  <div style="
+    background:linear-gradient(135deg,#7c3aed,#db2777);
+    color:#fff;
+    padding:12px 24px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:15px;
+    display:inline-block;
+    box-shadow:0 4px 20px rgba(219,39,119,0.5);
+  ">🚀 اشترك الآن</div>
+  <div style="color:#6b7280;font-size:11px;margin-top:10px">ابدأ بتجربة مجانية</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- BANNER 3: بانر Popup (300×250) - مناسب للنوافذ المنبثقة -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="iptv-popup" style="
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:linear-gradient(135deg,#0f0c29,#1a1040);
+  border:2px solid #7c3aed;
+  border-radius:16px;
+  padding:20px;
+  max-width:280px;
+  font-family:'Segoe UI',Arial,sans-serif;
+  box-shadow:0 10px 40px rgba(0,0,0,0.8),0 0 30px rgba(124,58,237,0.4);
+  z-index:9999;
+  animation:slideIn 0.5s ease;
+">
+  <style>
+    @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+    #iptv-popup-close:hover{background:#374151!important}
+  </style>
+  <button id="iptv-popup-close" onclick="document.getElementById('iptv-popup').style.display='none'" style="
+    position:absolute;top:8px;right:8px;
+    background:#1f2937;color:#9ca3af;
+    border:none;border-radius:50%;
+    width:24px;height:24px;
+    cursor:pointer;font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+  ">×</button>
+  <div style="text-align:center;margin-bottom:12px">
+    <div style="font-size:36px">📺</div>
+    <div style="color:#fff;font-weight:700;font-size:16px">IPTV Premium</div>
+    <div style="color:#a78bfa;font-size:12px">20,000+ قناة HD</div>
+  </div>
+  <div style="color:#d1d5db;font-size:12px;margin-bottom:12px;text-align:center">
+    شاهد كل القنوات العربية والعالمية على جميع أجهزتك
+  </div>
+  <a href="YOUR_LINK" target="_blank" style="
+    display:block;
+    background:linear-gradient(135deg,#7c3aed,#db2777);
+    color:#fff;
+    padding:10px;
+    border-radius:8px;
+    font-weight:700;
+    font-size:14px;
+    text-align:center;
+    text-decoration:none;
+    box-shadow:0 4px 15px rgba(219,39,119,0.4);
+  ">🔥 اشترك الآن</a>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- BANNER 4: بانر داخل المقال (468×60) - أفقي صغير -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div style="
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:linear-gradient(135deg,#1e1b4b,#312e81);
+  border:1px solid #4f46e5;
+  border-radius:8px;
+  padding:10px 16px;
+  max-width:468px;
+  margin:10px auto;
+  font-family:'Segoe UI',Arial,sans-serif;
+  cursor:pointer;
+" onclick="window.open('YOUR_LINK','_blank')">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:24px">📺</span>
+    <div>
+      <div style="color:#fff;font-weight:600;font-size:13px">IPTV Premium — 20,000+ قناة</div>
+      <div style="color:#818cf8;font-size:11px">عربي • أفلام • رياضة • HD</div>
+    </div>
+  </div>
+  <div style="
+    background:#4f46e5;
+    color:#fff;
+    padding:6px 14px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:600;
+    white-space:nowrap;
+  ">اشترك ←</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- BANNER 5: بانر جوال (320×50) - للأجهزة المحمولة -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div style="
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:linear-gradient(135deg,#0f0c29,#302b63);
+  border:1px solid #7c3aed;
+  border-radius:8px;
+  padding:8px 12px;
+  max-width:320px;
+  margin:8px auto;
+  font-family:'Segoe UI',Arial,sans-serif;
+  cursor:pointer;
+" onclick="window.open('YOUR_LINK','_blank')">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:20px">📺</span>
+    <div style="color:#fff;font-size:12px;font-weight:600">IPTV 20K+ قناة HD</div>
+  </div>
+  <div style="
+    background:linear-gradient(135deg,#7c3aed,#db2777);
+    color:#fff;
+    padding:5px 10px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:700;
+  ">اشترك</div>
+</div>

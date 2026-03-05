@@ -1,0 +1,67 @@
+[
+  {
+    "date": "2026-02-27T04:20:09.738Z",
+    "snapshot": {
+      "usps tracking": {
+        "pos": 3,
+        "change": -2
+      },
+      "track usps package": {
+        "pos": 38,
+        "change": 1
+      },
+      "usps package tracking": {
+        "pos": 15,
+        "change": 2
+      },
+      "usps tracking number": {
+        "pos": 12,
+        "change": -2
+      },
+      "usps mail tracking": {
+        "pos": 47,
+        "change": 1
+      },
+      "usps tracking not updating": {
+        "pos": 1,
+        "change": 2
+      },
+      "usps package stuck in transit": {
+        "pos": 34,
+        "change": 0
+      },
+      "usps in transit": {
+        "pos": 32,
+        "change": -2
+      },
+      "usps out for delivery": {
+        "pos": 42,
+        "change": -2
+      },
+      "usps tracking status": {
+        "pos": 29,
+        "change": 0
+      },
+      "usps priority mail tracking": {
+        "pos": 41,
+        "change": -2
+      },
+      "usps certified mail tracking": {
+        "pos": 32,
+        "change": 0
+      },
+      "usps first class tracking": {
+        "pos": 35,
+        "change": -2
+      },
+      "usps package lost": {
+        "pos": 31,
+        "change": 1
+      },
+      "usps tracking delivered but not received": {
+        "pos": 22,
+        "change": 0
+      }
+    }
+  }
+]

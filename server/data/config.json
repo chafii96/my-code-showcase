@@ -1,0 +1,33 @@
+{
+  "site": {
+    "name": "US Postal Tracking",
+    "domain": "uspostaltracking.com",
+    "language": "en"
+  },
+  "seo": {
+    "titleSuffix": "| US Postal Tracking",
+    "defaultDescription": "Track USPS packages in real-time"
+  },
+  "apiKeys": {
+    "uspsUserId": "3P934TRACK349",
+    "uspsPassword": "K9024ME92Z0856D",
+    "googleSearchConsole": "",
+    "googleAnalytics4": "",
+    "googleAdsense": "",
+    "googleIndexingApi": "",
+    "bingWebmaster": "",
+    "semrushApiKey": "",
+    "ahrefsApiKey": "",
+    "indexNowKey": "",
+    "openaiApiKey": "",
+    "cloudflareApiKey": "",
+    "cloudflareZoneId": "",
+    "recaptchaSiteKey": "",
+    "recaptchaSecretKey": "",
+    "slackWebhook": "",
+    "discordWebhook": "",
+    "telegramBotToken": "",
+    "telegramChatId": ""
+  },
+  "adminPassword": "swifttrack2024"
+}

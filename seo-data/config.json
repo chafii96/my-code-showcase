@@ -1,0 +1,139 @@
+{
+  "site": {
+    "siteName": "SwiftTrack Hub",
+    "siteUrl": "",
+    "siteDescription": "",
+    "contactEmail": "",
+    "twitterHandle": "",
+    "facebookPage": "",
+    "timezone": "America/New_York",
+    "maintenanceMode": false,
+    "maintenanceMessage": ""
+  },
+  "seo": {
+    "defaultTitle": "USPS Package Tracking",
+    "defaultDescription": "",
+    "defaultKeywords": "usps tracking",
+    "canonicalDomain": "",
+    "robotsIndex": true,
+    "robotsFollow": true,
+    "structuredDataEnabled": true,
+    "openGraphEnabled": true,
+    "twitterCardsEnabled": true,
+    "hreflangEnabled": false
+  },
+  "apiKeys": {
+    "googleSearchConsole": "",
+    "googleAnalytics4": "",
+    "googleAdsense": "",
+    "googleIndexingApi": "",
+    "bingWebmaster": "",
+    "uspsUserId": "3P934TRACK349",
+    "uspsPassword": "K9024ME92Z0856D",
+    "semrushApiKey": "",
+    "ahrefsApiKey": "",
+    "indexNowKey": "",
+    "openaiApiKey": "",
+    "cloudflareApiKey": "",
+    "cloudflareZoneId": "",
+    "recaptchaSiteKey": "",
+    "recaptchaSecretKey": "",
+    "slackWebhook": "",
+    "discordWebhook": "",
+    "telegramBotToken": "",
+    "telegramChatId": ""
+  },
+  "ads": {
+    "adsenseEnabled": false,
+    "adsensePublisherId": "",
+    "adSlots": [
+      {
+        "id": "header-ad",
+        "name": "📢 إعلان الهيدر (728×90)",
+        "position": "header",
+        "type": "adsense",
+        "slotId": "",
+        "enabled": false,
+        "htmlCode": "",
+        "description": "يظهر أعلى كل صفحة مباشرةً تحت الـ Navbar"
+      },
+      {
+        "id": "footer-ad",
+        "name": "📢 إعلان الفوتر (728×90)",
+        "position": "footer",
+        "type": "adsense",
+        "slotId": "",
+        "enabled": false,
+        "htmlCode": "",
+        "description": "يظهر أسفل كل صفحة فوق الـ Footer"
+      },
+      {
+        "id": "content-ad",
+        "name": "📰 إعلان وسط المحتوى (336×280)",
+        "position": "content",
+        "type": "adsense",
+        "slotId": "",
+        "enabled": false,
+        "htmlCode": "",
+        "description": "يظهر في منتصف الصفحة الرئيسية وصفحات المقالات"
+      },
+      {
+        "id": "in-article-ad",
+        "name": "📄 إعلان داخل المقال (468×60)",
+        "position": "in-article",
+        "type": "adsense",
+        "slotId": "",
+        "enabled": false,
+        "htmlCode": "",
+        "description": "يظهر بعد الـ FAQ في صفحات المقالات"
+      },
+      {
+        "id": "sidebar-ad",
+        "name": "📌 إعلان الشريط الجانبي (300×250)",
+        "position": "sidebar",
+        "type": "adsense",
+        "slotId": "",
+        "enabled": false,
+        "htmlCode": "",
+        "description": "يظهر في الشريط الجانبي"
+      },
+      {
+        "id": "top-banner-ad",
+        "name": "🔝 بانر علوي ضخم (970×90)",
+        "position": "top-banner",
+        "type": "adsense",
+        "slotId": "",
+        "enabled": false,
+        "htmlCode": "",
+        "description": "بانر ضخم فوق المحتوى الرئيسي"
+      },
+      {
+        "id": "mobile-ad",
+        "name": "📱 إعلان الجوال (320×50)",
+        "position": "mobile",
+        "type": "adsense",
+        "slotId": "",
+        "enabled": false,
+        "htmlCode": "",
+        "description": "يظهر فقط على الأجهزة المحمولة"
+      },
+      {
+        "id": "popup-ad",
+        "name": "🪟 إعلان Popup (300×250)",
+        "position": "popup",
+        "type": "html",
+        "slotId": "",
+        "enabled": false,
+        "htmlCode": "",
+        "description": "نافذة منبثقة — يدعم HTML فقط"
+      }
+    ]
+  },
+  "notifications": {
+    "alertEmail": "",
+    "slackWebhook": "",
+    "discordWebhook": "",
+    "telegramBotToken": "",
+    "telegramChatId": ""
+  }
+}

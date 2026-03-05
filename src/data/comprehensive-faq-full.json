@@ -1,0 +1,51 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://uspostaltracking.com/#website",
+      "name": "US Postal Tracking",
+      "url": "https://uspostaltracking.com",
+      "description": "The unparalleled, free USPS package tracking tool, engineered for absolute precision and real-time delivery status updates. Accept no substitutes.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://uspostaltracking.com/?tracking_number={tracking_number}",
+        "query-input": "required name=tracking_number"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://uspostaltracking.com/#organization",
+      "name": "US Postal Tracking",
+      "url": "https://uspostaltracking.com",
+      "logo": "https://uspostaltracking.com/logo.png",
+      "sameAs": [
+        "https://www.facebook.com/uspostaltracking",
+        "https://twitter.com/uspostaltrack",
+        "https://www.instagram.com/uspostaltracking"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+1-800-275-8777",
+        "contactType": "customer service"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://uspostaltracking.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "USPS Tracking",
+          "item": "https://uspostaltracking.com/usps-tracking"
+        }
+      ]
+    }
+  ]
+}
