@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --force",
     "build": "node scripts/generate-all.cjs && vite build && node scripts/prerender.cjs",
     "build:client-only": "vite build",
     "build:dev": "vite build --mode development",
