@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import {
   LayoutDashboard, Zap, Users, Cpu, Terminal, BookOpen, Megaphone,
   TrendingUp, Shield, Key, Database, GitBranch, Activity, Settings,
   ExternalLink, LogOut, Loader2, PanelLeftClose, PanelLeft, Menu,
-  ChevronRight, Search, Bell,
+  ChevronRight, Search, Bell, Server, HardDrive, Bug, Radar, ShieldAlert, FileText, Cog,
 } from "lucide-react";
 import { Script } from "@/components/admin/types";
 import LoginGate, { SESSION_KEY, SESSION_DURATION } from "@/components/admin/LoginGate";
@@ -22,6 +22,16 @@ import DatabaseTab from "@/components/admin/DatabaseTab";
 import ActivityLogsTab from "@/components/admin/ActivityLogsTab";
 import GitTab from "@/components/admin/GitTab";
 import KeywordsTab from "@/components/admin/KeywordsTab";
+
+// API Manager tabs (lazy loaded)
+const ApiOverviewTab = lazy(() => import("@/components/admin/api-manager/ApiOverviewTab"));
+const ApiProvidersTab = lazy(() => import("@/components/admin/api-manager/ApiProvidersTab"));
+const CacheManagementTab = lazy(() => import("@/components/admin/api-manager/CacheManagementTab"));
+const ScraperManagementTab = lazy(() => import("@/components/admin/api-manager/ScraperManagementTab"));
+const CarrierDetectionTab = lazy(() => import("@/components/admin/api-manager/CarrierDetectionTab"));
+const RateLimitingTab = lazy(() => import("@/components/admin/api-manager/RateLimitingTab"));
+const ApiLogsTab = lazy(() => import("@/components/admin/api-manager/ApiLogsTab"));
+const ApiSystemSettingsTab = lazy(() => import("@/components/admin/api-manager/ApiSystemSettingsTab"));
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try { const s = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}'); return s.ts && (Date.now() - s.ts < SESSION_DURATION); } catch { return false; }
@@ -99,6 +109,16 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
       { id: "overview", label: "نظرة عامة", icon: LayoutDashboard },
       { id: "performance", label: "الأداء", icon: Zap },
       { id: "visitors", label: "الزوار", icon: Users },
+    ]},
+    { title: 'API Manager', items: [
+      { id: "api-overview", label: "API Dashboard", icon: Server },
+      { id: "api-providers", label: "Providers", icon: Database },
+      { id: "api-cache", label: "Cache", icon: HardDrive },
+      { id: "api-scrapers", label: "Scrapers", icon: Bug },
+      { id: "api-carriers", label: "Carrier Detection", icon: Radar },
+      { id: "api-ratelimit", label: "Rate Limiting", icon: ShieldAlert },
+      { id: "api-logs", label: "API Logs", icon: FileText },
+      { id: "api-settings", label: "API Settings", icon: Cog },
     ]},
     { title: 'الأدوات', items: [
       { id: "tools", label: `الأدوات (${scripts.length})`, icon: Cpu },
@@ -276,6 +296,17 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
             {tab === "performance" && <PerformanceTab />}
             {tab === "database" && <DatabaseTab />}
             {tab === "logs" && <ActivityLogsTab />}
+            {/* API Manager Tabs */}
+            <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-blue-400" size={24} /></div>}>
+              {tab === "api-overview" && <ApiOverviewTab />}
+              {tab === "api-providers" && <ApiProvidersTab />}
+              {tab === "api-cache" && <CacheManagementTab />}
+              {tab === "api-scrapers" && <ScraperManagementTab />}
+              {tab === "api-carriers" && <CarrierDetectionTab />}
+              {tab === "api-ratelimit" && <RateLimitingTab />}
+              {tab === "api-logs" && <ApiLogsTab />}
+              {tab === "api-settings" && <ApiSystemSettingsTab />}
+            </Suspense>
           </div>
         </main>
       </div>
