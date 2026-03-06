@@ -24,12 +24,14 @@ export default function RateLimitingTab() {
   const [whitelistText, setWhitelistText] = useState('');
 
   const saveSettings = async () => {
-    const result = await apiCall('/rate-limits/settings', 'POST', {
+    const updated = {
       ...settings,
       blacklist: blacklistText.split('\n').filter(Boolean),
       whitelist: whitelistText.split('\n').filter(Boolean),
-    });
-    toast({ title: result.ok ? "✅ تم حفظ الإعدادات" : "❌ فشل الحفظ" });
+    };
+    setSettings(updated);
+    await apiCall('/rate-limits/settings', 'POST', updated);
+    toast({ title: "✅ تم حفظ الإعدادات" });
   };
 
   const toggleBlock = async (ipHash: string, blocked: boolean) => {
