@@ -1595,7 +1595,12 @@ export default defineConfig(({ mode }) => ({
     postBuildSeoPlugin(),
   ].filter(Boolean),
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "react": path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+    },
+    dedupe: ["react", "react-dom"],
   },
   build: {
     target: "es2020",
