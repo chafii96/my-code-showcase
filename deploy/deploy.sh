@@ -412,6 +412,12 @@ server {
     location ~ /sitemap.*\.xml$ { access_log off; }
     location = /robots.txt { access_log off; }
 
+    # Force React app for core SEO routes
+    # (prevents serving legacy thin static HTML from public/)
+    location ~ ^/(city|article|zip|state|status|locations)(/|$) {
+        try_files /index.html =404;
+    }
+
     # Programmatic SEO pages
     location /programmatic/ {
         try_files \$uri \$uri/ \$uri.html =404;
