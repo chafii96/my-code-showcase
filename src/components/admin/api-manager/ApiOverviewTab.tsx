@@ -1,28 +1,43 @@
-import { useState } from "react";
-import { Activity, Database, DollarSign, Gauge, Server, TrendingUp, Zap, RefreshCw } from "lucide-react";
+import { Activity, Database, DollarSign, Server, TrendingUp, Zap } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { mockSystemStats, mockHourlyData, mockProviderUsage, mockProviders, mockTrackingLogs } from "./mockData";
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+import { mockSystemStats, mockHourlyData, mockProviderUsage, mockTrackingLogs } from "./mockData";
+import { useApiData } from "./useApiData";
+import { SystemStats, TrackingLog } from "./types";
 
 export default function ApiOverviewTab() {
-  const [stats] = useState(mockSystemStats);
-  const [hourlyData] = useState(mockHourlyData);
-  const [providerUsage] = useState(mockProviderUsage);
+  const { data: stats, isLive: statsLive } = useApiData<SystemStats>(
+    '/system-stats', mockSystemStats, { pollingInterval: 30000 }
+  );
+  const { data: logs } = useApiData<TrackingLog[]>(
+    '/tracking-logs?limit=15', mockTrackingLogs.slice(0, 15), { pollingInterval: 30000 }
+  );
+
+  // Hourly data & provider usage — backend would need dedicated endpoints
+  // For now fallback to mock, can be extended later
+  const hourlyData = mockHourlyData;
+  const providerUsage = mockProviderUsage;
 
   const statCards = [
-    { label: 'Total Requests Today', value: stats.totalRequestsToday.toLocaleString(), icon: Activity, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    { label: 'Total Requests Today', value: Number(stats.totalRequestsToday).toLocaleString(), icon: Activity, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
     { label: 'Cache Hit Rate', value: `${stats.cacheHitRate}%`, icon: Zap, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
     { label: 'Active Provider', value: stats.activeProvider, icon: Server, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-    { label: 'API Calls Saved', value: stats.apiCallsSaved.toLocaleString(), icon: Database, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+    { label: 'API Calls Saved', value: Number(stats.apiCallsSaved).toLocaleString(), icon: Database, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
     { label: 'Est. Cost This Month', value: `$${stats.estimatedCost}`, icon: DollarSign, color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
     { label: 'Success Rate', value: `${stats.successRate}%`, icon: TrendingUp, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
   ];
 
-  const recentLogs = mockTrackingLogs.slice(0, 15);
+  const recentLogs = Array.isArray(logs) ? logs.slice(0, 15) : mockTrackingLogs.slice(0, 15);
 
   return (
     <div className="space-y-6">
+      {/* Live indicator */}
+      <div className="flex justify-end">
+        <span className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full ${statsLive ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-500 bg-slate-500/10'}`}>
+          <span className={`w-2 h-2 rounded-full ${statsLive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+          {statsLive ? 'Live — Polling 30s' : 'Offline — Mock Data'}
+        </span>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {statCards.map((card) => (
@@ -38,7 +53,6 @@ export default function ApiOverviewTab() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Requests per hour */}
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <h3 className="text-sm font-semibold text-white mb-4">Requests per Hour (24h)</h3>
           <ResponsiveContainer width="100%" height={240}>
@@ -52,7 +66,6 @@ export default function ApiOverviewTab() {
           </ResponsiveContainer>
         </div>
 
-        {/* Provider Usage Pie */}
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <h3 className="text-sm font-semibold text-white mb-4">Provider Usage Distribution</h3>
           <ResponsiveContainer width="100%" height={240}>
@@ -65,7 +78,6 @@ export default function ApiOverviewTab() {
           </ResponsiveContainer>
         </div>
 
-        {/* Cache vs API */}
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <h3 className="text-sm font-semibold text-white mb-4">Cache Hits vs API Calls</h3>
           <ResponsiveContainer width="100%" height={240}>
@@ -81,11 +93,10 @@ export default function ApiOverviewTab() {
           </ResponsiveContainer>
         </div>
 
-        {/* Success Rate */}
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <h3 className="text-sm font-semibold text-white mb-4">Success Rate Over Time</h3>
           <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={hourlyData.map((h, i) => ({ ...h, successRate: 90 + Math.random() * 10 }))}>
+            <AreaChart data={hourlyData.map((h) => ({ ...h, successRate: 90 + Math.random() * 10 }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#94a3b8' }} interval={3} />
               <YAxis domain={[85, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
@@ -118,8 +129,8 @@ export default function ApiOverviewTab() {
               </tr>
             </thead>
             <tbody>
-              {recentLogs.map(log => (
-                <tr key={log.id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+              {recentLogs.map((log, idx) => (
+                <tr key={log.id || idx} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
                   <td className="py-2 px-2 text-slate-400">{new Date(log.timestamp).toLocaleTimeString()}</td>
                   <td className="py-2 px-2 font-mono text-slate-300">{log.trackingNumberHash}</td>
                   <td className="py-2 px-2 text-slate-300">{log.carrier}</td>

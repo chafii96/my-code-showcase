@@ -1,44 +1,52 @@
 import { useState, useMemo } from "react";
-import { Download, Filter, Search } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import { mockTrackingLogs } from "./mockData";
+import { TrackingLog } from "./types";
+import { useApiData } from "./useApiData";
 
 export default function ApiLogsTab() {
-  const [logs] = useState(mockTrackingLogs);
+  const { data: logs, isLive } = useApiData<TrackingLog[]>('/tracking-logs?limit=100', mockTrackingLogs, { pollingInterval: 30000 });
   const [filters, setFilters] = useState({ provider: '', carrier: '', status: '', search: '' });
 
+  const safeData = Array.isArray(logs) ? logs : mockTrackingLogs;
+
   const filtered = useMemo(() => {
-    return logs.filter(l => {
+    return safeData.filter(l => {
       if (filters.provider && l.providerUsed !== filters.provider) return false;
       if (filters.carrier && l.carrier !== filters.carrier) return false;
       if (filters.status && l.status !== filters.status) return false;
       if (filters.search && !l.trackingNumberHash.includes(filters.search)) return false;
       return true;
     });
-  }, [logs, filters]);
+  }, [safeData, filters]);
 
-  const providers = [...new Set(logs.map(l => l.providerUsed))];
-  const carriers = [...new Set(logs.map(l => l.carrier))];
+  const providers = [...new Set(safeData.map(l => l.providerUsed))];
+  const carriers = [...new Set(safeData.map(l => l.carrier))];
 
   const errorAnalysis = useMemo(() => {
-    const errors = logs.filter(l => l.status === 'error');
+    const errors = safeData.filter(l => l.status === 'error');
     const grouped: Record<string, number> = {};
     errors.forEach(e => {
       const msg = e.errorMessage || 'Unknown error';
       grouped[msg] = (grouped[msg] || 0) + 1;
     });
     return Object.entries(grouped).sort((a, b) => b[1] - a[1]);
-  }, [logs]);
+  }, [safeData]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Logs & Analytics</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-bold text-white">Logs & Analytics</h2>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full ${isLive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-500'}`}>
+            {isLive ? '● Live — Polling 30s' : '○ Offline'}
+          </span>
+        </div>
         <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20 hover:bg-slate-500/20 transition-colors">
           <Download size={12} /> Export CSV
         </button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-2">
         <div className="relative">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -63,7 +71,6 @@ export default function ApiLogsTab() {
         </select>
       </div>
 
-      {/* Logs Table */}
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
@@ -82,8 +89,8 @@ export default function ApiLogsTab() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(log => (
-                <tr key={log.id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+              {filtered.map((log, idx) => (
+                <tr key={log.id || idx} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
                   <td className="py-2 px-3 text-slate-400 whitespace-nowrap">{new Date(log.timestamp).toLocaleTimeString()}</td>
                   <td className="py-2 px-3 font-mono text-slate-300">{log.trackingNumberHash}</td>
                   <td className="py-2 px-3 text-slate-300">{log.carrier}</td>
@@ -111,7 +118,6 @@ export default function ApiLogsTab() {
         </div>
       </div>
 
-      {/* Error Analysis */}
       {errorAnalysis.length > 0 && (
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <h3 className="text-sm font-semibold text-white mb-3">Error Analysis</h3>
