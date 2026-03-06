@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender.cjs",
+    "build": "node scripts/generate-all.cjs && vite build && node scripts/prerender.cjs",
     "build:client-only": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

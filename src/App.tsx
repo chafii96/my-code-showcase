@@ -20,6 +20,8 @@ function VisitorTracker() {
 }
 
 import CityTopicRedirect from "@/components/CityTopicRedirect";
+import LegacyProgrammaticStatusRedirect from "@/components/LegacyProgrammaticStatusRedirect";
+import LegacyProgrammaticArticleRedirect from "@/components/LegacyProgrammaticArticleRedirect";
 
 // ── Critical pages (eagerly loaded) ──
 import Index from "./pages/Index";
@@ -289,6 +291,10 @@ const App = () => (
           
           {/* Redirect old URL pattern to new pattern (preserves 2,060+ indexed URLs) */}
           <Route path="/city/:city/:topic" element={<CityTopicRedirect />} />
+
+          {/* Legacy static programmatic URLs compatibility (preserves indexed .html URLs) */}
+          <Route path="/programmatic/city-status/:legacySlug" element={<LegacyProgrammaticStatusRedirect />} />
+          <Route path="/programmatic/city-article/:legacySlug" element={<LegacyProgrammaticArticleRedirect />} />
           
           <Route path="/state/:state/carrier/:carrier" element={<StateCarrierPage />} />
 
