@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { ChevronDown, ChevronRight, Eye, EyeOff, GripVertical, Play, Plus, RotateCcw, Trash2, Power, X, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, GripVertical, Play, Plus, RotateCcw, Trash2, Power, X, Loader2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -8,52 +8,56 @@ import { ApiProvider, ApiAccount } from "./types";
 import { useApiData, apiCall } from "./useApiData";
 import { toast } from "@/hooks/use-toast";
 
-// ── Add Account Modal ──
+const STATUS_AR: Record<string, string> = { active: 'نشط', exhausted: 'مستنفد', error: 'خطأ', disabled: 'معطل' };
+
+// ── نافذة إضافة حساب ──
 function AddAccountModal({ provider, onClose, onAdd }: {
   provider: ApiProvider;
   onClose: () => void;
   onAdd: (account: ApiAccount) => void;
 }) {
-  const [name, setName] = useState(`${provider.name} - Account ${provider.accounts.length + 1}`);
+  const [name, setName] = useState(`${provider.name} - حساب ${provider.accounts.length + 1}`);
   const [apiKey, setApiKey] = useState('');
   const [dailyQuota, setDailyQuota] = useState(1000);
   const [validating, setValidating] = useState(false);
   const [validated, setValidated] = useState<boolean | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = 'Account name is required';
-    if (name.trim().length > 100) errs.name = 'Name must be less than 100 characters';
-    if (!apiKey.trim()) errs.apiKey = 'API Key is required';
-    if (apiKey.trim().length < 8) errs.apiKey = 'API Key must be at least 8 characters';
-    if (apiKey.trim().length > 500) errs.apiKey = 'API Key is too long';
-    if (dailyQuota < 1) errs.dailyQuota = 'Quota must be at least 1';
-    if (dailyQuota > 1000000) errs.dailyQuota = 'Quota is too high';
+    if (!name.trim()) errs.name = 'اسم الحساب مطلوب';
+    if (name.trim().length > 100) errs.name = 'الاسم طويل جداً (الحد الأقصى 100 حرف)';
+    if (!apiKey.trim()) errs.apiKey = 'مفتاح API مطلوب';
+    if (apiKey.trim().length < 8) errs.apiKey = 'مفتاح API قصير جداً (8 أحرف على الأقل)';
+    if (apiKey.trim().length > 500) errs.apiKey = 'مفتاح API طويل جداً';
+    if (dailyQuota < 1) errs.dailyQuota = 'الحصة يجب أن تكون 1 على الأقل';
+    if (dailyQuota > 1000000) errs.dailyQuota = 'الحصة كبيرة جداً';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const testApiKey = async () => {
     if (!apiKey.trim()) {
-      setErrors(p => ({ ...p, apiKey: 'Enter an API key first' }));
+      setErrors(p => ({ ...p, apiKey: 'أدخل مفتاح API أولاً' }));
       return;
     }
     setValidating(true);
     setValidated(null);
-    const result = await apiCall('/accounts/validate-key', 'POST', { providerId: provider.id, apiKey });
+    const result = await apiCall('/accounts/validate-key', 'POST', { providerId: provider.id, apiKey: apiKey.trim() });
     setValidating(false);
     if (result.ok && result.data?.valid) {
       setValidated(true);
-      toast({ title: '✅ API Key is valid' });
+      toast({ title: '✅ مفتاح API صالح' });
     } else {
       setValidated(false);
-      toast({ title: '⚠️ Could not validate key', description: 'Key saved but not verified. Backend may be offline.' });
+      toast({ title: '⚠️ لم يتم التحقق', description: 'سيتم حفظ المفتاح بدون تحقق. قد يكون الخادم غير متصل.' });
     }
   };
 
   const handleSubmit = async () => {
     if (!validate()) return;
+    setSubmitting(true);
     const newAccount: ApiAccount = {
       id: `${provider.id}-${Date.now()}`,
       providerId: provider.id,
@@ -68,23 +72,23 @@ function AddAccountModal({ provider, onClose, onAdd }: {
       avgResponseTime: 0,
       status: 'active',
     };
-    // Persist to backend
     const result = await apiCall('/accounts', 'POST', newAccount);
     if (result.ok && result.data?.id) {
       newAccount.id = result.data.id;
     }
+    setSubmitting(false);
     onAdd(newAccount);
-    toast({ title: `✅ ${name} added to ${provider.name}` });
+    toast({ title: `✅ تمت إضافة ${name} إلى ${provider.name}` });
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md rounded-2xl border border-white/[0.08] bg-slate-900 shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
           <div>
-            <h3 className="text-base font-bold text-white">Add New Account</h3>
+            <h3 className="text-base font-bold text-white">إضافة حساب جديد</h3>
             <p className="text-xs text-slate-500 mt-0.5">{provider.icon} {provider.name}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.06] transition-colors">
@@ -93,50 +97,49 @@ function AddAccountModal({ provider, onClose, onAdd }: {
         </div>
 
         <div className="p-5 space-y-4">
-          {/* Account Name */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-400">Account Name</label>
+            <label className="text-xs font-medium text-slate-400">اسم الحساب</label>
             <input value={name} onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: '' })); }}
               className={`w-full bg-slate-800 border rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${errors.name ? 'border-red-500/50' : 'border-white/[0.08]'}`}
-              placeholder="e.g. Ship24 - Account 1" />
+              placeholder="مثال: Ship24 - حساب 1" />
             {errors.name && <p className="text-[10px] text-red-400">{errors.name}</p>}
           </div>
 
-          {/* API Key */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-400">API Key</label>
+            <label className="text-xs font-medium text-slate-400">مفتاح API</label>
             <div className="flex gap-2">
               <input value={apiKey} onChange={e => { setApiKey(e.target.value); setErrors(p => ({ ...p, apiKey: '' })); setValidated(null); }}
                 className={`flex-1 bg-slate-800 border rounded-lg px-3 py-2.5 text-sm font-mono text-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${errors.apiKey ? 'border-red-500/50' : 'border-white/[0.08]'}`}
-                placeholder="sk_live_xxxxxxxxxx" />
+                placeholder="sk_live_xxxxxxxxxx" dir="ltr" />
               <button onClick={testApiKey} disabled={validating}
                 className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors disabled:opacity-50 whitespace-nowrap">
-                {validating ? <Loader2 size={12} className="animate-spin" /> : validated === true ? <CheckCircle size={12} /> : validated === false ? <XCircle size={12} /> : null}
-                {validating ? 'Testing...' : 'Validate'}
+                {validating ? <Loader2 size={12} className="animate-spin" /> : validated === true ? <CheckCircle size={12} /> : validated === false ? <XCircle size={12} /> : <Play size={12} />}
+                {validating ? 'جاري...' : 'تحقق'}
               </button>
             </div>
             {errors.apiKey && <p className="text-[10px] text-red-400">{errors.apiKey}</p>}
-            {validated === true && <p className="text-[10px] text-emerald-400">✅ Key validated successfully</p>}
-            {validated === false && <p className="text-[10px] text-amber-400">⚠️ Could not validate — will save anyway</p>}
+            {validated === true && <p className="text-[10px] text-emerald-400">✅ تم التحقق من المفتاح بنجاح</p>}
+            {validated === false && <p className="text-[10px] text-amber-400">⚠️ لم يتم التحقق — سيتم الحفظ على أي حال</p>}
           </div>
 
-          {/* Daily Quota */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-400">Daily Quota Limit</label>
+            <label className="text-xs font-medium text-slate-400">الحصة اليومية</label>
             <input type="number" value={dailyQuota} onChange={e => { setDailyQuota(+e.target.value); setErrors(p => ({ ...p, dailyQuota: '' })); }}
               className={`w-full bg-slate-800 border rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${errors.dailyQuota ? 'border-red-500/50' : 'border-white/[0.08]'}`}
-              min={1} max={1000000} />
+              min={1} max={1000000} dir="ltr" />
             {errors.dailyQuota && <p className="text-[10px] text-red-400">{errors.dailyQuota}</p>}
-            <p className="text-[10px] text-slate-500">Maximum API calls per day for this account</p>
+            <p className="text-[10px] text-slate-500">الحد الأقصى لاستدعاءات API يومياً لهذا الحساب</p>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 p-5 border-t border-white/[0.06]">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors">
-            Cancel
+        <div className="flex justify-start gap-2 p-5 border-t border-white/[0.06]">
+          <button onClick={handleSubmit} disabled={submitting}
+            className="px-5 py-2 rounded-lg text-xs font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-1.5">
+            {submitting ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+            {submitting ? 'جاري الإضافة...' : 'إضافة الحساب'}
           </button>
-          <button onClick={handleSubmit} className="px-5 py-2 rounded-lg text-xs font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors">
-            <Plus size={12} className="inline mr-1" />Add Account
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors">
+            إلغاء
           </button>
         </div>
       </div>
@@ -149,7 +152,7 @@ function QuotaBar({ used, total }: { used: number; total: number }) {
   const color = pct < 50 ? 'bg-emerald-500' : pct < 80 ? 'bg-amber-500' : 'bg-red-500';
   return (
     <div className="w-full">
-      <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+      <div className="flex justify-between text-[10px] text-slate-400 mb-1" dir="ltr">
         <span>{used.toLocaleString()} / {total.toLocaleString()}</span>
         <span>{pct.toFixed(0)}%</span>
       </div>
@@ -170,7 +173,7 @@ function StatusBadge({ status }: { status: ApiAccount['status'] }) {
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${styles[status]}`}>
       {status === 'active' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {STATUS_AR[status] || status}
     </span>
   );
 }
@@ -182,6 +185,7 @@ function AccountRow({ account, onToggle, onDelete, onTest }: {
   onTest: () => void;
 }) {
   const [showKey, setShowKey] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const successRate = account.successCount + account.errorCount > 0
     ? ((account.successCount / (account.successCount + account.errorCount)) * 100).toFixed(1)
     : '0.0';
@@ -194,7 +198,7 @@ function AccountRow({ account, onToggle, onDelete, onTest }: {
             <span className="text-sm font-medium text-white">{account.name}</span>
             <StatusBadge status={account.status} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" dir="ltr">
             <code className="text-[11px] bg-slate-800 px-2 py-1 rounded font-mono text-slate-400 flex-1 truncate">
               {showKey ? account.apiKey : '••••••••••••••••'}
             </code>
@@ -210,63 +214,52 @@ function AccountRow({ account, onToggle, onDelete, onTest }: {
 
         <div className="flex gap-4 text-[11px]">
           <div className="text-center">
-            <p className="text-slate-500">Success</p>
+            <p className="text-slate-500">النجاح</p>
             <p className="text-emerald-400 font-semibold">{successRate}%</p>
           </div>
           <div className="text-center">
-            <p className="text-slate-500">Avg Time</p>
+            <p className="text-slate-500">متوسط الوقت</p>
             <p className="text-blue-400 font-semibold">{account.avgResponseTime}ms</p>
           </div>
           <div className="text-center">
-            <p className="text-slate-500">Last Used</p>
-            <p className="text-slate-300">{account.lastUsed ? new Date(account.lastUsed).toLocaleTimeString() : '—'}</p>
+            <p className="text-slate-500">آخر استخدام</p>
+            <p className="text-slate-300">{account.lastUsed ? new Date(account.lastUsed).toLocaleTimeString('ar') : '—'}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button onClick={onTest} className="px-2.5 py-1.5 text-[10px] font-medium rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
-            <Play size={10} className="inline mr-1" />Test
+            <Play size={10} className="inline ml-1" />اختبار
           </button>
           <button onClick={onToggle}
             className={`p-1.5 rounded-lg transition-colors ${account.enabled ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-slate-500/10 text-slate-500 hover:bg-slate-500/20'}`}>
             <Power size={14} />
           </button>
-          <button onClick={onDelete} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">
-            <Trash2 size={14} />
-          </button>
+          {confirmDelete ? (
+            <div className="flex items-center gap-1">
+              <button onClick={() => { onDelete(); setConfirmDelete(false); }} className="px-2 py-1 text-[9px] rounded bg-red-500/20 text-red-400 hover:bg-red-500/30">تأكيد</button>
+              <button onClick={() => setConfirmDelete(false)} className="px-2 py-1 text-[9px] rounded bg-slate-700 text-slate-400">إلغاء</button>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// Sortable Provider Card
 function SortableProviderCard({
-  provider,
-  expanded,
-  onToggleExpand,
-  onToggleProvider,
-  onToggleAccount,
-  onDeleteAccount,
-  onTestAccount,
-  onAddAccount,
+  provider, expanded, onToggleExpand, onToggleProvider, onToggleAccount, onDeleteAccount, onTestAccount, onAddAccount,
 }: {
-  provider: ApiProvider;
-  expanded: boolean;
-  onToggleExpand: () => void;
-  onToggleProvider: () => void;
-  onToggleAccount: (accountId: string) => void;
-  onDeleteAccount: (accountId: string) => void;
-  onTestAccount: (account: ApiAccount) => void;
-  onAddAccount: () => void;
+  provider: ApiProvider; expanded: boolean; onToggleExpand: () => void; onToggleProvider: () => void;
+  onToggleAccount: (accountId: string) => void; onDeleteAccount: (accountId: string) => void;
+  onTestAccount: (account: ApiAccount) => void; onAddAccount: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: provider.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto' as any,
-  };
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : 'auto' as any };
 
   const activeAccounts = provider.accounts.filter(a => a.enabled).length;
   const totalQuota = provider.accounts.reduce((sum, a) => sum + a.dailyQuota, 0);
@@ -287,31 +280,32 @@ function SortableProviderCard({
             </span>
           </div>
           <p className="text-[10px] text-slate-500">
-            {activeAccounts}/{provider.accounts.length} accounts active · {usedQuota.toLocaleString()}/{totalQuota.toLocaleString()} quota used
+            {activeAccounts}/{provider.accounts.length} حساب نشط · {usedQuota.toLocaleString()}/{totalQuota.toLocaleString()} حصة مستخدمة
           </p>
         </div>
-        <button
-          onClick={e => { e.stopPropagation(); onToggleProvider(); }}
-          className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-colors ${provider.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-500'}`}
-        >
-          {provider.enabled ? 'Enabled' : 'Disabled'}
+        <button onClick={e => { e.stopPropagation(); onToggleProvider(); }}
+          className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-colors ${provider.enabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-500'}`}>
+          {provider.enabled ? 'مفعل' : 'معطل'}
         </button>
         {expanded ? <ChevronDown size={16} className="text-slate-500" /> : <ChevronRight size={16} className="text-slate-500" />}
       </div>
 
       {expanded && (
         <div className="px-4 pb-4 space-y-2 border-t border-white/[0.04] pt-3">
+          {provider.accounts.length === 0 && (
+            <div className="flex items-center gap-2 py-4 justify-center text-slate-500 text-xs">
+              <AlertTriangle size={14} />
+              <span>لا توجد حسابات. أضف حساب API للبدء.</span>
+            </div>
+          )}
           {provider.accounts.map(account => (
-            <AccountRow
-              key={account.id}
-              account={account}
+            <AccountRow key={account.id} account={account}
               onToggle={() => onToggleAccount(account.id)}
               onDelete={() => onDeleteAccount(account.id)}
-              onTest={() => onTestAccount(account)}
-            />
+              onTest={() => onTestAccount(account)} />
           ))}
-          <button onClick={onAddAccount} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-white/10 text-xs text-slate-500 hover:text-white hover:border-white/20 transition-colors">
-            <Plus size={14} /> Add New Account
+          <button onClick={onAddAccount} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-white/10 text-xs text-slate-500 hover:text-white hover:border-blue-500/30 hover:bg-blue-500/5 transition-colors">
+            <Plus size={14} /> إضافة حساب جديد
           </button>
         </div>
       )}
@@ -334,22 +328,13 @@ export default function ApiProvidersTab() {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-
     setProviders(prev => {
       const oldIndex = prev.findIndex(p => p.id === active.id);
       const newIndex = prev.findIndex(p => p.id === over.id);
       if (oldIndex === -1 || newIndex === -1) return prev;
-
-      const reordered = arrayMove(prev, oldIndex, newIndex).map((p, i) => ({
-        ...p,
-        priority: i + 1,
-      }));
-
-      reordered.forEach(p => {
-        apiCall(`/providers/${p.id}`, 'PUT', { priority: p.priority });
-      });
-
-      toast({ title: "Provider priority updated" });
+      const reordered = arrayMove(prev, oldIndex, newIndex).map((p, i) => ({ ...p, priority: i + 1 }));
+      reordered.forEach(p => { apiCall(`/providers/${p.id}`, 'PUT', { priority: p.priority }); });
+      toast({ title: "✅ تم تحديث ترتيب الأولوية" });
       return reordered;
     });
   }, [setProviders]);
@@ -361,7 +346,7 @@ export default function ApiProvidersTab() {
       apiCall(`/providers/${id}`, 'PUT', { enabled: updated.enabled });
       return updated;
     }));
-    toast({ title: "Provider updated" });
+    toast({ title: "تم تحديث المزود" });
   };
 
   const toggleAccount = (providerId: string, accountId: string) => {
@@ -380,55 +365,51 @@ export default function ApiProvidersTab() {
       ...p, accounts: p.accounts.filter(a => a.id !== accountId)
     } : p));
     apiCall(`/accounts/${accountId}`, 'DELETE');
-    toast({ title: "Account deleted" });
+    toast({ title: "تم حذف الحساب" });
   };
 
   const testAccount = async (account: ApiAccount) => {
-    toast({ title: `Testing ${account.name}...`, description: "Sending test tracking request" });
+    toast({ title: `جاري اختبار ${account.name}...`, description: "إرسال طلب تتبع تجريبي" });
     const result = await apiCall(`/accounts/${account.id}/test`, 'POST');
     if (result.ok) {
       toast({ title: `✅ ${account.name} — ${result.data?.responseTime}ms` });
     } else {
-      toast({ title: `❌ Test failed`, description: result.error, variant: "destructive" });
+      toast({ title: `❌ فشل الاختبار`, description: result.error, variant: "destructive" });
     }
   };
 
   const addAccount = (providerId: string, account: ApiAccount) => {
-    setProviders(prev => prev.map(p => p.id === providerId ? {
-      ...p, accounts: [...p.accounts, account]
-    } : p));
+    setProviders(prev => prev.map(p => p.id === providerId ? { ...p, accounts: [...p.accounts, account] } : p));
   };
 
   const forceRotate = async () => {
     const result = await apiCall('/providers/force-rotate', 'POST');
-    toast({ title: result.ok ? "Rotated to next account" : "Rotation failed" });
+    toast({ title: result.ok ? "✅ تم التبديل للحساب التالي" : "❌ فشل التبديل" });
   };
 
   const sortedProviders = [...providers].sort((a, b) => a.priority - b.priority);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" dir="rtl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-bold text-white">API Providers</h2>
+          <h2 className="text-lg font-bold text-white">مزودي API</h2>
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${isLive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-500'}`}>
-            {isLive ? '● Live' : '○ Offline'}
+            {isLive ? '● متصل' : '○ غير متصل'}
           </span>
         </div>
         <button onClick={forceRotate} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors">
-          <RotateCcw size={12} /> Force Rotate
+          <RotateCcw size={12} /> تبديل إجباري
         </button>
       </div>
 
-      <p className="text-[11px] text-slate-500">↕ Drag providers to reorder priority. Changes are saved automatically.</p>
+      <p className="text-[11px] text-slate-500">↕ اسحب المزودين لإعادة ترتيب الأولوية. التغييرات تُحفظ تلقائياً.</p>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={sortedProviders.map(p => p.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
             {sortedProviders.map(provider => (
-              <SortableProviderCard
-                key={provider.id}
-                provider={provider}
+              <SortableProviderCard key={provider.id} provider={provider}
                 expanded={!!expanded[provider.id]}
                 onToggleExpand={() => setExpanded(prev => ({ ...prev, [provider.id]: !prev[provider.id] }))}
                 onToggleProvider={() => toggleProvider(provider.id)}
@@ -442,13 +423,9 @@ export default function ApiProvidersTab() {
         </SortableContext>
       </DndContext>
 
-      {/* Add Account Modal */}
       {addModalProvider && (
-        <AddAccountModal
-          provider={addModalProvider}
-          onClose={() => setAddModalProvider(null)}
-          onAdd={(account) => addAccount(addModalProvider.id, account)}
-        />
+        <AddAccountModal provider={addModalProvider} onClose={() => setAddModalProvider(null)}
+          onAdd={(account) => addAccount(addModalProvider.id, account)} />
       )}
     </div>
   );
