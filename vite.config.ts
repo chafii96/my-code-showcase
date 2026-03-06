@@ -1597,10 +1597,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "react": path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
-    dedupe: ["react", "react-dom"],
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
   build: {
     target: "es2020",
@@ -1635,7 +1633,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "react-router-dom", "lucide-react", "@tanstack/react-query", "clsx", "tailwind-merge"],
+    include: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "react-router-dom", "lucide-react", "@tanstack/react-query", "clsx", "tailwind-merge"],
   },
   define: {
     __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
