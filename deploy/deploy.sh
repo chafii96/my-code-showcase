@@ -25,7 +25,7 @@ info() { echo -e "${C}ℹ️  $1${N}"; }
 hr()   { echo -e "\n${BD}${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${N}"; echo -e "${BD}${B}  $1${N}"; echo -e "${BD}${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${N}\n"; }
 
 # ── إعدادات ──
-REPO="https://github.com/chafii96/track-my-mail.git"
+REPO="https://github.com/chafii96/my-code-showcase.git"
 APP="swifttrack-hub"
 DIR="/var/www/${APP}"
 BAK="/var/www/backups"

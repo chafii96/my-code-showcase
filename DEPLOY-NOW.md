@@ -15,7 +15,7 @@ Replace `YOUR_VPS_IP` with your actual IP.
 ### 2. One-Command Deployment
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/chafii96/track-my-mail/main/deploy/deploy.sh | sudo bash -s uspostaltracking.com www.uspostaltracking.com
+curl -fsSL https://raw.githubusercontent.com/chafii96/my-code-showcase/main/deploy/deploy.sh | sudo bash -s uspostaltracking.com www.uspostaltracking.com
 ```
 
 **That's it!** ☕ Grab a coffee, it takes 10-15 minutes.
@@ -28,7 +28,7 @@ If you prefer to see what's happening:
 
 ```bash
 # 1. Download script
-wget https://raw.githubusercontent.com/chafii96/track-my-mail/main/deploy/deploy.sh
+wget https://raw.githubusercontent.com/chafii96/my-code-showcase/main/deploy/deploy.sh
 
 # 2. Make it executable
 chmod +x deploy.sh

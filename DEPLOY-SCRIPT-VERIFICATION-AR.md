@@ -211,7 +211,7 @@ update-site.sh
 في بداية السكريبت:
 
 ```bash
-REPO="https://github.com/chafii96/track-my-mail.git"  # رابط GitHub
+REPO="https://github.com/chafii96/my-code-showcase.git"  # رابط GitHub
 APP="swifttrack-hub"                                   # اسم التطبيق
 DIR="/var/www/${APP}"                                  # مجلد التثبيت
 EMAIL="its.rabyawork@gmail.com"                        # للـ SSL
