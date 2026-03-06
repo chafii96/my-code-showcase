@@ -118,7 +118,7 @@ const RICH_SNIPPETS = [
       '@type': 'WebSite',
       potentialAction: {
         '@type': 'SearchAction',
-        target: 'https://uspoststracking.com/?q={search_term_string}',
+        target: 'https://uspostaltracking.com/?q={search_term_string}',
         'query-input': 'required name=search_term_string'
       }
     }
@@ -234,12 +234,12 @@ async function main() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'USPS Tracking',
-    url: 'https://uspoststracking.com',
+    url: 'https://uspostaltracking.com',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: 'https://uspoststracking.com/?tracking={search_term_string}'
+        urlTemplate: 'https://uspostaltracking.com/?tracking={search_term_string}'
       },
       'query-input': 'required name=search_term_string'
     }

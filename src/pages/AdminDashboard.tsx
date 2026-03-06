@@ -165,7 +165,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
           </div>
           {(sidebarOpen || (!sidebarCollapsed && window.innerWidth >= 1024)) && (
             <div className="min-w-0">
-              <span className="text-sm font-bold text-white whitespace-nowrap block">SwiftTrack</span>
+              <span className="text-sm font-bold text-white whitespace-nowrap block">USPostal</span>
               <span className="text-[10px] text-slate-500 whitespace-nowrap">Admin Panel</span>
             </div>
           )}

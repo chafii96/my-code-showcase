@@ -1,7 +1,7 @@
 {
-  "name": "swifttrack-api",
+  "name": "uspostaltracking-api",
   "version": "1.0.0",
-  "description": "SwiftTrack Hub Backend API",
+  "description": "US Postal Tracking Backend API",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

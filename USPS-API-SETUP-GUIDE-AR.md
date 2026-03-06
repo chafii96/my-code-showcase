@@ -92,7 +92,7 @@ node test-usps-api.cjs
 ### الطريقة 2: عبر لوحة التحكم (Admin Dashboard)
 
 1. اذهب إلى: `https://uspostaltracking.com/admin`
-2. سجل الدخول (كلمة المرور: `swifttrack2024`)
+2. سجل الدخول (كلمة المرور: `uspostal2024`)
 3. اذهب إلى **API Keys**
 4. أدخل USPS USERID و Password
 5. احفظ التغييرات

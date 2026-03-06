@@ -324,7 +324,7 @@ app.get('/api/config', (req, res) => {
     seo: { titleSuffix: '| US Postal Tracking', defaultDescription: 'Track USPS packages in real-time' },
     notifications: { email: '', slack: false, discord: false },
     apiKeys: {},
-    adminPassword: 'swifttrack2024', // Default password
+    adminPassword: 'uspostal2024', // Default password
   });
   res.json(config);
 });
@@ -339,7 +339,7 @@ app.post('/api/config', (req, res) => {
 // ─── Admin Authentication ────────────────────────────────────────────────────
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
-  const config = readJSON('config.json', { adminPassword: 'swifttrack2024' });
+  const config = readJSON('config.json', { adminPassword: 'uspostal2024' });
   
   if (password === config.adminPassword) {
     res.json({ ok: true, token: Buffer.from(`${Date.now()}`).toString('base64') });
@@ -359,7 +359,7 @@ app.post('/api/admin/change-password', (req, res) => {
     return res.status(400).json({ ok: false, message: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' });
   }
   
-  const config = readJSON('config.json', { adminPassword: 'swifttrack2024' });
+  const config = readJSON('config.json', { adminPassword: 'uspostal2024' });
   
   if (currentPassword !== config.adminPassword) {
     return res.status(401).json({ ok: false, message: 'كلمة المرور الحالية غير صحيحة' });
@@ -859,7 +859,7 @@ app.get('/api/usps-track/:trackingNumber', async (req, res) => {
   }
   
   // Build USPS Track API XML request
-  const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>SwiftTrackHub</SourceId><TrackID ID="${trackingNumber}"/></TrackFieldRequest>`;
+  const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp>const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>USPostalTracking</SourceId><TrackID ID="${trackingNumber}"/></TrackFieldRequest>`;<TrackID ID="${trackingNumber}"/></TrackFieldRequest>`;
   
   const url = `https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=${encodeURIComponent(xmlRequest)}`;
   
@@ -1294,7 +1294,7 @@ app.post('/api/accounts/reset-quotas', (req, res) => {
 
 // ─── Start Server ────────────────────────────────────────────────────────────
 app.listen(PORT, '127.0.0.1', () => {
-  console.log(`\n🚀 SwiftTrack API Server running on http://127.0.0.1:${PORT}`);
+  console.log(`\n🚀 US Postal Tracking API Server running on http://127.0.0.1:${PORT}`);
   console.log(`📁 Data directory: ${DATA_DIR}`);
   console.log(`📊 Dashboard API ready`);
   console.log(`🔌 API Manager endpoints active\n`);

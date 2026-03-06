@@ -53,7 +53,7 @@ function sync() {
   // حفظ بيانات site/seo من seo-data إذا لم تكن موجودة في server
   if (seo.site && !srv.site) srv.site = seo.site;
   if (seo.seo && !srv.seo) srv.seo = seo.seo;
-  if (!srv.adminPassword) srv.adminPassword = 'swifttrack2024';
+  if (!srv.adminPassword) srv.adminPassword = 'uspostal2024';
 
   fs.writeFileSync(SERVER_CONFIG, JSON.stringify(srv, null, 2));
   console.log(`\n🔄 تم مزامنة ${changes} مفتاح → server/data/config.json`);

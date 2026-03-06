@@ -405,7 +405,7 @@ function adminApiPlugin() {
             try {
               const { password } = JSON.parse(body);
               const config = loadConfig();
-              const adminPass = config.adminPassword || "swifttrack2024";
+              const adminPass = config.adminPassword || "uspostal2024";
               if (password === adminPass) {
                 res.setHeader("Content-Type", "application/json");
                 res.end(JSON.stringify({ ok: true, token: Buffer.from(`${Date.now()}`).toString("base64") }));
@@ -442,7 +442,7 @@ function adminApiPlugin() {
                 return;
               }
               const config = loadConfig();
-              if (currentPassword !== (config.adminPassword || "swifttrack2024")) {
+              if (currentPassword !== (config.adminPassword || "uspostal2024")) {
                 res.statusCode = 401;
                 res.setHeader("Content-Type", "application/json");
                 res.end(JSON.stringify({ ok: false, message: "كلمة المرور الحالية غير صحيحة" }));
