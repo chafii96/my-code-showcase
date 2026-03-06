@@ -212,7 +212,7 @@ update-site.sh
 
 ```bash
 REPO="https://github.com/chafii96/my-code-showcase.git"  # رابط GitHub
-APP="swifttrack-hub"                                   # اسم التطبيق
+APP="uspostaltracking"                                   # اسم التطبيق
 DIR="/var/www/${APP}"                                  # مجلد التثبيت
 EMAIL="its.rabyawork@gmail.com"                        # للـ SSL
 NVER="20"                                              # إصدار Node.js

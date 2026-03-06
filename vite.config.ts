@@ -38,7 +38,7 @@ function getMaskedConfig(cfg: any): any {
 
 function getDefaultConfig(): any {
   return {
-    site: { siteName: 'SwiftTrack Hub', siteUrl: '', siteDescription: '', contactEmail: '', twitterHandle: '', facebookPage: '', timezone: 'America/New_York', maintenanceMode: false, maintenanceMessage: '' },
+    site: { siteName: 'US Postal Tracking', siteUrl: '', siteDescription: '', contactEmail: '', twitterHandle: '', facebookPage: '', timezone: 'America/New_York', maintenanceMode: false, maintenanceMessage: '' },
     seo: { defaultTitle: 'USPS Package Tracking', defaultDescription: '', defaultKeywords: 'usps tracking', canonicalDomain: '', robotsIndex: true, robotsFollow: true, structuredDataEnabled: true, openGraphEnabled: true, twitterCardsEnabled: true, hreflangEnabled: false },
     apiKeys: { googleSearchConsole: '', googleAnalytics4: '', googleAdsense: '', googleIndexingApi: '', bingWebmaster: '', semrushApiKey: '', ahrefsApiKey: '', indexNowKey: '', openaiApiKey: '', cloudflareApiKey: '', cloudflareZoneId: '', recaptchaSiteKey: '', recaptchaSecretKey: '', slackWebhook: '', discordWebhook: '', telegramBotToken: '', telegramChatId: '' },
     ads: { adsenseEnabled: false, adsensePublisherId: '', adSlots: [
@@ -227,7 +227,7 @@ function adminApiPlugin() {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({
             status: "ok",
-            server: "SwiftTrack Hub Admin API (Vite Plugin)",
+            server: "US Postal Tracking Admin API (Vite Plugin)",
             version: "3.0.0",
             timestamp: new Date().toISOString(),
             node: process.version,

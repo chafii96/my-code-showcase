@@ -52,7 +52,7 @@ pm2 status
 
 ### إعادة تشغيل:
 ```bash
-pm2 reload swifttrack-hub
+pm2 reload uspostaltracking
 ```
 
 ### فحص Nginx:
@@ -90,16 +90,16 @@ systemctl status nginx
 nginx -t
 
 # إعادة تشغيل
-pm2 reload swifttrack-hub
+pm2 reload uspostaltracking
 systemctl restart nginx
 ```
 
 ### بطء في البناء؟
 ```bash
 # استخدم build بدون prerender
-cd /var/www/swifttrack-hub
+cd /var/www/uspostaltracking
 npm run build:client-only
-pm2 reload swifttrack-hub
+pm2 reload uspostaltracking
 ```
 
 ---
@@ -119,8 +119,8 @@ pm2 reload swifttrack-hub
 
 3. **API Keys**: عدّل `server/data/config.json` بعد النشر:
    ```bash
-   nano /var/www/swifttrack-hub/server/data/config.json
-   pm2 reload swifttrack-hub
+   nano /var/www/uspostaltracking/server/data/config.json
+   pm2 reload uspostaltracking
    ```
 
 4. **Backup**: النسخ الاحتياطية في:

@@ -1,13 +1,13 @@
 /**
- * PM2 Ecosystem Configuration — SwiftTrack Hub
+ * PM2 Ecosystem Configuration — US Postal Tracking
  * الاستخدام: pm2 start ecosystem.config.cjs
  */
 module.exports = {
   apps: [
     {
-      name: 'swifttrack-hub',
+      name: 'uspostaltracking',
       script: 'server/index.js',
-      cwd: '/var/www/swifttrack-hub',
+      cwd: '/var/www/uspostaltracking',
       instances: 'max',
       exec_mode: 'cluster',
       autorestart: true,

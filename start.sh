@@ -1,6 +1,6 @@
 #!/bin/bash
 # ══════════════════════════════════════════════════════════════════
-#  SwiftTrack Hub — Unified Startup Script
+#  US Postal Tracking — Unified Startup Script
 #  تشغيل الموقع بأمر واحد فقط
 # ══════════════════════════════════════════════════════════════════
 #
@@ -28,7 +28,7 @@ NC='\033[0m' # No Color
 
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║     ⚡ SwiftTrack Hub — Admin Dashboard           ║${NC}"
+echo -e "${CYAN}║     ⚡ US Postal Tracking — Admin Dashboard        ║${NC}"
 echo -e "${CYAN}║     تشغيل لوحة التحكم الكاملة                    ║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════╝${NC}"
 echo ""

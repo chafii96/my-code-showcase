@@ -19,7 +19,7 @@ export default function RobotsTab() {
       if (!res.ok) throw new Error();
       setSaved(true); setTimeout(() => setSaved(false), 3000);
     } catch {
-      localStorage.setItem('swifttrack_robots', content);
+      localStorage.setItem('uspostaltracking_robots', content);
       setSaved(true); setTimeout(() => setSaved(false), 3000);
     } finally { setSaving(false); }
   };

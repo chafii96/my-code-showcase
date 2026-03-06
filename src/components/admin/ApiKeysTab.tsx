@@ -15,7 +15,7 @@ export default function ApiKeysTab() {
       setConfig(d);
       setLocalKeys(d.apiKeys || {});
     }).catch(() => {
-      const saved = localStorage.getItem('swifttrack_api_keys');
+      const saved = localStorage.getItem('uspostaltracking_api_keys');
       const keys = saved ? JSON.parse(saved) : {};
       setConfig({ apiKeys: keys });
       setLocalKeys(keys);
@@ -29,7 +29,7 @@ export default function ApiKeysTab() {
       if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
       else throw new Error();
     } catch {
-      localStorage.setItem('swifttrack_api_keys', JSON.stringify(localKeys));
+      localStorage.setItem('uspostaltracking_api_keys', JSON.stringify(localKeys));
       setSaved(true); setTimeout(() => setSaved(false), 3000);
     } finally { setSaving(false); }
   };

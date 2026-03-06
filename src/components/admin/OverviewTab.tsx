@@ -160,7 +160,7 @@ function WelcomeBanner() {
       <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
       <div className="relative">
         <h2 className="text-lg sm:text-xl font-bold text-white">{greeting} 👋</h2>
-        <p className="text-sm text-slate-400 mt-1">مرحباً بك في لوحة تحكم SwiftTrack Hub</p>
+        <p className="text-sm text-slate-400 mt-1">مرحباً بك في لوحة تحكم US Postal Tracking</p>
         <div className="flex flex-wrap gap-3 mt-4">
           <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-white/[0.04] rounded-lg px-3 py-1.5">
             <Clock size={12} />

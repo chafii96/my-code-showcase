@@ -15,7 +15,7 @@ export default function AdsManagerTab() {
 
   useEffect(() => {
     fetch('/api/ads').then(r => r.ok ? r.json() : Promise.reject()).then(setAds).catch(() => {
-      const saved = localStorage.getItem('swifttrack_ads');
+      const saved = localStorage.getItem('uspostaltracking_ads');
       setAds(saved ? JSON.parse(saved) : {
         globalEnabled: true,
         adSlots: [
@@ -35,7 +35,7 @@ export default function AdsManagerTab() {
       if (!res.ok) throw new Error();
       setSaved(true); invalidateAdsCache(); setTimeout(() => setSaved(false), 3000);
     } catch {
-      localStorage.setItem('swifttrack_ads', JSON.stringify(data));
+      localStorage.setItem('uspostaltracking_ads', JSON.stringify(data));
       setSaved(true); invalidateAdsCache(); setTimeout(() => setSaved(false), 3000);
     } finally { setSaving(false); }
   };

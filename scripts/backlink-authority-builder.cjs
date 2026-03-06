@@ -69,7 +69,7 @@ const LINK_OPPORTUNITIES = {
 const ANCHOR_STRATEGY = {
   exact: { percentage: 5, examples: ['usps tracking', 'track usps package'] },
   partial: { percentage: 20, examples: ['usps tracking tool', 'package tracking usps', 'track your usps mail'] },
-  branded: { percentage: 30, examples: ['SwiftTrack', 'USPostalTracking', 'uspostaltracking.com'] },
+  branded: { percentage: 30, examples: ['US Postal Tracking', 'USPostalTracking', 'uspostaltracking.com'] },
   generic: { percentage: 25, examples: ['click here', 'visit website', 'learn more', 'check here'] },
   naked: { percentage: 15, examples: ['https://uspostaltracking.com', 'uspostaltracking.com'] },
   lsi: { percentage: 5, examples: ['postal tracking', 'mail delivery status', 'package location'] }

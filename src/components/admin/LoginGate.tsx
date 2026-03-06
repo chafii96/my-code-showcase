@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { LayoutDashboard, Loader2, Lock, Eye, EyeOff, Shield } from "lucide-react";
 
-export const SESSION_KEY = "swifttrack_admin_session";
+export const SESSION_KEY = "uspostaltracking_admin_session";
 export const SESSION_DURATION = 24 * 60 * 60 * 1000;
 
 export default function LoginGate({ onAuth }: { onAuth: () => void }) {
@@ -39,7 +39,7 @@ export default function LoginGate({ onAuth }: { onAuth: () => void }) {
       }
     } catch {
       // Fallback: local auth
-      if (password === (localStorage.getItem("swifttrack_admin_password") || "swifttrack2024")) {
+      if (password === (localStorage.getItem("uspostaltracking_admin_password") || "uspostaltracking2024")) {
         localStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now(), token: "local" }));
         onAuth();
       } else {
@@ -65,7 +65,7 @@ export default function LoginGate({ onAuth }: { onAuth: () => void }) {
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-xl shadow-blue-500/25">
             <LayoutDashboard size={28} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">SwiftTrack Admin</h1>
+          <h1 className="text-2xl font-bold text-white">US Postal Tracking Admin</h1>
           <p className="text-sm text-slate-500 mt-1">لوحة التحكم الإدارية</p>
         </div>
 
