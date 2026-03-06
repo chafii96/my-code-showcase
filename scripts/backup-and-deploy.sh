@@ -9,7 +9,7 @@ set -e
 APP="swifttrack-hub"
 PRIMARY_DOMAIN="uspostaltracking.com"
 BACKUP_DOMAINS=("uspspackagetracker.com" "trackuspspackage.net" "uspsdeliverytracker.com")
-GITHUB_REPO="chafii96/track-my-mail"
+GITHUB_REPO="chafii96/my-code-showcase"
 BUILD_DIR="./dist"
 BACKUP_DIR="./backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

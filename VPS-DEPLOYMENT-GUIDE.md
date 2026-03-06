@@ -24,10 +24,10 @@ Replace `YOUR_VPS_IP` with your actual VPS IP address.
 
 ```bash
 # Download the deploy script
-wget https://raw.githubusercontent.com/chafii96/track-my-mail/main/deploy/deploy.sh
+wget https://raw.githubusercontent.com/chafii96/my-code-showcase/main/deploy/deploy.sh
 
 # Or if you prefer curl:
-curl -O https://raw.githubusercontent.com/chafii96/track-my-mail/main/deploy/deploy.sh
+curl -O https://raw.githubusercontent.com/chafii96/my-code-showcase/main/deploy/deploy.sh
 ```
 
 ---
