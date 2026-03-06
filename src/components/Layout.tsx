@@ -15,11 +15,7 @@ const Layout = ({ children, showAds = true }: LayoutProps) => {
       <Navbar />
 
       {/* Header Ad Slot */}
-      {showAds && (
-        <div className="w-full flex justify-center py-2 bg-background border-b border-border/20">
-          <AdSlot slotId="header-ad" />
-        </div>
-      )}
+      {showAds && <AdSlot slotId="header-ad" />}
 
       <main id="main-content" className="flex-1 relative" role="main">{children}</main>
 
