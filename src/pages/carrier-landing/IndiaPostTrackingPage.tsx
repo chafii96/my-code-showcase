@@ -14,8 +14,7 @@ const IndiaPostTrackingPage = () => {
         description="Free India Post tracking tool. Track Indian postal service packages, Speed Post, and registered mail. Enter your India Post tracking number for instant status."
         canonical="/india-post-tracking"
         keywords="india post tracking, india post tracking number, indian postal service tracking number, track india post, india post speed post tracking, india post international tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

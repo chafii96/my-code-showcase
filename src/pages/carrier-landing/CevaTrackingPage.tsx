@@ -14,8 +14,7 @@ const CevaTrackingPage = () => {
         description="Free CEVA Logistics tracking tool. Track CEVA freight, air cargo, and logistics shipments worldwide. Enter your CEVA tracking number for instant status."
         canonical="/ceva-tracking"
         keywords="ceva tracking, ceva tracking number, ceva logistics tracking, track ceva, ceva freight tracking, ceva shipment tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

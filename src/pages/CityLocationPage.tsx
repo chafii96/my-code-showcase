@@ -547,29 +547,7 @@ const CityLocationPage = () => {
             </div>
 
             {/* FAQ */}
-            <section>
-              <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <Star className="h-4 w-4 text-amber-500" />
-                </div>
-                FAQ: USPS Tracking in {location.city}
-              </h2>
-              <div className="space-y-3">
-                {faqSchema.mainEntity.map((item: any, idx: number) => (
-                  <div key={idx} className="bg-card border rounded-2xl p-5 hover:border-accent/20 transition-colors">
-                    <h3 className="font-semibold text-foreground mb-2 flex items-start gap-2">
-                      <span className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <span className="text-xs font-bold text-accent">{idx + 1}</span>
-                      </span>
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground pl-8">{item.acceptedAnswer.text}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <NativeAdWidget />
+<NativeAdWidget />
             <InArticleAd />
 
             {/* Related Statuses */}

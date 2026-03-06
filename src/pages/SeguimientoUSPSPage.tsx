@@ -15,8 +15,7 @@ const SeguimientoUSPSPage = () => {
         description="Seguimiento USPS gratis. Rastrear paquete USPS con número de seguimiento. Actualizaciones en tiempo real del estado de entrega. Seguimiento de paquetes del Servicio Postal de Estados Unidos."
         canonical="/seguimiento-usps"
         keywords="seguimiento usps, seguimiento de usps, rastrear paquete usps, usps seguimiento, rastreo usps, seguimiento de paquete usps, usps rastreo, rastrear envio usps, usps en español, correo postal estados unidos seguimiento"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

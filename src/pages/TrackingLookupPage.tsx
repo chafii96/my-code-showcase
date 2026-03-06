@@ -15,8 +15,7 @@ const TrackingLookupPage = () => {
         description="Free USPS tracking number lookup tool. Search any USPS tracking number for real-time status updates. Look up tracking by number, find lost tracking numbers, and get delivery information instantly."
         canonical="/tracking-lookup"
         keywords="usps tracking number lookup, usps tracking lookup, usps tracking search, usps search tracking, usps tracking number search, usps tracking by number, tracking number lookup usps, look up usps tracking, usps tracking number customer service, usps tracking info, usps tracking information, usps tracking online"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

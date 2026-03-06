@@ -25,7 +25,7 @@ const BestShippingCarriersGuide = () => {
         description="In-depth comparison of the best shipping carriers: USPS, FedEx, UPS, DHL, and regional carriers. Compare prices, delivery speeds, tracking quality, and reliability. Updated for 2026."
         keywords="best shipping carrier, usps vs fedex, ups vs fedex, cheapest shipping, fastest shipping, carrier comparison, best carrier for small business, shipping carrier reviews, dhl vs ups"
         canonical="https://uspostaltracking.com/knowledge-center/best-shipping-carriers"
-        structuredData={[articleSchema, faqSchema]}
+        structuredData={[articleSchema]}
       />
       <BreadcrumbSchema items={[
         { name: "Home", url: "/" },

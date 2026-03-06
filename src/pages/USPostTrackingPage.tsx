@@ -15,8 +15,7 @@ const USPostTrackingPage = () => {
         description="Free US Post tracking tool. Track US Post packages, mail, and shipments by tracking number. Real-time US postal tracking updates for all USPS services. Track US Post online instantly."
         canonical="/us-post-tracking"
         keywords="us post tracking, us post track, us post package tracking, track us post, us post office tracking, us post mail tracking, us post parcel tracking, us postal tracking, united states post tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

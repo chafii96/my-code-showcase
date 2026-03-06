@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schema Test</title>
+</head>
+<body>
+    <h1>Testing JSON-LD Schema Import</h1>
+    <div id="result"></div>
+    
+    <script type="module">
+        import schema from './src/data/advanced-schema-markup.json' assert { type: 'json' };
+        
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = `
+            <p>✓ Schema loaded successfully!</p>
+            <p>✓ Has @context: ${!!schema['@context']}</p>
+            <p>✓ Has @graph: ${!!schema['@graph']}</p>
+            <p>✓ Graph items: ${schema['@graph'].length}</p>
+            <p>✓ FAQ questions: ${schema['@graph'].find(i => i['@type'] === 'FAQPage')?.mainEntity.length || 0}</p>
+            <pre>${JSON.stringify(schema, null, 2).substring(0, 500)}...</pre>
+        `;
+    </script>
+</body>
+</html>

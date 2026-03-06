@@ -37,8 +37,7 @@ const CarrierTrackingFormatsGuide = () => {
         description="Complete reference guide for tracking number formats across 20+ carriers: SpeedEx, OnTrac, DoorDash, Colissimo, SF Express, India Post, USPS, and more. Identify any tracking number instantly."
         canonical="/knowledge-center/carrier-tracking-formats"
         keywords="tracking number format, usps tracking number length, how many digits usps tracking number, how long is a usps tracking number, speedex tracking number, ontrac tracking number, doordash tracking number, sf express tracking number, colissimo tracking number, india post tracking number"
-        structuredData={faqSchema}
-      />
+/>
 
       <article className="container max-w-4xl py-10">
         <nav className="text-sm text-muted-foreground mb-6 flex items-center gap-2">

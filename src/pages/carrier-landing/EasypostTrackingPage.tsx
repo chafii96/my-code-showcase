@@ -14,8 +14,7 @@ const EasypostTrackingPage = () => {
         description="Free EasyPost tracking tool. Track EasyPost shipments across USPS, FedEx, UPS, DHL, and 100+ carriers. Enter your EasyPost tracking number for instant status."
         canonical="/easypost-tracking"
         keywords="easypost tracking, easypost tracking number, track easypost, easypost package tracking, easypost shipment tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

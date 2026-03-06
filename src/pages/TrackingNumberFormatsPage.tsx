@@ -15,8 +15,7 @@ const TrackingNumberFormatsPage = () => {
         description="Understand USPS tracking number formats. Learn what 9200, 9205, 9214, 9261, 9270, 9300, 9400 prefixes mean. How many digits in a USPS tracking number? Complete guide to USPS tracking number formats."
         canonical="/tracking-number-formats"
         keywords="9200 tracking number usps, 9205 usps tracking, 9214 usps tracking, 9261 usps tracking, usps tracking number format, how many digits in usps tracking number, usps tracking number, what does a usps tracking number look like, usps tracking number starts with, usps tracking number length, usps tracking number digits, how many numbers in a usps tracking number, how long is a usps tracking number"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

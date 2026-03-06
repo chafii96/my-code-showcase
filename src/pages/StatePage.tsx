@@ -252,7 +252,7 @@ const StatePage = () => {
         description={description}
         keywords={keywords.join(", ")}
         canonical={`https://uspostaltracking.com/state/${stateSlug}`}
-        structuredData={[stateSchema, faqSchema]}
+        structuredData={[stateSchema]}
       />
 
       {/* Hero */}

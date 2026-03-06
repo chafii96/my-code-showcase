@@ -15,8 +15,7 @@ const FirstClassTrackingPage = () => {
         description="Free USPS First Class mail tracking. Track First Class packages and mail with real-time updates. Learn about First Class tracking numbers, delivery times & how to add tracking to letters."
         canonical="/first-class-tracking"
         keywords="usps first class tracking, first class mail tracking, usps first class mail tracking, usps 1st class mail tracking, first class tracking, track first class usps, first class package tracking, usps first class, first class mail usps tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

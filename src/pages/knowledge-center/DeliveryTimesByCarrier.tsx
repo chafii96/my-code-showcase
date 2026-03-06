@@ -25,7 +25,7 @@ const DeliveryTimesByCarrier = () => {
         description="Compare delivery times for all major carriers. Complete guide to USPS, FedEx, UPS, DHL shipping speeds for domestic and international deliveries. Updated for 2026."
         keywords="delivery times, shipping times, usps delivery time, fedex delivery time, ups shipping speed, dhl express delivery, carrier comparison, fastest shipping, how long does shipping take"
         canonical="https://uspostaltracking.com/knowledge-center/delivery-times-by-carrier"
-        structuredData={[articleSchema, faqSchema]}
+        structuredData={[articleSchema]}
       />
       <BreadcrumbSchema items={[
         { name: "Home", url: "/" },

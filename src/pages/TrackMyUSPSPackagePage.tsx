@@ -15,8 +15,7 @@ const TrackMyUSPSPackagePage = () => {
         description="Track my USPS package online free. Enter your tracking number to track your USPS package in real time. See delivery status, current location, and estimated delivery date for any USPS shipment."
         canonical="/track-my-usps-package"
         keywords="track my usps package, track my package usps, track my usps, my usps package tracking, where is my usps package, track my usps mail, find my usps package, my usps tracking, track my package usps free"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

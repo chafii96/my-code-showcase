@@ -14,8 +14,7 @@ const ColissimoTrackingPage = () => {
         description="Free Colissimo tracking tool. Track La Poste France Colissimo packages worldwide. Enter your Colissimo tracking number for instant delivery status updates."
         canonical="/colissimo-tracking"
         keywords="colissimo tracking, colissimo tracking number, track colissimo, la poste tracking, colissimo france tracking, colissimo package tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

@@ -15,8 +15,7 @@ const LiveTrackingPage = () => {
         description="Live USPS tracking tool. Get real-time package updates, track USPS trucks, and monitor delivery status live. Free live tracking for all USPS shipments. Check if USPS tracking is down."
         canonical="/live-tracking"
         keywords="live usps tracking, usps live tracking, usps tracking real time, real time usps tracking, usps truck tracker, track your usps truck, is usps tracking down, usps tracking not updating, usps tracking update, usps tracking down, live tracking usps, usps real time tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

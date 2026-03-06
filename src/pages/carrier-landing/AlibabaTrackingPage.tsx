@@ -14,8 +14,7 @@ const AlibabaTrackingPage = () => {
         description="Free Alibaba tracking tool. Track Alibaba orders and packages shipped via DHL, FedEx, SF Express, and China Post. Enter your Alibaba tracking number for instant status."
         canonical="/alibaba-tracking"
         keywords="alibaba tracking, alibaba tracking number, track alibaba, alibaba order tracking, alibaba package tracking, alibaba shipment tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

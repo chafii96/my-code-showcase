@@ -14,8 +14,7 @@ const SpeedexTrackingPage = () => {
         description="Free SpeedEx tracking tool. Track SpeedEx packages, Speed X shipments, and Speedex courier deliveries in real time. Enter your SpeedEx tracking number for instant status updates."
         canonical="/speedex-tracking"
         keywords="speedex tracking, speedex tracking number, speed x tracking number, speedx tracking number, speedex courier tracking, speedex package tracking, track speedex"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

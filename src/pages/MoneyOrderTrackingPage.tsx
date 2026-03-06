@@ -15,8 +15,7 @@ const MoneyOrderTrackingPage = () => {
         description="Track USPS money orders online. Verify if your money order has been cashed, check status, and learn how to file a claim for lost or stolen USPS money orders. Free money order tracking tool."
         canonical="/money-order-tracking"
         keywords="usps money order tracking, track a money order from usps, usps money order, money order tracking usps, track money order usps, usps money order status, usps money order inquiry, how to track usps money order, usps money order verification"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

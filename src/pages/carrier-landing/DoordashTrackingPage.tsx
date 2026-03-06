@@ -14,8 +14,7 @@ const DoordashTrackingPage = () => {
         description="Free DoorDash tracking tool. Track DoorDash deliveries, orders, and packages in real time. Enter your DoorDash tracking number for instant delivery status."
         canonical="/doordash-tracking"
         keywords="doordash tracking, doordash tracking number, track doordash, doordash order tracking, doordash delivery tracking, doordash package tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

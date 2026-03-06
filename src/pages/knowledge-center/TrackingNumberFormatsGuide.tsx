@@ -26,7 +26,7 @@ const TrackingNumberFormatsGuide = () => {
         description="Complete guide to tracking number formats for all major carriers. Learn how to identify USPS, FedEx, UPS, DHL tracking numbers, what each digit means, and how to track your package."
         keywords="tracking number format, usps tracking number format, fedex tracking number, ups tracking number 1z, dhl tracking number format, tracking number lookup, how many digits tracking number, identify carrier by tracking number"
         canonical="https://uspostaltracking.com/knowledge-center/tracking-number-formats"
-        structuredData={[articleSchema, faqSchema]}
+        structuredData={[articleSchema]}
       />
       <BreadcrumbSchema items={[
         { name: "Home", url: "/" },

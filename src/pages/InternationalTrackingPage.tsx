@@ -15,8 +15,7 @@ const InternationalTrackingPage = () => {
         description="Free USPS international tracking tool. Track international packages, customs status & delivery worldwide. Enter your international tracking number for real-time updates on USPS international shipments."
         canonical="/international-tracking"
         keywords="usps international tracking, usps tracking international, international usps tracking, usps tracking overseas packages, usps international package tracking, usps tracking international package, usps global tracking, usps international mail tracking, track usps international, international tracking usps"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

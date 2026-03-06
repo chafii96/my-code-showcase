@@ -15,8 +15,7 @@ const GroundAdvantageTrackingPage = () => {
         description="Free USPS Ground Advantage tracking tool. Track Ground Advantage packages with real-time updates, 2-5 day delivery status & $100 insurance. Enter your tracking number now."
         canonical="/ground-advantage-tracking"
         keywords="usps ground advantage tracking, ground advantage tracking, usps ground tracking, does usps ground advantage have tracking, usps ground advantage, ground advantage usps tracking, track usps ground advantage, usps ground advantage tracking number, usps ground tracking number"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

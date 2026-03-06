@@ -26,7 +26,7 @@ const CustomsClearanceGuide = () => {
         description="Learn everything about customs clearance: how duties and taxes are calculated, required documentation, prohibited items, and how to avoid delays. Updated for 2026."
         keywords="customs clearance guide, customs duties, import taxes, customs declaration, international shipping customs, USPS customs, how to clear customs, customs delay"
         canonical="https://uspostaltracking.com/knowledge-center/customs-clearance-guide"
-        structuredData={[articleSchema, faqSchema]}
+        structuredData={[articleSchema]}
       />
       <BreadcrumbSchema items={[
         { name: "Home", url: "/" },

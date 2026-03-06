@@ -15,8 +15,7 @@ const WhereIsMyPackagePage = () => {
         description="Find out where your USPS package is right now. Free real-time USPS package tracking — enter your tracking number to see current location, delivery status, and estimated arrival time."
         canonical="/where-is-my-package"
         keywords="where is my package usps, where is my usps package, find my usps package, usps package location, where is my mail usps, usps where is my package, track my usps package location"
-        structuredData={faqSchema}
-      />
+/>
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
@@ -103,21 +102,7 @@ const WhereIsMyPackagePage = () => {
       </section>
 
       {/* FAQ */}
-      <section className="bg-muted py-12">
-        <div className="container max-w-4xl">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Frequently Asked Questions</h2>
-          <div className="space-y-4">
-            {faqSchema.mainEntity.map((item, i) => (
-              <div key={i} className="bg-card border rounded-lg p-5">
-                <h3 className="font-semibold text-foreground mb-2">{item.name}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.acceptedAnswer.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* USPS Contact Info */}
+{/* USPS Contact Info */}
       <section className="container max-w-4xl py-12">
         <h2 className="text-xl font-bold text-foreground mb-4">Contact USPS About Your Package</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

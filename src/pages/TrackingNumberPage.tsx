@@ -192,19 +192,7 @@ const TrackingNumberPage = () => {
         </div>
 
         {/* FAQ */}
-        <section className="mb-6">
-          <h2 className="text-lg font-bold text-foreground mb-4">Frequently Asked Questions</h2>
-          <div className="space-y-3">
-            {faqSchema.mainEntity.map((item: any, idx: number) => (
-              <div key={idx} className="border rounded-lg p-4">
-                <h3 className="font-semibold text-sm text-foreground mb-2">{item.name}</h3>
-                <p className="text-xs text-muted-foreground">{item.acceptedAnswer.text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* CTA */}
+{/* CTA */}
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-5 mb-6">
           <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
             <Truck className="h-4 w-4 text-primary" /> Track Another Package

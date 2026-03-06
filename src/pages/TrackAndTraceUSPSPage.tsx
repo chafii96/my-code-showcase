@@ -15,8 +15,7 @@ const TrackAndTraceUSPSPage = () => {
         description="Free USPS track and trace tool. Track and trace US Postal Service packages in real time. Enter your tracking number for instant delivery status. Track and trace USPS mail, parcels, and shipments."
         canonical="/track-and-trace-usps"
         keywords="track and trace usps, track and trace us postal service, usps track and trace, track and trace us postal, us post track and trace, track & trace usps, usps tracking track and trace, postal track and trace"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

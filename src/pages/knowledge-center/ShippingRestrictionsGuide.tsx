@@ -25,7 +25,7 @@ const ShippingRestrictionsGuide = () => {
         description="Complete guide to international shipping restrictions. Learn what items are prohibited, restricted, and allowed for shipping via USPS, FedEx, UPS, and DHL. Country-specific regulations included."
         keywords="shipping restrictions, prohibited items shipping, international shipping rules, what can I ship internationally, USPS prohibited items, hazardous materials shipping, lithium battery shipping, restricted items list"
         canonical="https://uspostaltracking.com/knowledge-center/shipping-restrictions"
-        structuredData={[articleSchema, faqSchema]}
+        structuredData={[articleSchema]}
       />
       <BreadcrumbSchema items={[
         { name: "Home", url: "/" },

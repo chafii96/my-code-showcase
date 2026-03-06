@@ -15,8 +15,7 @@ const PriorityMailTrackingPage = () => {
         description="Free USPS Priority Mail tracking. Track your Priority Mail package in real-time with delivery updates, estimated delivery date & $100 insurance status. Enter your tracking number now."
         canonical="/priority-mail-tracking"
         keywords="usps priority mail tracking, priority mail tracking, usps priority tracking, track priority mail, priority mail tracking number, usps priority mail, priority mail usps tracking, usps priority mail tracker, track usps priority mail, priority tracking usps"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

@@ -25,7 +25,7 @@ const CustomsDutiesTaxesGuide = () => {
         description="Complete guide to customs duties, import taxes, and VAT for international shipping. Learn duty-free thresholds by country, how duties are calculated, and how to avoid unexpected charges."
         keywords="customs duties, import taxes, vat on imports, customs duty calculator, duty free threshold, international shipping taxes, import duty rates, customs charges, de minimis threshold"
         canonical="https://uspostaltracking.com/knowledge-center/customs-duties-taxes"
-        structuredData={[articleSchema, faqSchema]}
+        structuredData={[articleSchema]}
       />
       <BreadcrumbSchema items={[
         { name: "Home", url: "/" },

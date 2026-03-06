@@ -14,8 +14,7 @@ const OntracTrackingPage = () => {
         description="Free OnTrac tracking tool. Track OnTrac packages and deliveries in real time across the Western US. Enter your OnTrac tracking number for instant status updates."
         canonical="/ontrac-tracking"
         keywords="ontrac tracking, ontrac tracking number, track ontrac, ontrac package tracking, ontrac delivery tracking, ontrac shipment tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

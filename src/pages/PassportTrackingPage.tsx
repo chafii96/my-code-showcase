@@ -15,8 +15,7 @@ const PassportTrackingPage = () => {
         description="Track USPS passport delivery online. Monitor your new or renewed passport shipment via USPS Priority Mail Express. Free passport delivery tracking with real-time updates."
         canonical="/passport-tracking"
         keywords="usps passport tracking, passport tracker usps, tracking usps passport, usps passport delivery, track passport usps, usps passport, passport tracking usps, passport delivery tracking, usps passport status"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

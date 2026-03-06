@@ -138,7 +138,7 @@ const CityPairRoutePage = () => {
         description={description}
         keywords={keywords.join(", ")}
         canonical={`https://uspostaltracking.com/route/${route}`}
-        structuredData={[routeSchema, faqSchema]}
+        structuredData={[routeSchema]}
       />
 
       {/* Hero */}

@@ -14,8 +14,7 @@ const DeutschePostTrackingPage = () => {
         description="Free Deutsche Post tracking tool. Track Deutsche Post and DHL Germany packages worldwide. Enter your Deutsche Post tracking number for instant delivery status."
         canonical="/deutsche-post-tracking"
         keywords="deutsche post tracking, deutsche post tracking number, track deutsche post, german post tracking, dhl germany tracking, deutsche post international tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

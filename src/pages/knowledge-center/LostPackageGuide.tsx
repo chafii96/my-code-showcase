@@ -86,7 +86,7 @@ const LostPackageGuide = () => {
         description="Step-by-step guide to find, report, and get compensation for lost packages. File claims with USPS, FedEx, UPS, and DHL. Includes deadlines, contact numbers, and prevention tips."
         keywords="lost package, missing package, lost package claim, USPS lost package, FedEx lost package, UPS lost package, DHL lost package, shipping insurance claim, package not delivered"
         canonical="https://uspostaltracking.com/knowledge-center/lost-package-guide"
-        structuredData={[articleSchema, faqSchema]}
+        structuredData={[articleSchema]}
       />
       <BreadcrumbSchema items={[
         { name: "Home", url: "/" },

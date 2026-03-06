@@ -65,7 +65,7 @@ const CarrierPage = ({ carrier }: { carrier: CarrierInfo }) => {
         description={`Track ${carrier.name} (${carrier.fullName}) packages with real-time status updates. Enter your ${carrier.name} tracking number for instant delivery status, location, and estimated delivery date.`}
         keywords={carrier.keywords.join(", ")}
         canonical={`https://uspostaltracking.com/tracking/${carrier.id}`}
-        structuredData={[articleSchema, faqSchema, howToSchema, softwareAppSchema]}
+        structuredData={[articleSchema, howToSchema, softwareAppSchema]}
       />
       <BreadcrumbSchema
         items={[

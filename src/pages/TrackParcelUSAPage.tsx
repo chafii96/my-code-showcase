@@ -15,8 +15,7 @@ const TrackParcelUSAPage = () => {
         description="Track parcel USA — free online parcel tracking for the United States. Enter your tracking number to track any USA parcel in real time. USPS parcel tracking with instant delivery status updates."
         canonical="/track-parcel-usa"
         keywords="track parcel usa, track parcel united states, usa parcel tracking, track usa parcel, parcel tracking usa, track a parcel usa, usa parcel track, parcel tracker usa, track my parcel usa"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

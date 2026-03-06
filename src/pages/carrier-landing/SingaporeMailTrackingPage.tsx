@@ -14,8 +14,7 @@ const SingaporeMailTrackingPage = () => {
         description="Free Singapore Mail tracking tool. Track SingPost packages and Singapore postal service mail worldwide. Enter your Singapore tracking number for instant status."
         canonical="/singapore-mail-tracking"
         keywords="singapore mail tracking, singapore mail tracking number, singpost tracking, singapore post tracking, track singapore mail, singapore postal tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Test</title>
+</head>
+<body>
+    <h1>Testing React Build</h1>
+    <div id="root"></div>
+    
+    <script>
+        // Check if root element exists
+        const root = document.getElementById('root');
+        console.log('Root element:', root);
+        
+        // Try to load the main JS file
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = '/assets/js/index-CCkcsi5Q.js';
+        script.onload = () => console.log('✓ Script loaded successfully');
+        script.onerror = (e) => console.error('✗ Script failed to load:', e);
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>

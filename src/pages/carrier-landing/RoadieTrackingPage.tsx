@@ -14,8 +14,7 @@ const RoadieTrackingPage = () => {
         description="Free Roadie tracking tool. Track Roadie same-day deliveries and packages in real time. Enter your Roadie tracking number for instant status updates."
         canonical="/roadie-tracking"
         keywords="roadie tracking, roadie tracking number, track roadie, roadie delivery tracking, roadie package tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

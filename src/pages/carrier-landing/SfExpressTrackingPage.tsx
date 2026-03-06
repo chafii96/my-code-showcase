@@ -14,8 +14,7 @@ const SfExpressTrackingPage = () => {
         description="Free SF Express tracking tool. Track SF Express, SFC, and SF tracking packages from China worldwide. Enter your SF tracking number for instant delivery status."
         canonical="/sf-express-tracking"
         keywords="sf express tracking, sf express tracking number, sf tracking number, sfc tracking number, sf tracking, track sf express, sf express china tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

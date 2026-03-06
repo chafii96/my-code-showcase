@@ -15,8 +15,7 @@ const TrackingNotUpdatingPage2 = () => {
         description="USPS tracking not updating? Learn why USPS tracking stops updating, how to fix stuck tracking, and what to do when your package tracking hasn't moved. Solutions for all USPS tracking problems."
         canonical="/tracking-not-updating"
         keywords="usps tracking not updating, tracking number not updating usps, usps not update tracking, usps tracking not updating for 3 days, usps tracking not updating for 24 hours, usps tracking not updating for a week, is usps tracking down, usps tracking down, usps tracking in transit arriving late, usps tracking not showing location"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

@@ -15,8 +15,7 @@ const CheckUSPSTrackingPage = () => {
         description="Check USPS tracking status online free. Enter your USPS tracking number to check delivery status, current location, and estimated arrival. Free USPS tracking checker — instant results."
         canonical="/check-usps-tracking"
         keywords="check usps tracking, check usps tracking status, usps tracking check, check my usps tracking, check usps package tracking, usps check tracking number, check tracking usps, usps tracking status check"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">

@@ -26,7 +26,7 @@ const CertifiedMailTrackingPage = () => {
         description="Free USPS Certified Mail tracking tool. Track certified mail by tracking number with real-time updates, proof of mailing, delivery confirmation & signature status. Track USPS certified mail instantly."
         canonical="/certified-mail-tracking"
         keywords="usps certified mail tracking, certified mail tracking, track certified mail usps, usps certified mail tracker, certified mail tracking number, usps certified mail tracking number, track certified mail, certified mail usps, usps certified mail, certified mail tracking usps"
-        structuredData={[faqSchema, howToSchema]}
+        structuredData={[ howToSchema]}
       />
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">

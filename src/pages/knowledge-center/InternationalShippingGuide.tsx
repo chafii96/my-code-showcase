@@ -68,7 +68,7 @@ const InternationalShippingGuide = () => {
         description="Compare international shipping carriers, rates, and delivery times. Find the cheapest and fastest way to ship packages internationally from the US in 2026."
         keywords="international shipping guide, cheapest international shipping, USPS vs FedEx vs UPS vs DHL, international shipping rates, ship package internationally, international delivery times"
         canonical="https://uspostaltracking.com/knowledge-center/international-shipping-guide"
-        structuredData={[articleSchema, faqSchema]}
+        structuredData={[articleSchema]}
       />
       <BreadcrumbSchema items={[
         { name: "Home", url: "/" },

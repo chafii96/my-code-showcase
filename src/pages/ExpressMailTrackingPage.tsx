@@ -15,8 +15,7 @@ const ExpressMailTrackingPage = () => {
         description="Free USPS Express Mail tracking. Track Priority Mail Express packages with guaranteed overnight delivery, real-time updates & money-back guarantee. Enter your Express Mail tracking number."
         canonical="/express-mail-tracking"
         keywords="usps express mail tracking, express mail tracking, usps express tracking, priority mail express tracking, usps priority mail express tracking, track express mail usps, usps express mail, express mail tracking number, usps overnight tracking"
-        structuredData={faqSchema}
-      />
+/>
 
       <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground py-16">
         <div className="container max-w-4xl text-center">
