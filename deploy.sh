@@ -82,25 +82,28 @@ fi
 # ══════════════════════════════════════════════════════════════
 step "5/$TOTAL_STEPS — Puppeteer & Chrome Dependencies"
 # ══════════════════════════════════════════════════════════════
-# Install ALL Chrome/Puppeteer system dependencies
-# Detect libasound package name (Ubuntu 24+ uses libasound2t64)
-LIBASOUND="libasound2"
-if ! apt-cache show libasound2 &>/dev/null 2>&1; then
-  LIBASOUND="libasound2t64"
-fi
-
-apt install -y \
-  libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libdrm2 \
-  libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
-  libpango-1.0-0 libcairo2 $LIBASOUND libxshmfence1 \
-  libx11-xcb1 libxcb-dri3-0 libxss1 libxtst6 \
-  fonts-liberation fonts-noto-color-emoji xdg-utils wget ca-certificates || \
-apt install -y \
-  libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
-  libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
-  libpango-1.0-0 libcairo2 $LIBASOUND libxshmfence1 \
-  libx11-xcb1 libxcb-dri3-0 libxss1 libxtst6 \
+# Install Chrome/Puppeteer system deps (compatible with Ubuntu 22-25+)
+# Use individual installs to handle package name changes across Ubuntu versions
+CHROME_DEPS=(
+  libnss3 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1
+  libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libxshmfence1
+  libx11-xcb1 libxcb-dri3-0 libxss1 libxtst6
   fonts-liberation fonts-noto-color-emoji xdg-utils wget ca-certificates
+)
+
+# Packages that changed names in Ubuntu 24+ (old → new)
+for pkg in "libatk1.0-0:libatk1.0-0t64" "libatk-bridge2.0-0:libatk-bridge2.0-0t64" \
+           "libcups2:libcups2t64" "libasound2:libasound2t64"; do
+  OLD="${pkg%%:*}"
+  NEW="${pkg##*:}"
+  if apt-cache show "$NEW" &>/dev/null 2>&1; then
+    CHROME_DEPS+=("$NEW")
+  else
+    CHROME_DEPS+=("$OLD")
+  fi
+done
+
+apt install -y "${CHROME_DEPS[@]}"
 log "Chrome system dependencies installed"
 
 # ══════════════════════════════════════════════════════════════
