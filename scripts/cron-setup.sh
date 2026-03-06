@@ -4,7 +4,7 @@
 # Run once on VPS: bash scripts/cron-setup.sh
 # ============================================================
 
-APP="swifttrack-hub"
+APP="uspostaltracking"
 SITE_DIR="/var/www/${APP}"
 SCRIPTS_DIR="$SITE_DIR/scripts"
 LOG_DIR="/var/log/${APP}"
@@ -20,7 +20,7 @@ cat > "$SCRIPTS_DIR/daily-seo-cron.sh" << 'CRONEOF'
 #!/bin/bash
 # Daily SEO Automation: Sitemap Update + IndexNow Ping
 
-APP="swifttrack-hub"
+APP="uspostaltracking"
 SITE_DIR="/var/www/${APP}"
 LOG_DIR="/var/log/${APP}"
 DATE=$(date +%Y-%m-%d_%H%M)
@@ -57,7 +57,7 @@ chmod +x "$SCRIPTS_DIR/daily-seo-cron.sh"
 echo "📅 Installing cron jobs..."
 
 # Remove old cron entries for this project (if any)
-(crontab -l 2>/dev/null || true) | (grep -v "uspostaltracking\|swifttrack-hub\|daily-seo-cron\|package-pal\|your-package-pal" || true) > /tmp/current_cron
+(crontab -l 2>/dev/null || true) | (grep -v "uspostaltracking\|daily-seo-cron" || true) > /tmp/current_cron
 
 # Add new cron jobs
 cat >> /tmp/current_cron << EOF

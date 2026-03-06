@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const DOMAIN = 'uspoststracking.com';
+const DOMAIN = 'uspostaltracking.com';
 
 const C = {
   reset: '\x1b[0m', bold: '\x1b[1m', dim: '\x1b[2m',
@@ -41,7 +41,7 @@ const AD_PLACEMENTS = [
     viewability: 85,
     priority: 1,
     notes: 'أعلى RPM — أول ما يراه الزائر',
-    adCode: `<!-- SwiftTrack Header Banner -->
+    adCode: `<!-- USPostalTracking Header Banner -->
 <ins class="adsbygoogle"
      style="display:inline-block;width:728px;height:90px"
      data-ad-client="ca-pub-XXXXXXXXXX"
@@ -58,7 +58,7 @@ const AD_PLACEMENTS = [
     viewability: 92,
     priority: 2,
     notes: 'أعلى CTR — الزائر يقرأ النتيجة ويرى الإعلان',
-    adCode: `<!-- SwiftTrack In-Content Ad -->
+    adCode: `<!-- USPostalTracking In-Content Ad -->
 <ins class="adsbygoogle"
      style="display:block"
      data-ad-client="ca-pub-XXXXXXXXXX"
@@ -77,7 +77,7 @@ const AD_PLACEMENTS = [
     viewability: 78,
     priority: 3,
     notes: 'أعلى CPM — Half Page Ad',
-    adCode: `<!-- SwiftTrack Sidebar Sticky -->
+    adCode: `<!-- USPostalTracking Sidebar Sticky -->
 <div style="position:sticky;top:20px">
 <ins class="adsbygoogle"
      style="display:inline-block;width:300px;height:600px"
@@ -96,7 +96,7 @@ const AD_PLACEMENTS = [
     viewability: 88,
     priority: 4,
     notes: 'يظهر بين كل نتيجتين — زيارات طويلة',
-    adCode: `<!-- SwiftTrack Between Results -->
+    adCode: `<!-- USPostalTracking Between Results -->
 <ins class="adsbygoogle"
      style="display:block;text-align:center"
      data-ad-layout="in-article"
@@ -115,7 +115,7 @@ const AD_PLACEMENTS = [
     viewability: 95,
     priority: 5,
     notes: '72% من الزوار على mobile — دخل إضافي مستمر',
-    adCode: `<!-- SwiftTrack Mobile Anchor -->
+    adCode: `<!-- USPostalTracking Mobile Anchor -->
 <ins class="adsbygoogle"
      style="display:inline-block;width:320px;height:50px"
      data-ad-client="ca-pub-XXXXXXXXXX"
@@ -132,7 +132,7 @@ const AD_PLACEMENTS = [
     viewability: 70,
     priority: 6,
     notes: 'Native ads — CTR أعلى بـ 3x من البانر العادي',
-    adCode: `<!-- SwiftTrack Article Multiplex -->
+    adCode: `<!-- USPostalTracking Article Multiplex -->
 <ins class="adsbygoogle"
      style="display:block"
      data-ad-format="autorelaxed"

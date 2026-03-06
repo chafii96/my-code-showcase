@@ -21,7 +21,7 @@ console.log(`🔑 PASSWORD: ${PASSWORD.substring(0, 5)}...`);
 console.log(`📦 Test Tracking Number: ${TEST_TRACKING_NUMBER}\n`);
 
 // Build XML request
-const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>SwiftTrackHub</SourceId><TrackID ID="${TEST_TRACKING_NUMBER}"/></TrackFieldRequest>`;
+const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp>const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>USPostalTracking</SourceId><TrackID ID="${TEST_TRACKING_NUMBER}"/></TrackFieldRequest>`;<TrackID ID="${TEST_TRACKING_NUMBER}"/></TrackFieldRequest>`;
 
 const url = `https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=${encodeURIComponent(xmlRequest)}`;
 

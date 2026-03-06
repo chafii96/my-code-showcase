@@ -268,7 +268,7 @@ async function prerenderBatch(browser, routes) {
 
 // ── Main ────────────────────────────────────────────────────────────────────
 async function main() {
-  console.log('\n🔧 SwiftTrack Prerender — Dynamic Rendering Generator');
+  console.log('\n🔧 US Postal Tracking Prerender — Dynamic Rendering Generator');
   console.log('═══════════════════════════════════════════════════════\n');
 
   // تحقق من وجود dist/
