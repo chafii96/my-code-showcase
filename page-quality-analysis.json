@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-03-06T01:28:14.707Z",
+  "summary": {
+    "total": 12909,
+    "good": 12893,
+    "bad": 5
+  },
+  "issues": {
+    "empty": [],
+    "thinContent": [],
+    "noUniqueContent": [],
+    "duplicates": [
+      {
+        "path": "tracking\\nipost\\index.html",
+        "duplicateOf": "tracking\\nigeria-post\\index.html",
+        "category": "core"
+      },
+      {
+        "path": "tracking\\nz-post\\index.html",
+        "duplicateOf": "tracking\\new-zealand-post\\index.html",
+        "category": "core"
+      },
+      {
+        "path": "tracking\\phlpost\\index.html",
+        "duplicateOf": "tracking\\philpost\\index.html",
+        "category": "core"
+      },
+      {
+        "path": "tracking\\singpost\\index.html",
+        "duplicateOf": "tracking\\singapore-post\\index.html",
+        "category": "core"
+      },
+      {
+        "path": "tracking\\yto-express\\index.html",
+        "duplicateOf": "tracking\\yt-express\\index.html",
+        "category": "core"
+      }
+    ]
+  },
+  "byCategory": {
+    "article": {
+      "total": 191,
+      "good": 191,
+      "bad": 0
+    },
+    "city": {
+      "total": 206,
+      "good": 206,
+      "bad": 0
+    },
+    "cityStatus": {
+      "total": 3090,
+      "good": 3090,
+      "bad": 0
+    },
+    "cityArticle": {
+      "total": 2060,
+      "good": 2060,
+      "bad": 0
+    },
+    "cityCarrier": {
+      "total": 1648,
+      "good": 1648,
+      "bad": 0
+    },
+    "programmatic": {
+      "total": 4140,
+      "good": 4124,
+      "bad": 16
+    },
+    "core": {
+      "total": 750,
+      "good": 750,
+      "bad": 0
+    },
+    "zip": {
+      "total": 824,
+      "good": 824,
+      "bad": 0
+    }
+  }
+}
