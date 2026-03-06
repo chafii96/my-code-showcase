@@ -12,13 +12,11 @@ export default function CarrierDetectionTab() {
 
   const testDetection = async () => {
     if (!testInput.trim()) return;
-    // Try backend first
     const result = await apiCall('/carrier-patterns/detect', 'POST', { trackingNumber: testInput });
     if (result.ok && result.data?.carrier) {
       setDetectedCarrier(result.data.carrier);
       return;
     }
-    // Fallback to local detection
     const sorted = [...patterns].sort((a, b) => a.priority - b.priority);
     for (const p of sorted) {
       try {
@@ -28,61 +26,61 @@ export default function CarrierDetectionTab() {
         }
       } catch {}
     }
-    setDetectedCarrier('Unknown');
+    setDetectedCarrier('غير معروف');
   };
 
   const deletePattern = async (id: string) => {
     setPatterns(prev => prev.filter(p => p.id !== id));
     await apiCall(`/carrier-patterns/${id}`, 'DELETE');
-    toast({ title: "Pattern deleted" });
+    toast({ title: "تم حذف النمط" });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-bold text-white">Carrier Detection Rules</h2>
+          <h2 className="text-lg font-bold text-white">قواعد اكتشاف الناقل</h2>
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${isLive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-500'}`}>
-            {isLive ? '● Live' : '○ Offline'}
+            {isLive ? '● متصل' : '○ غير متصل'}
           </span>
         </div>
         <div className="flex gap-2">
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20 hover:bg-slate-500/20 transition-colors">
-            <Upload size={12} /> Import JSON
+            <Upload size={12} /> استيراد JSON
           </button>
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
-            <Plus size={12} /> Add Pattern
+            <Plus size={12} /> إضافة نمط
           </button>
         </div>
       </div>
 
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-        <h3 className="text-sm font-semibold text-white mb-3">Test Carrier Detection</h3>
+        <h3 className="text-sm font-semibold text-white mb-3">اختبار اكتشاف الناقل</h3>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input value={testInput} onChange={e => setTestInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && testDetection()}
-              placeholder="Enter tracking number to test..."
-              className="w-full bg-slate-800 border border-white/[0.08] rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              placeholder="أدخل رقم التتبع للاختبار..." dir="ltr"
+              className="w-full bg-slate-800 border border-white/[0.08] rounded-lg pr-9 pl-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
           </div>
-          <button onClick={testDetection} className="px-4 py-2 rounded-lg text-xs font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors">Detect</button>
+          <button onClick={testDetection} className="px-4 py-2 rounded-lg text-xs font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors">اكتشاف</button>
         </div>
         {detectedCarrier && (
-          <div className={`mt-3 px-4 py-2 rounded-lg text-sm font-medium ${detectedCarrier !== 'Unknown' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-            Detected: <span className="font-bold">{detectedCarrier}</span>
+          <div className={`mt-3 px-4 py-2 rounded-lg text-sm font-medium ${detectedCarrier !== 'غير معروف' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+            الناقل المكتشف: <span className="font-bold">{detectedCarrier}</span>
           </div>
         )}
       </div>
 
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-        <table className="w-full text-xs">
+        <table className="w-full text-xs" dir="ltr">
           <thead>
             <tr className="text-slate-500 border-b border-white/[0.06] bg-white/[0.02]">
-              <th className="text-left py-3 px-4">Priority</th>
-              <th className="text-left py-3 px-4">Carrier</th>
-              <th className="text-left py-3 px-4">Pattern (Regex)</th>
-              <th className="text-left py-3 px-4">Example</th>
-              <th className="text-left py-3 px-4">Actions</th>
+              <th className="text-left py-3 px-4">الأولوية</th>
+              <th className="text-left py-3 px-4">الناقل</th>
+              <th className="text-left py-3 px-4">النمط (Regex)</th>
+              <th className="text-left py-3 px-4">مثال</th>
+              <th className="text-left py-3 px-4">إجراءات</th>
             </tr>
           </thead>
           <tbody>

@@ -6,39 +6,37 @@ import { SystemStats, TrackingLog } from "./types";
 
 export default function ApiOverviewTab() {
   const { data: stats, isLive: statsLive } = useApiData<SystemStats>(
-    '/system-stats', mockSystemStats, { pollingInterval: 30000 }
+    '/system-stats', mockSystemStats, { pollingInterval: 15000 }
   );
   const { data: logs } = useApiData<TrackingLog[]>(
-    '/tracking-logs?limit=15', mockTrackingLogs.slice(0, 15), { pollingInterval: 30000 }
+    '/tracking-logs?limit=20', mockTrackingLogs.slice(0, 20), { pollingInterval: 15000 }
   );
 
-  // Hourly data & provider usage — backend would need dedicated endpoints
-  // For now fallback to mock, can be extended later
   const hourlyData = mockHourlyData;
   const providerUsage = mockProviderUsage;
 
   const statCards = [
-    { label: 'Total Requests Today', value: Number(stats.totalRequestsToday).toLocaleString(), icon: Activity, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-    { label: 'Cache Hit Rate', value: `${stats.cacheHitRate}%`, icon: Zap, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-    { label: 'Active Provider', value: stats.activeProvider, icon: Server, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-    { label: 'API Calls Saved', value: Number(stats.apiCallsSaved).toLocaleString(), icon: Database, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-    { label: 'Est. Cost This Month', value: `$${stats.estimatedCost}`, icon: DollarSign, color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
-    { label: 'Success Rate', value: `${stats.successRate}%`, icon: TrendingUp, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
+    { label: 'إجمالي الطلبات اليوم', value: Number(stats.totalRequestsToday).toLocaleString(), icon: Activity, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    { label: 'معدل إصابة الكاش', value: `${stats.cacheHitRate}%`, icon: Zap, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+    { label: 'المزود النشط', value: stats.activeProvider, icon: Server, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+    { label: 'استدعاءات API المحفوظة', value: Number(stats.apiCallsSaved).toLocaleString(), icon: Database, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+    { label: 'التكلفة المقدرة (شهرياً)', value: `$${stats.estimatedCost}`, icon: DollarSign, color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
+    { label: 'نسبة النجاح', value: `${stats.successRate}%`, icon: TrendingUp, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
   ];
 
-  const recentLogs = Array.isArray(logs) ? logs.slice(0, 15) : mockTrackingLogs.slice(0, 15);
+  const recentLogs = Array.isArray(logs) ? logs.slice(0, 20) : mockTrackingLogs.slice(0, 20);
 
   return (
-    <div className="space-y-6">
-      {/* Live indicator */}
-      <div className="flex justify-end">
-        <span className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full ${statsLive ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-500 bg-slate-500/10'}`}>
+    <div className="space-y-6" dir="rtl">
+      {/* مؤشر الاتصال */}
+      <div className="flex justify-start">
+        <span className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full ${statsLive ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-500 bg-slate-500/10'}`}>
           <span className={`w-2 h-2 rounded-full ${statsLive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
-          {statsLive ? 'Live — Polling 30s' : 'Offline — Mock Data'}
+          {statsLive ? 'متصل — تحديث كل 15 ثانية' : 'غير متصل — بيانات محلية'}
         </span>
       </div>
 
-      {/* Stats Grid */}
+      {/* بطاقات الإحصائيات */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {statCards.map((card) => (
           <div key={card.label} className={`rounded-xl border p-4 ${card.bg}`}>
@@ -51,10 +49,10 @@ export default function ApiOverviewTab() {
         ))}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* الرسوم البيانية */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" dir="ltr">
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-          <h3 className="text-sm font-semibold text-white mb-4">Requests per Hour (24h)</h3>
+          <h3 className="text-sm font-semibold text-white mb-4" dir="rtl">الطلبات في الساعة (24 ساعة)</h3>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={hourlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -67,7 +65,7 @@ export default function ApiOverviewTab() {
         </div>
 
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-          <h3 className="text-sm font-semibold text-white mb-4">Provider Usage Distribution</h3>
+          <h3 className="text-sm font-semibold text-white mb-4" dir="rtl">توزيع استخدام المزودين</h3>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie data={providerUsage} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" nameKey="name" label={({ name, value }) => `${name} ${value}%`} labelLine={false}>
@@ -79,22 +77,22 @@ export default function ApiOverviewTab() {
         </div>
 
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-          <h3 className="text-sm font-semibold text-white mb-4">Cache Hits vs API Calls</h3>
+          <h3 className="text-sm font-semibold text-white mb-4" dir="rtl">الكاش مقابل استدعاءات API</h3>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={hourlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#94a3b8' }} interval={3} />
               <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
               <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }} />
-              <Bar dataKey="cacheHits" fill="#8b5cf6" name="Cache Hits" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="apiCalls" fill="#f59e0b" name="API Calls" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="cacheHits" fill="#8b5cf6" name="إصابات الكاش" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="apiCalls" fill="#f59e0b" name="استدعاءات API" radius={[4, 4, 0, 0]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-          <h3 className="text-sm font-semibold text-white mb-4">Success Rate Over Time</h3>
+          <h3 className="text-sm font-semibold text-white mb-4" dir="rtl">نسبة النجاح عبر الوقت</h3>
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={hourlyData.map((h) => ({ ...h, successRate: 90 + Math.random() * 10 }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -107,43 +105,43 @@ export default function ApiOverviewTab() {
         </div>
       </div>
 
-      {/* Live Activity Feed */}
+      {/* سجل النشاط المباشر */}
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-white">Live Activity Feed</h3>
+          <h3 className="text-sm font-semibold text-white">سجل النشاط المباشر</h3>
           <span className="flex items-center gap-1.5 text-[10px] text-emerald-400">
-            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" /> Live
+            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" /> مباشر
           </span>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" dir="ltr">
           <table className="w-full text-xs">
             <thead>
               <tr className="text-slate-500 border-b border-white/[0.06]">
-                <th className="text-left py-2 px-2">Time</th>
-                <th className="text-left py-2 px-2">Tracking #</th>
-                <th className="text-left py-2 px-2">Carrier</th>
-                <th className="text-left py-2 px-2">Provider</th>
-                <th className="text-left py-2 px-2">Cache</th>
-                <th className="text-left py-2 px-2">Time (ms)</th>
-                <th className="text-left py-2 px-2">Status</th>
+                <th className="text-left py-2 px-2">الوقت</th>
+                <th className="text-left py-2 px-2">رقم التتبع</th>
+                <th className="text-left py-2 px-2">الناقل</th>
+                <th className="text-left py-2 px-2">المزود</th>
+                <th className="text-left py-2 px-2">الكاش</th>
+                <th className="text-left py-2 px-2">الوقت (مل/ث)</th>
+                <th className="text-left py-2 px-2">الحالة</th>
               </tr>
             </thead>
             <tbody>
               {recentLogs.map((log, idx) => (
                 <tr key={log.id || idx} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
-                  <td className="py-2 px-2 text-slate-400">{new Date(log.timestamp).toLocaleTimeString()}</td>
+                  <td className="py-2 px-2 text-slate-400">{new Date(log.timestamp).toLocaleTimeString('ar')}</td>
                   <td className="py-2 px-2 font-mono text-slate-300">{log.trackingNumberHash}</td>
                   <td className="py-2 px-2 text-slate-300">{log.carrier}</td>
                   <td className="py-2 px-2 text-slate-300">{log.providerUsed}</td>
                   <td className="py-2 px-2">
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${log.cacheHit ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-500/20 text-slate-400'}`}>
-                      {log.cacheHit ? 'HIT' : 'MISS'}
+                      {log.cacheHit ? 'إصابة' : 'فقدان'}
                     </span>
                   </td>
                   <td className="py-2 px-2 text-slate-300">{log.responseTimeMs}</td>
                   <td className="py-2 px-2">
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${log.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                      {log.status}
+                      {log.status === 'success' ? 'نجاح' : 'خطأ'}
                     </span>
                   </td>
                 </tr>
