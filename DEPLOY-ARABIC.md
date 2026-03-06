@@ -23,7 +23,7 @@ ssh root@YOUR_VPS_IP
 ## الخطوة 2: النشر بأمر واحد فقط! 🎯
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/chafii96/track-my-mail/main/deploy/deploy.sh | sudo bash -s uspostaltracking.com www.uspostaltracking.com
+curl -fsSL https://raw.githubusercontent.com/chafii96/my-code-showcase/main/deploy/deploy.sh | sudo bash -s uspostaltracking.com www.uspostaltracking.com
 ```
 
 **هذا كل شيء!** ☕ اشرب قهوة، سيستغرق 10-15 دقيقة.
@@ -36,7 +36,7 @@ curl -fsSL https://raw.githubusercontent.com/chafii96/track-my-mail/main/deploy/
 
 ```bash
 # 1. تحميل السكريبت
-wget https://raw.githubusercontent.com/chafii96/track-my-mail/main/deploy/deploy.sh
+wget https://raw.githubusercontent.com/chafii96/my-code-showcase/main/deploy/deploy.sh
 
 # 2. جعله قابل للتنفيذ
 chmod +x deploy.sh
@@ -374,7 +374,7 @@ ssh root@YOUR_VPS_IP
 ثم:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/chafii96/track-my-mail/main/deploy/deploy.sh | sudo bash -s uspostaltracking.com www.uspostaltracking.com
+curl -fsSL https://raw.githubusercontent.com/chafii96/my-code-showcase/main/deploy/deploy.sh | sudo bash -s uspostaltracking.com www.uspostaltracking.com
 ```
 
 🚀 بالتوفيق!
