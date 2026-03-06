@@ -46,7 +46,25 @@ else
   log "Repository cloned"
 fi
 
-step "4/8 — Install & Build"
+step "4/9 — Puppeteer & Chrome (for prerendering)"
+if ! npx puppeteer browsers inspect chrome &>/dev/null 2>&1; then
+  # Install Chrome dependencies (headless)
+  apt install -y \
+    libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+    libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
+    libpango-1.0-0 libcairo2 libasound2 libxshmfence1 \
+    fonts-liberation fonts-noto-color-emoji xdg-utils wget ca-certificates
+  log "Chrome dependencies installed"
+  # Puppeteer will be installed via npm, Chrome via puppeteer
+  cd "$APP_DIR"
+  npm install puppeteer --legacy-peer-deps
+  npx puppeteer browsers install chrome
+  log "Puppeteer + Chrome installed"
+else
+  log "Puppeteer + Chrome already installed"
+fi
+
+step "5/9 — Install & Build"
 cd "$APP_DIR"
 rm -rf node_modules/.vite
 npm install --legacy-peer-deps
@@ -55,7 +73,7 @@ rm -rf public/city public/article public/zip public/state public/status public/l
 npm run build
 log "Build complete — $(du -sh dist | cut -f1)"
 
-step "5/8 — Nginx Configuration"
+step "6/9 — Nginx Configuration"
 cat > /etc/nginx/sites-available/uspostaltracking.conf << 'NGINX'
 server {
     listen 80;
@@ -131,13 +149,13 @@ systemctl restart nginx
 systemctl enable nginx
 log "Nginx configured and running"
 
-step "6/8 — Firewall (UFW)"
+step "7/9 — Firewall (UFW)"
 ufw allow OpenSSH
 ufw allow 'Nginx Full'
 ufw --force enable
 log "Firewall configured"
 
-step "7/8 — SSL Certificate (Let's Encrypt)"
+step "8/9 — SSL Certificate (Let's Encrypt)"
 if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
   certbot --nginx \
     -d "$DOMAIN" \
@@ -152,7 +170,7 @@ else
   certbot renew --dry-run && log "SSL certificate already exists and is valid"
 fi
 
-step "8/8 — Final Verification"
+step "9/9 — Final Verification"
 # Test if site responds
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost" || echo "000")
 if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ]; then
