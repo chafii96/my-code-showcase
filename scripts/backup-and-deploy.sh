@@ -1,12 +1,12 @@
 #!/bin/bash
 # ============================================================
-# SwiftTrack Hub — Backup and Deploy Script
+# US Postal Tracking — Backup and Deploy Script
 # Backs up site content and deploys to backup domain on trigger
 # ============================================================
 
 set -e
 
-APP="swifttrack-hub"
+APP="uspostaltracking"
 PRIMARY_DOMAIN="uspostaltracking.com"
 BACKUP_DOMAINS=("uspspackagetracker.com" "trackuspspackage.net" "uspsdeliverytracker.com")
 GITHUB_REPO="chafii96/my-code-showcase"

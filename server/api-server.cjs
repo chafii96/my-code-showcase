@@ -1,5 +1,5 @@
 /**
- * SwiftTrack Hub — Real Admin API Server
+ * US Postal Tracking — Real Admin API Server
  * =======================================
  * Express.js backend that executes real scripts, reads real file data,
  * and provides live stats. NO mock data.
@@ -65,7 +65,7 @@ function parseSitemap(filePath) {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    server: 'SwiftTrack Hub Admin API',
+    server: 'US Postal Tracking Admin API',
     version: '2.0.0',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
@@ -643,7 +643,7 @@ app.post('/api/indexnow', async (req, res) => {
 
 // ─── Start server ─────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🚀 SwiftTrack Hub Admin API Server`);
+  console.log(`\n🚀 US Postal Tracking Admin API Server`);
   console.log(`   Port: ${PORT}`);
   console.log(`   Root: ${ROOT}`);
   console.log(`   Time: ${new Date().toISOString()}`);

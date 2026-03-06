@@ -86,7 +86,7 @@ curl -I https://uspostaltracking.com
 pm2 status
 ```
 
-يجب أن يظهر `swifttrack-hub` بحالة `online`.
+يجب أن يظهر `uspostaltracking` بحالة `online`.
 
 ### 3. تحقق من Nginx
 
@@ -131,7 +131,7 @@ dig www.uspostaltracking.com +short
 ### تعديل ملف الإعدادات:
 
 ```bash
-cd /var/www/swifttrack-hub
+cd /var/www/uspostaltracking
 nano server/data/config.json
 ```
 
@@ -151,7 +151,7 @@ nano server/data/config.json
 ### إعادة تحميل الباكند:
 
 ```bash
-pm2 reload swifttrack-hub
+pm2 reload uspostaltracking
 ```
 
 ---
@@ -187,23 +187,23 @@ health-check.sh
 ### عرض سجلات الباكند
 
 ```bash
-pm2 logs swifttrack-hub
+pm2 logs uspostaltracking
 ```
 
 ### إعادة تشغيل الباكند
 
 ```bash
-pm2 restart swifttrack-hub
+pm2 restart uspostaltracking
 ```
 
 ### عرض سجلات Nginx
 
 ```bash
 # سجلات الوصول
-tail -f /var/log/nginx/swifttrack-hub_access.log
+tail -f /var/log/nginx/uspostaltracking_access.log
 
 # سجلات الأخطاء
-tail -f /var/log/nginx/swifttrack-hub_error.log
+tail -f /var/log/nginx/uspostaltracking_error.log
 ```
 
 ---
@@ -229,12 +229,12 @@ netstat -tulpn | grep nginx
 **تحقق من PM2:**
 ```bash
 pm2 status
-pm2 logs swifttrack-hub --lines 50
+pm2 logs uspostaltracking --lines 50
 ```
 
 **إعادة تشغيل:**
 ```bash
-pm2 restart swifttrack-hub
+pm2 restart uspostaltracking
 ```
 
 ### المشكلة: SSL فشل
@@ -336,10 +336,10 @@ update-site.sh
 health-check.sh
 
 # عرض السجلات
-pm2 logs swifttrack-hub
+pm2 logs uspostaltracking
 
 # إعادة تشغيل الباكند
-pm2 restart swifttrack-hub
+pm2 restart uspostaltracking
 
 # إعادة تحميل Nginx
 systemctl reload nginx
@@ -358,10 +358,10 @@ ufw status
 
 ## الملفات المهمة
 
-- **المشروع**: `/var/www/swifttrack-hub`
-- **الإعدادات**: `/var/www/swifttrack-hub/server/data/config.json`
-- **Nginx**: `/etc/nginx/sites-available/swifttrack-hub`
-- **PM2**: `/var/www/swifttrack-hub/ecosystem.config.cjs`
+- **المشروع**: `/var/www/uspostaltracking`
+- **الإعدادات**: `/var/www/uspostaltracking/server/data/config.json`
+- **Nginx**: `/etc/nginx/sites-available/uspostaltracking`
+- **PM2**: `/var/www/uspostaltracking/ecosystem.config.cjs`
 
 ---
 

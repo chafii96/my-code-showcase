@@ -12,7 +12,7 @@ const API_BASE = window.location.hostname === 'localhost'
   ? ''
   : '/api';
 
-const ADMIN_SESSION_KEY = 'swifttrack_admin_session';
+const ADMIN_SESSION_KEY = 'uspostaltracking_admin_session';
 
 /**
  * Check if the current user is an admin to exclude from tracking

@@ -1,16 +1,16 @@
 /**
- * SwiftTrack Hub — Backend API Server
+ * US Postal Tracking — Backend API Server
  * يعمل على VPS على البورت 8080
  * 
  * التثبيت:
- *   cd /var/www/swifttrack-hub/server
+ *   cd /var/www/uspostaltracking/server
  *   npm init -y
  *   npm install express cors
  * 
  * التشغيل:
  *   node index.js
  *   أو باستخدام PM2:
- *   pm2 start index.js --name swifttrack-api
+ *   pm2 start index.js --name uspostaltracking-api
  *   pm2 save
  *   pm2 startup
  */
@@ -226,9 +226,9 @@ app.get('/api/sitemaps', (req, res) => {
 // ─── Scripts ─────────────────────────────────────────────────────────────────
 const DEFAULT_SCRIPTS = [
   // ── Technical ──
-  { id: 'build', name: 'Build Project', desc: 'npm run build — بناء المشروع', category: 'technical', icon: '🔨', cmd: 'cd /var/www/swifttrack-hub && npm run build' },
-  { id: 'deploy', name: 'Deploy (Build + Copy)', desc: 'بناء ونقل الملفات للسيرفر', category: 'technical', icon: '🚀', cmd: 'cd /var/www/swifttrack-hub && npm run build && cp -r dist/* /var/www/html/' },
-  { id: 'quick-deploy', name: 'Quick Deploy (Full)', desc: 'سكريبت النشر الكامل بضغطة واحدة', category: 'technical', icon: '⚡', cmd: 'bash /var/www/swifttrack-hub/deploy/quick-deploy.sh' },
+  { id: 'build', name: 'Build Project', desc: 'npm run build — بناء المشروع', category: 'technical', icon: '🔨', cmd: 'cd /var/www/uspostaltracking && npm run build' },
+  { id: 'deploy', name: 'Deploy (Build + Copy)', desc: 'بناء ونقل الملفات للسيرفر', category: 'technical', icon: '🚀', cmd: 'cd /var/www/uspostaltracking && npm run build && cp -r dist/* /var/www/html/' },
+  { id: 'quick-deploy', name: 'Quick Deploy (Full)', desc: 'سكريبت النشر الكامل بضغطة واحدة', category: 'technical', icon: '⚡', cmd: 'bash /var/www/uspostaltracking/deploy/quick-deploy.sh' },
   { id: 'nginx-reload', name: 'Reload Nginx', desc: 'إعادة تحميل إعدادات Nginx', category: 'technical', icon: '🔄', cmd: 'sudo systemctl reload nginx' },
   { id: 'nginx-test', name: 'Test Nginx Config', desc: 'فحص إعدادات Nginx', category: 'technical', icon: '✅', cmd: 'sudo nginx -t' },
   { id: 'cache-clear', name: 'Clear Nginx Cache', desc: 'مسح كاش Nginx', category: 'technical', icon: '🧹', cmd: 'sudo find /var/cache/nginx -type f -delete 2>/dev/null; echo "Cache cleared"' },
@@ -236,11 +236,11 @@ const DEFAULT_SCRIPTS = [
   { id: 'pm2-status', name: 'PM2 Status', desc: 'حالة العمليات', category: 'technical', icon: '📊', cmd: 'pm2 status' },
   { id: 'pm2-logs', name: 'PM2 Logs', desc: 'آخر 20 سطر من السجلات', category: 'technical', icon: '📋', cmd: 'pm2 logs --lines 20 --nostream' },
   // ── Git ──
-  { id: 'git-pull', name: 'Git Pull', desc: 'سحب آخر التحديثات', category: 'git', icon: '📥', cmd: 'cd /var/www/swifttrack-hub && git pull origin main' },
-  { id: 'git-push', name: 'Git Push', desc: 'رفع التغييرات', category: 'git', icon: '📤', cmd: 'cd /var/www/swifttrack-hub && git add -A && git commit -m "auto: update" && git push' },
-  { id: 'git-status', name: 'Git Status', desc: 'حالة الملفات', category: 'git', icon: '📋', cmd: 'cd /var/www/swifttrack-hub && git status --short' },
-  { id: 'git-log', name: 'Git Log', desc: 'آخر 10 commits', category: 'git', icon: '📜', cmd: 'cd /var/www/swifttrack-hub && git log --oneline -10' },
-  { id: 'git-diff', name: 'Git Diff', desc: 'التغييرات غير المحفوظة', category: 'git', icon: '🔍', cmd: 'cd /var/www/swifttrack-hub && git diff --stat' },
+  { id: 'git-pull', name: 'Git Pull', desc: 'سحب آخر التحديثات', category: 'git', icon: '📥', cmd: 'cd /var/www/uspostaltracking && git pull origin main' },
+  { id: 'git-push', name: 'Git Push', desc: 'رفع التغييرات', category: 'git', icon: '📤', cmd: 'cd /var/www/uspostaltracking && git add -A && git commit -m "auto: update" && git push' },
+  { id: 'git-status', name: 'Git Status', desc: 'حالة الملفات', category: 'git', icon: '📋', cmd: 'cd /var/www/uspostaltracking && git status --short' },
+  { id: 'git-log', name: 'Git Log', desc: 'آخر 10 commits', category: 'git', icon: '📜', cmd: 'cd /var/www/uspostaltracking && git log --oneline -10' },
+  { id: 'git-diff', name: 'Git Diff', desc: 'التغييرات غير المحفوظة', category: 'git', icon: '🔍', cmd: 'cd /var/www/uspostaltracking && git diff --stat' },
   // ── Indexing ──
   { id: 'ping-google', name: 'Ping Google', desc: 'إخطار Google بتحديث Sitemap', category: 'indexing', icon: '🔔', cmd: 'curl -s "https://www.google.com/ping?sitemap=https://uspostaltracking.com/sitemap.xml"' },
   { id: 'ping-bing', name: 'Ping Bing', desc: 'إخطار Bing بتحديث Sitemap', category: 'indexing', icon: '🔍', cmd: 'curl -s "https://www.bing.com/ping?sitemap=https://uspostaltracking.com/sitemap.xml"' },
@@ -256,28 +256,28 @@ const DEFAULT_SCRIPTS = [
   // ── Monitoring ──
   { id: 'ssl-renew', name: 'Renew SSL', desc: 'تجديد شهادة SSL', category: 'monitoring', icon: '🔒', cmd: 'sudo certbot renew --dry-run' },
   { id: 'ssl-check', name: 'SSL Check', desc: 'فحص انتهاء الشهادة', category: 'monitoring', icon: '🔐', cmd: 'curl -vI https://uspostaltracking.com 2>&1 | grep -i "expire"' },
-  { id: 'disk-usage', name: 'Disk Usage', desc: 'استخدام القرص', category: 'monitoring', icon: '💾', cmd: 'df -h / && echo "---" && du -sh /var/www/swifttrack-hub/dist/' },
+  { id: 'disk-usage', name: 'Disk Usage', desc: 'استخدام القرص', category: 'monitoring', icon: '💾', cmd: 'df -h / && echo "---" && du -sh /var/www/uspostaltracking/dist/' },
   { id: 'memory', name: 'Memory Usage', desc: 'استخدام الذاكرة', category: 'monitoring', icon: '🧠', cmd: 'free -h' },
   { id: 'uptime', name: 'Server Uptime', desc: 'وقت تشغيل السيرفر', category: 'monitoring', icon: '⏱️', cmd: 'uptime' },
   { id: 'top-processes', name: 'Top Processes', desc: 'أكثر العمليات استهلاكاً', category: 'monitoring', icon: '📈', cmd: 'ps aux --sort=-%mem | head -10' },
   // ── Content ──
-  { id: 'count-pages', name: 'Count Pages', desc: 'عدد الصفحات المُنشأة', category: 'content', icon: '📄', cmd: 'find /var/www/swifttrack-hub/src/pages -name "*.tsx" | wc -l' },
-  { id: 'count-components', name: 'Count Components', desc: 'عدد المكونات', category: 'content', icon: '🧩', cmd: 'find /var/www/swifttrack-hub/src/components -name "*.tsx" | wc -l' },
-  { id: 'sitemap-urls', name: 'Count Sitemap URLs', desc: 'عدد URLs في Sitemaps', category: 'content', icon: '🔢', cmd: 'grep -c "<loc>" /var/www/swifttrack-hub/public/sitemap*.xml 2>/dev/null || echo "No sitemaps found"' },
-  { id: 'build-size', name: 'Build Size', desc: 'حجم ملفات البناء', category: 'content', icon: '📦', cmd: 'du -sh /var/www/swifttrack-hub/dist/ && echo "---" && ls -lhS /var/www/swifttrack-hub/dist/assets/*.js 2>/dev/null | head -5' },
+  { id: 'count-pages', name: 'Count Pages', desc: 'عدد الصفحات المُنشأة', category: 'content', icon: '📄', cmd: 'find /var/www/uspostaltracking/src/pages -name "*.tsx" | wc -l' },
+  { id: 'count-components', name: 'Count Components', desc: 'عدد المكونات', category: 'content', icon: '🧩', cmd: 'find /var/www/uspostaltracking/src/components -name "*.tsx" | wc -l' },
+  { id: 'sitemap-urls', name: 'Count Sitemap URLs', desc: 'عدد URLs في Sitemaps', category: 'content', icon: '🔢', cmd: 'grep -c "<loc>" /var/www/uspostaltracking/public/sitemap*.xml 2>/dev/null || echo "No sitemaps found"' },
+  { id: 'build-size', name: 'Build Size', desc: 'حجم ملفات البناء', category: 'content', icon: '📦', cmd: 'du -sh /var/www/uspostaltracking/dist/ && echo "---" && ls -lhS /var/www/uspostaltracking/dist/assets/*.js 2>/dev/null | head -5' },
   // ── Elite ──
   { id: 'competitor-analysis', name: 'Competitor Analysis', desc: 'تحليل المنافسين — مقارنة سرعة وأداء المواقع المنافسة', category: 'elite', icon: '☢️', cmd: 'echo "=== Competitor Analysis ===" && for site in trackusps.com usps.com parcelsapp.com; do echo "--- $site ---" && curl -sI "https://$site" -w "Time: %{time_total}s | HTTP: %{http_code}\\n" -o /dev/null; done' },
-  { id: 'backlink-check', name: 'Backlink Checker', desc: 'فحص Backlinks باستخدام بيانات الموقع', category: 'elite', icon: '🔗', cmd: 'echo "=== Backlink Analysis ===" && curl -s "https://api.ahrefs.com/v3/site-explorer/backlinks?target=uspostaltracking.com&limit=10" -H "Authorization: Bearer $(cat /var/www/swifttrack-hub/server/data/config.json 2>/dev/null | grep -o \'"ahrefsApiKey":"[^"]*"\' | cut -d\'"\' -f4)" 2>/dev/null || echo "⚠️ Ahrefs API Key مطلوب — أضفه من تبويب API Keys"' },
+  { id: 'backlink-check', name: 'Backlink Checker', desc: 'فحص Backlinks باستخدام بيانات الموقع', category: 'elite', icon: '🔗', cmd: 'echo "=== Backlink Analysis ===" && curl -s "https://api.ahrefs.com/v3/site-explorer/backlinks?target=uspostaltracking.com&limit=10" -H "Authorization: Bearer $(cat /var/www/uspostaltracking/server/data/config.json 2>/dev/null | grep -o \'"ahrefsApiKey":"[^"]*"\' | cut -d\'"\' -f4)" 2>/dev/null || echo "⚠️ Ahrefs API Key مطلوب — أضفه من تبويب API Keys"' },
   { id: 'keyword-rank', name: 'Keyword Rank Check', desc: 'فحص ترتيب الكلمات المفتاحية', category: 'elite', icon: '🏆', cmd: 'echo "=== Keyword Rankings ===" && for kw in "usps tracking" "track usps package" "usps package tracking"; do echo "🔍 Checking: $kw" && curl -s "https://www.google.com/search?q=$(echo $kw | tr " " "+")+site:uspostaltracking.com" -H "User-Agent: Mozilla/5.0" | grep -c "uspostaltracking.com" && echo "---"; done' },
   { id: 'pagespeed-deep', name: 'Deep PageSpeed', desc: 'فحص عميق لسرعة الصفحات الرئيسية', category: 'elite', icon: '⚡', cmd: 'echo "=== Deep PageSpeed Check ===" && for page in "/" "/track" "/usps-tracking-number-format"; do echo "--- Page: $page ---" && curl -sI "https://uspostaltracking.com$page" -w "TTFB: %{time_starttransfer}s | Total: %{time_total}s | Size: %{size_download} bytes\\n" -o /dev/null; done' },
   { id: 'broken-links', name: 'Broken Links Scanner', desc: 'فحص الروابط المكسورة في الموقع', category: 'elite', icon: '🔴', cmd: 'echo "=== Broken Links Check ===" && curl -s https://uspostaltracking.com/sitemap.xml | grep -oP "(?<=<loc>)[^<]+" | head -20 | while read url; do code=$(curl -sI "$url" -w "%{http_code}" -o /dev/null --connect-timeout 5); if [ "$code" != "200" ]; then echo "❌ $code — $url"; else echo "✅ $code — $url"; fi; done' },
-  { id: 'core-web-vitals', name: 'Core Web Vitals', desc: 'فحص مؤشرات الأداء الأساسية عبر CrUX API', category: 'elite', icon: '📊', cmd: 'echo "=== Core Web Vitals ===" && curl -s "https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=$(cat /var/www/swifttrack-hub/server/data/config.json 2>/dev/null | grep -o \'"googleIndexingApi":"[^"]*"\' | cut -d\'"\' -f4)" -X POST -H "Content-Type: application/json" -d \'{"url":"https://uspostaltracking.com/"}\' 2>/dev/null || echo "⚠️ Google API Key مطلوب"' },
+  { id: 'core-web-vitals', name: 'Core Web Vitals', desc: 'فحص مؤشرات الأداء الأساسية عبر CrUX API', category: 'elite', icon: '📊', cmd: 'echo "=== Core Web Vitals ===" && curl -s "https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=$(cat /var/www/uspostaltracking/server/data/config.json 2>/dev/null | grep -o \'"googleIndexingApi":"[^"]*"\' | cut -d\'"\' -f4)" -X POST -H "Content-Type: application/json" -d \'{"url":"https://uspostaltracking.com/"}\' 2>/dev/null || echo "⚠️ Google API Key مطلوب"' },
   { id: 'security-scan', name: 'Security Scan', desc: 'فحص أمني شامل للموقع', category: 'elite', icon: '🛡️', cmd: 'echo "=== Security Scan ===" && echo "-- SSL Grade --" && curl -s "https://api.ssllabs.com/api/v3/analyze?host=uspostaltracking.com&fromCache=on" | grep -oP \'"grade":"[^"]+"\' && echo "-- Headers --" && curl -sI https://uspostaltracking.com | grep -iE "x-frame|x-content|strict-transport|referrer|content-security|permissions-policy" && echo "-- Open Ports --" && (timeout 5 bash -c "echo >/dev/tcp/uspostaltracking.com/80" 2>/dev/null && echo "✅ Port 80 open") && (timeout 5 bash -c "echo >/dev/tcp/uspostaltracking.com/443" 2>/dev/null && echo "✅ Port 443 open")' },
   { id: 'dns-check', name: 'DNS & CDN Analysis', desc: 'تحليل DNS و CDN و Nameservers', category: 'elite', icon: '🌐', cmd: 'echo "=== DNS Analysis ===" && echo "-- A Records --" && dig +short uspostaltracking.com A && echo "-- AAAA Records --" && dig +short uspostaltracking.com AAAA && echo "-- NS Records --" && dig +short uspostaltracking.com NS && echo "-- MX Records --" && dig +short uspostaltracking.com MX && echo "-- TXT Records --" && dig +short uspostaltracking.com TXT' },
   { id: 'schema-validator', name: 'Schema Markup Test', desc: 'فحص بيانات Schema المنظمة', category: 'elite', icon: '📋', cmd: 'echo "=== Schema Markup ===" && curl -s https://uspostaltracking.com/ | grep -oP "(?<=<script type=\\"application/ld\\\\+json\\">).*?(?=</script>)" | head -5 | python3 -m json.tool 2>/dev/null || echo "تم استخراج Schema بنجاح"' },
   { id: 'mobile-friendly', name: 'Mobile Friendly Test', desc: 'فحص توافق الموقع مع الجوال', category: 'elite', icon: '📱', cmd: 'echo "=== Mobile Friendly ===" && curl -sI https://uspostaltracking.com/ -H "User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)" -w "Mobile TTFB: %{time_starttransfer}s | Total: %{time_total}s | HTTP: %{http_code}\\n" -o /dev/null && echo "-- Viewport Meta --" && curl -s https://uspostaltracking.com/ | grep -o \'<meta name="viewport"[^>]*>\'' },
   { id: 'log-analyzer', name: 'Nginx Log Analysis', desc: 'تحليل سجلات Nginx — أكثر الصفحات زيارة والأخطاء', category: 'elite', icon: '📜', cmd: 'echo "=== Top 10 Pages ===" && awk \'{print $7}\' /var/log/nginx/access.log 2>/dev/null | sort | uniq -c | sort -rn | head -10 && echo "=== Top Errors ===" && awk \'$9 >= 400 {print $9, $7}\' /var/log/nginx/access.log 2>/dev/null | sort | uniq -c | sort -rn | head -10 && echo "=== Bot Traffic ===" && grep -iE "bot|crawler|spider" /var/log/nginx/access.log 2>/dev/null | awk \'{print $14}\' | sort | uniq -c | sort -rn | head -5' },
-  { id: 'full-audit', name: 'Full SEO Audit', desc: '☢️ فحص SEO شامل — يأخذ وقت', category: 'elite', icon: '🔥', cmd: 'echo "☢️ === FULL SEO AUDIT ===" && echo "1. Site Status:" && curl -sI https://uspostaltracking.com -w "HTTP: %{http_code} | TTFB: %{time_starttransfer}s\\n" -o /dev/null && echo "2. Sitemap:" && curl -sI https://uspostaltracking.com/sitemap.xml -w "HTTP: %{http_code}\\n" -o /dev/null && echo "3. Robots:" && curl -s https://uspostaltracking.com/robots.txt | head -5 && echo "4. SSL Expiry:" && curl -vI https://uspostaltracking.com 2>&1 | grep -i "expire" && echo "5. Total Pages:" && grep -c "<loc>" /var/www/swifttrack-hub/public/sitemap*.xml 2>/dev/null && echo "6. Headers:" && curl -sI https://uspostaltracking.com | grep -iE "x-frame|strict-transport|content-security" && echo "✅ Audit Complete"' },
+  { id: 'full-audit', name: 'Full SEO Audit', desc: '☢️ فحص SEO شامل — يأخذ وقت', category: 'elite', icon: '🔥', cmd: 'echo "☢️ === FULL SEO AUDIT ===" && echo "1. Site Status:" && curl -sI https://uspostaltracking.com -w "HTTP: %{http_code} | TTFB: %{time_starttransfer}s\\n" -o /dev/null && echo "2. Sitemap:" && curl -sI https://uspostaltracking.com/sitemap.xml -w "HTTP: %{http_code}\\n" -o /dev/null && echo "3. Robots:" && curl -s https://uspostaltracking.com/robots.txt | head -5 && echo "4. SSL Expiry:" && curl -vI https://uspostaltracking.com 2>&1 | grep -i "expire" && echo "5. Total Pages:" && grep -c "<loc>" /var/www/uspostaltracking/public/sitemap*.xml 2>/dev/null && echo "6. Headers:" && curl -sI https://uspostaltracking.com | grep -iE "x-frame|strict-transport|content-security" && echo "✅ Audit Complete"' },
 ];
 
 app.get('/api/scripts', (req, res) => {

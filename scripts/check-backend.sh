@@ -1,10 +1,10 @@
 #!/bin/bash
 ########################################################################
-#  🔍 SwiftTrack Hub — Backend Health Check Script
+#  🔍 US Postal Tracking — Backend Health Check Script
 #  فحص حالة الـ Backend API
 ########################################################################
 
-APP="swifttrack-hub"
+APP="uspostaltracking"
 DIR="/var/www/${APP}"
 PORT="8080"
 

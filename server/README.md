@@ -1,10 +1,10 @@
-# SwiftTrack Backend API — دليل التثبيت
+# US Postal Tracking Backend API — دليل التثبيت
 
 ## التثبيت على VPS
 
 ```bash
 # 1. انتقل لمجلد السيرفر
-cd /var/www/swifttrack-hub/server
+cd /var/www/uspostaltracking/server
 
 # 2. تثبيت الحزم
 npm install
@@ -14,7 +14,7 @@ node index.js
 
 # 4. (اختياري) تشغيل دائم باستخدام PM2
 npm install -g pm2
-pm2 start index.js --name swifttrack-api
+pm2 start index.js --name uspostaltracking-api
 pm2 save
 pm2 startup
 ```
@@ -39,7 +39,7 @@ pm2 startup
 
 ## Nginx Proxy
 
-الـ Nginx مُعدّ مسبقاً في `deploy/nginx-swifttrack.conf` لتمرير `/api/*` إلى البورت `8080`:
+الـ Nginx مُعدّ مسبقاً في `deploy/deploy.sh` لتمرير `/api/*` إلى البورت `8080`:
 
 ```nginx
 location /api/ {

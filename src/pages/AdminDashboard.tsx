@@ -78,7 +78,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
     setRunning(script.id);
     setTermLines(prev => [...prev, `[START] ▶ ${script.name}`, `$ ${script.cmd}`, '─'.repeat(50)]);
     if (!backendOnline) {
-      setTermLines(prev => [...prev, '[ERROR] ❌ Backend غير متصل. شغّل السيرفر على VPS أولاً:', '$ cd /var/www/swifttrack-hub/server && node index.js']);
+      setTermLines(prev => [...prev, '[ERROR] ❌ Backend غير متصل. شغّل السيرفر على VPS أولاً:', '$ cd /var/www/uspostaltracking/server && node index.js']);
       setRunning(null);
       return;
     }

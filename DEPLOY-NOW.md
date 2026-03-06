@@ -55,7 +55,7 @@ Should return `200 OK`.
 pm2 status
 ```
 
-Should show `swifttrack-hub` as `online`.
+Should show `uspostaltracking` as `online`.
 
 ---
 
@@ -79,10 +79,10 @@ Shows complete system status.
 
 ## Important Files
 
-- **Project**: `/var/www/swifttrack-hub`
-- **Config**: `/var/www/swifttrack-hub/server/data/config.json`
-- **Nginx**: `/etc/nginx/sites-available/swifttrack-hub`
-- **Logs**: `pm2 logs swifttrack-hub`
+- **Project**: `/var/www/uspostaltracking`
+- **Config**: `/var/www/uspostaltracking/server/data/config.json`
+- **Nginx**: `/etc/nginx/sites-available/uspostaltracking`
+- **Logs**: `pm2 logs uspostaltracking`
 
 ---
 
@@ -124,10 +124,10 @@ netstat -tulpn | grep -E '80|443'
 ```bash
 # Check PM2
 pm2 status
-pm2 logs swifttrack-hub --lines 50
+pm2 logs uspostaltracking --lines 50
 
 # Restart
-pm2 restart swifttrack-hub
+pm2 restart uspostaltracking
 ```
 
 ### SSL failed?
@@ -155,7 +155,7 @@ health-check.sh
 pm2 logs
 
 # Restart backend
-pm2 restart swifttrack-hub
+pm2 restart uspostaltracking
 
 # Reload Nginx
 systemctl reload nginx

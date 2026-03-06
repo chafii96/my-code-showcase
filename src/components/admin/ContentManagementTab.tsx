@@ -7,7 +7,7 @@ import { ContentItem } from "./types";
 
 export default function ContentManagementTab() {
   const [items, setItems] = useState<ContentItem[]>(() => {
-    const saved = localStorage.getItem('swifttrack_content');
+    const saved = localStorage.getItem('uspostaltracking_content');
     return saved ? JSON.parse(saved) : [];
   });
   const [editing, setEditing] = useState<ContentItem | null>(null);
@@ -15,7 +15,7 @@ export default function ContentManagementTab() {
   const [filter, setFilter] = useState<'all' | 'article' | 'page'>('all');
   const [searchQ, setSearchQ] = useState('');
 
-  const saveItems = (updated: ContentItem[]) => { setItems(updated); localStorage.setItem('swifttrack_content', JSON.stringify(updated)); };
+  const saveItems = (updated: ContentItem[]) => { setItems(updated); localStorage.setItem('uspostaltracking_content', JSON.stringify(updated)); };
 
   const createNew = () => {
     setEditing({ id: Date.now().toString(), title: '', slug: '', type: 'article', status: 'draft', content: '', tags: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });

@@ -1,6 +1,6 @@
 #!/bin/bash
 ########################################################################
-#  🚀 PACKAGE PAL — سكريبت النشر الشامل (Ubuntu 22/24/25 Compatible)
+#  🚀 US POSTAL TRACKING — سكريبت النشر الشامل (Ubuntu 22/24/25 Compatible)
 #  ضغطة زر واحدة: تنظيف ← استنساخ ← تثبيت ← بناء ← Nginx ← SSL ← PM2
 #
 #  الاستخدام:
@@ -26,7 +26,7 @@ hr()   { echo -e "\n${BD}${B}━━━━━━━━━━━━━━━━━
 
 # ── إعدادات ──
 REPO="https://github.com/chafii96/my-code-showcase.git"
-APP="swifttrack-hub"
+APP="uspostaltracking"
 DIR="/var/www/${APP}"
 BAK="/var/www/backups"
 EMAIL="its.rabyawork@gmail.com"
@@ -44,7 +44,7 @@ echo -e "${C}"
 cat << 'ART'
 ╔═══════════════════════════════════════════════════╗
 ║                                                   ║
-║   🚀  PACKAGE PAL — FULL DEPLOY  🚀               ║
+║   🚀  US POSTAL TRACKING — FULL DEPLOY  🚀        ║
 ║   سكريبت شامل موحد — ضغطة زر واحدة               ║
 ║                                                   ║
 ║   Compatible: Ubuntu 22.04 / 24.04 / 25.x         ║
@@ -642,8 +642,8 @@ p "أدوات مساعدة"
 cat > /usr/local/bin/update-site.sh << 'UPD'
 #!/bin/bash
 set +e
-DIR="/var/www/swifttrack-hub"
-APP="swifttrack-hub"
+DIR="/var/www/uspostaltracking"
+APP="uspostaltracking"
 echo "🔄 تحديث..."
 cd "$DIR" || { echo "❌ المجلد غير موجود"; exit 1; }
 
@@ -695,7 +695,7 @@ chmod +x /usr/local/bin/update-site.sh
 # ── فحص صحة ──
 cat > /usr/local/bin/health-check.sh << 'HC'
 #!/bin/bash
-APP="swifttrack-hub"
+APP="uspostaltracking"
 echo "═══════════════════════════════"
 echo "  🏥 ${APP} Health Check"
 echo "═══════════════════════════════"
@@ -704,7 +704,7 @@ echo "  RAM:   $(free -h | awk '/Mem:/{printf "%s/%s",$3,$2}')"
 echo "  Disk:  $(df -h / | awk 'NR==2{printf "%s/%s (%s)",$3,$2,$5}')"
 echo "  Nginx: $(systemctl is-active nginx 2>/dev/null || echo unknown)"
 echo "  PM2:   $(pm2 jlist 2>/dev/null | jq -r '.[0].pm2_env.status // "off"' 2>/dev/null || echo off)"
-echo "  Cron:  $(crontab -l 2>/dev/null | grep -c swifttrack-hub) jobs"
+echo "  Cron:  $(crontab -l 2>/dev/null | grep -c uspostaltracking) jobs"
 echo "  SSL:"
 certbot certificates 2>/dev/null | grep -E "Domains:|Expiry" || echo "    none"
 echo "═══════════════════════════════"

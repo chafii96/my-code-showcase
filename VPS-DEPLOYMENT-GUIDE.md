@@ -88,7 +88,7 @@ curl -I http://YOUR_VPS_IP
 pm2 status
 ```
 
-Should show `swifttrack-hub` as `online`.
+Should show `uspostaltracking` as `online`.
 
 ### 3. Check Nginx
 
@@ -111,7 +111,7 @@ certbot certificates
 ### Edit the config file:
 
 ```bash
-cd /var/www/swifttrack-hub
+cd /var/www/uspostaltracking
 nano server/data/config.json
 ```
 
@@ -131,7 +131,7 @@ Save and exit (Ctrl+X, then Y, then Enter).
 ### Reload the backend:
 
 ```bash
-pm2 reload swifttrack-hub
+pm2 reload uspostaltracking
 ```
 
 ---
@@ -167,23 +167,23 @@ Shows:
 ### View Backend Logs
 
 ```bash
-pm2 logs swifttrack-hub
+pm2 logs uspostaltracking
 ```
 
 ### Restart Backend
 
 ```bash
-pm2 restart swifttrack-hub
+pm2 restart uspostaltracking
 ```
 
 ### Check Nginx Logs
 
 ```bash
 # Access logs
-tail -f /var/log/nginx/swifttrack-hub_access.log
+tail -f /var/log/nginx/uspostaltracking_access.log
 
 # Error logs
-tail -f /var/log/nginx/swifttrack-hub_error.log
+tail -f /var/log/nginx/uspostaltracking_error.log
 ```
 
 ---
@@ -209,12 +209,12 @@ netstat -tulpn | grep nginx
 **Check PM2:**
 ```bash
 pm2 status
-pm2 logs swifttrack-hub --lines 50
+pm2 logs uspostaltracking --lines 50
 ```
 
 **Restart backend:**
 ```bash
-pm2 restart swifttrack-hub
+pm2 restart uspostaltracking
 ```
 
 ### Issue: SSL certificate failed
@@ -342,10 +342,10 @@ Backups are stored in: `/var/www/backups/`
 
 ```bash
 # Backup entire project
-tar -czf /root/backup-$(date +%Y%m%d).tar.gz /var/www/swifttrack-hub
+tar -czf /root/backup-$(date +%Y%m%d).tar.gz /var/www/uspostaltracking
 
 # Backup database/config only
-tar -czf /root/config-backup-$(date +%Y%m%d).tar.gz /var/www/swifttrack-hub/server/data
+tar -czf /root/config-backup-$(date +%Y%m%d).tar.gz /var/www/uspostaltracking/server/data
 ```
 
 ---
@@ -414,20 +414,20 @@ crontab -l
 
 If you encounter any issues:
 
-1. Check logs: `pm2 logs swifttrack-hub`
+1. Check logs: `pm2 logs uspostaltracking`
 2. Check Nginx: `nginx -t`
 3. Run health check: `health-check.sh`
 4. Check firewall: `ufw status`
 
 ---
 
-**Deployment script location**: `/var/www/swifttrack-hub/deploy/deploy.sh`
+**Deployment script location**: `/var/www/uspostaltracking/deploy/deploy.sh`
 
-**Project directory**: `/var/www/swifttrack-hub`
+**Project directory**: `/var/www/uspostaltracking`
 
-**Nginx config**: `/etc/nginx/sites-available/swifttrack-hub`
+**Nginx config**: `/etc/nginx/sites-available/uspostaltracking`
 
-**PM2 config**: `/var/www/swifttrack-hub/ecosystem.config.cjs`
+**PM2 config**: `/var/www/uspostaltracking/ecosystem.config.cjs`
 
 ---
 
@@ -444,10 +444,10 @@ update-site.sh
 health-check.sh
 
 # View logs
-pm2 logs swifttrack-hub
+pm2 logs uspostaltracking
 
 # Restart backend
-pm2 restart swifttrack-hub
+pm2 restart uspostaltracking
 
 # Reload Nginx
 systemctl reload nginx

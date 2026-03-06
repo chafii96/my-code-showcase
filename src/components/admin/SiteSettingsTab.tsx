@@ -30,7 +30,7 @@ export default function SiteSettingsTab() {
 
   useEffect(() => {
     fetch('/api/config').then(r => r.ok ? r.json() : Promise.reject()).then(setConfig).catch(() => {
-      const saved = localStorage.getItem('swifttrack_config');
+      const saved = localStorage.getItem('uspostaltracking_config');
       setConfig(saved ? JSON.parse(saved) : {
         site: { name: 'US Postal Tracking', domain: 'uspostaltracking.com', language: 'en' },
         seo: { titleSuffix: '| US Postal Tracking', defaultDescription: 'Track USPS packages in real-time' },
@@ -57,7 +57,7 @@ export default function SiteSettingsTab() {
       const res = await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ site: config?.site, seo: config?.seo, notifications: config?.notifications }) });
       if (!res.ok) throw new Error();
     } catch {
-      if (config) localStorage.setItem('swifttrack_config', JSON.stringify(config));
+      if (config) localStorage.setItem('uspostaltracking_config', JSON.stringify(config));
     }
     setSaved(true); setTimeout(() => setSaved(false), 3000);
     setSaving(false);
