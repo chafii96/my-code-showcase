@@ -303,6 +303,12 @@ fi
 
 [ ! -f .env ] && [ -f .env.example ] && cp .env.example .env && warn ".env.example → .env"
 
+# ── تنظيف ملفات HTML الثابتة القديمة (React يتكفل بها) ──
+info "حذف ملفات HTML الثابتة القديمة..."
+for d in public/city public/article public/zip public/state public/status public/locations; do
+  [ -d "$d" ] && rm -rf "$d" && info "حذف $d ✓"
+done
+
 # ── البناء الأول ──
 info "بناء المشروع..."
 npm run build 2>&1
