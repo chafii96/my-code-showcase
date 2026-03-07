@@ -250,18 +250,34 @@ async function prerenderPage(browser, route, attempt = 1) {
 // ── تشغيل مجمّع (واحدة تلو الأخرى عند الفشل) ─────────────────────────────
 async function prerenderBatch(browser, routes) {
   let success = 0, fail = 0;
+  const total = routes.length;
   
   for (let i = 0; i < routes.length; i += CONCURRENCY) {
     const batch = routes.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(batch.map(r => prerenderPage(browser, r)));
-    results.forEach(r => r ? success++ : fail++);
+
+    // Skip existing check
+    const toProcess = SKIP_EXISTING ? batch.filter(route => {
+      const outputPath = path.join(PRERENDER_DIR, route === '/' ? 'index.html' : `${route}/index.html`);
+      if (fs.existsSync(outputPath)) { success++; return false; }
+      return true;
+    }) : batch;
+
+    if (toProcess.length > 0) {
+      const results = await Promise.all(toProcess.map(r => prerenderPage(browser, r)));
+      results.forEach(r => r ? success++ : fail++);
+    }
+
+    // Emit SSE progress
+    const done = Math.min(i + CONCURRENCY, total);
+    sse({ type: 'progress', total, done, success, failed: fail, page: batch[batch.length - 1], phase: `جاري التوليد... (${done}/${total})` });
     
     // إعادة تشغيل المتصفح كل RESTART_EVERY صفحة لتجنب تسرب الذاكرة
     if ((i + CONCURRENCY) % RESTART_EVERY === 0 && i + CONCURRENCY < routes.length) {
       console.log(`  🔄 إعادة تشغيل المتصفح (${i + CONCURRENCY}/${routes.length})...`);
+      sse({ type: 'progress', total, done: i + CONCURRENCY, success, failed: fail, phase: '🔄 إعادة تشغيل المتصفح...' });
       try {
         await browser.close();
-        await new Promise(r => setTimeout(r, 2000)); // انتظار تحرير الذاكرة
+        await new Promise(r => setTimeout(r, 2000));
         const puppeteer = require('puppeteer');
         browser = await puppeteer.launch({
           headless: 'new',
