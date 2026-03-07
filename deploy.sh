@@ -19,7 +19,7 @@
 #    7.  نسخ احتياطي + استنساخ المشروع
 #    8.  تثبيت الحزم + بناء المشروع
 #    9.  توليد Sitemaps + صفحات SEO
-#    10. Prerendering (اختياري)
+#    10. Prerendering (محذوف — يتم تخطيه دائماً)
 #    11. إعداد Nginx الكامل
 #    12. تشغيل الباكند (index.js:8080 + api-server.cjs:3001)
 #    13. SSL + تجديد تلقائي
@@ -379,24 +379,19 @@ else
 fi
 
 ###################################################################
-# 10. Prerendering (اختياري)
+# 10. Prerendering — محذوف (تخطي دائم)
 ###################################################################
-p "Prerendering (Dynamic Rendering)"
+p "Prerendering (تخطي — الصفحات مولّدة مسبقاً)"
 
-if $PUPPETEER_OK && [ -f scripts/prerender.cjs ]; then
-  if [ -d prerendered ] && [ "$(find prerendered -name '*.html' 2>/dev/null | wc -l)" -gt 100 ]; then
-    log "Prerendered pages موجودة بالفعل ($(find prerendered -name '*.html' | wc -l) صفحة) — تخطي"
-    info "لإعادة التوليد: node scripts/prerender.cjs أو من لوحة الإدارة"
-  else
-    info "توليد HTML للزواحف (قد يستغرق وقتاً)..."
-    timeout 1800 node scripts/prerender.cjs 2>&1 && log "Prerendering ✓ — $(find prerendered -name '*.html' 2>/dev/null | wc -l) صفحة" || { warn "Prerendering فشل — الموقع يعمل بدونه"; WARNINGS=$((WARNINGS+1)); }
-  fi
+PRERENDER_COUNT=$(find "${DIR}/prerendered" -name "*.html" 2>/dev/null | wc -l)
+if [ "$PRERENDER_COUNT" -gt 0 ]; then
+  log "Prerendered: ${PRERENDER_COUNT} صفحة موجودة مسبقاً ✓"
 else
-  info "تخطي Prerendering (Puppeteer غير متوفر أو prerender.cjs غير موجود)"
-  info "يمكنك تشغيله لاحقاً من لوحة الإدارة /admin → Prerender Manager"
+  info "لا توجد صفحات prerendered — يمكن توليدها لاحقاً يدوياً:"
+  info "  node scripts/prerender.cjs"
 fi
 
-# Noindex thin pages
+# noindex thin pages فقط
 [ -f scripts/noindex-programmatic.cjs ] && { info "إضافة noindex..."; node scripts/noindex-programmatic.cjs 2>&1 || true; }
 
 ###################################################################
@@ -923,6 +918,7 @@ cd "$DIR" || { echo "❌ المجلد غير موجود"; exit 1; }
 cp -r server/data /tmp/server-data-backup 2>/dev/null || true
 cp -r seo-data /tmp/seo-data-backup 2>/dev/null || true
 
+git stash 2>/dev/null || true
 git pull origin main 2>&1 || git pull origin master 2>&1
 npm ci 2>&1 || npm install --legacy-peer-deps 2>&1
 [ -f server/package.json ] && { cd server && npm install --legacy-peer-deps 2>&1 && cd "$DIR"; }
@@ -951,8 +947,8 @@ npm run build:client-only 2>&1
 cp -f public/sitemap*.xml dist/ 2>/dev/null || true
 cp -f public/robots.txt dist/ 2>/dev/null || true
 
-# Prerender (اختياري)
-[ -f scripts/prerender.cjs ] && timeout 1800 node scripts/prerender.cjs 2>&1 || true
+# تخطي Prerender — الصفحات مولّدة مسبقاً
+echo "ℹ️  Prerender: تخطي (الصفحات موجودة مسبقاً)"
 [ -f scripts/noindex-programmatic.cjs ] && node scripts/noindex-programmatic.cjs 2>&1 || true
 
 # Restart
@@ -1075,7 +1071,7 @@ echo -e "${G}║${N}  🐧  Ubuntu:         ${C}${UBUNTU_VER}${N}"
 echo -e "${G}║${N}  🔒  SSL:            ${C}$($SSL_EXISTS && echo "✓" || echo "HTTP only")${N}"
 echo -e "${G}║${N}  🔥  Firewall:       ${C}UFW (22/80/443)${N}"
 echo -e "${G}║${N}  📦  Build:          ${C}$(du -sh ${DIR}/dist 2>/dev/null | cut -f1)${N}"
-echo -e "${G}║${N}  📄  Prerendered:    ${C}${PRERENDER_COUNT} pages${N}"
+echo -e "${G}║${N}  📄  Prerendered:    ${C}${PRERENDER_COUNT} pages (محفوظة)${N}"
 echo -e "${G}║${N}  🗺️  Sitemaps:       ${C}${SITEMAP_URLS} URLs${N}"
 echo -e "${G}║${N}  ⏰  Cron Jobs:      ${C}${CRON_COUNT}${N}"
 echo -e "${G}║${N}  ⚠️  تحذيرات:       ${Y}${WARNINGS}${N}"
