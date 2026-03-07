@@ -36,6 +36,19 @@ export default function AdSenseManagerTab() {
   const [activeSection, setActiveSection] = useState<string>('config');
   const [editingUnit, setEditingUnit] = useState<string | null>(null);
 
+  // OAuth state
+  const [oauthStatus, setOauthStatus] = useState<{ connected: boolean; hasCredentials: boolean }>({ connected: false, hasCredentials: false });
+  const [oauthClientId, setOauthClientId] = useState('');
+  const [oauthClientSecret, setOauthClientSecret] = useState('');
+  const [oauthSaving, setOauthSaving] = useState(false);
+  const [fetchingStats, setFetchingStats] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/adsense/oauth-status').then(r => r.ok ? r.json() : null).then(d => {
+      if (d) setOauthStatus(d);
+    }).catch(() => {});
+  }, []);
+
   const save = () => {
     setSaving(true);
     saveAdSenseConfig(config);
