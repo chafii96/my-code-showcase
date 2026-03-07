@@ -94,6 +94,8 @@ const BestShippingCarriersGuide = lazy(() => import("./pages/knowledge-center/Be
 const CarrierTrackingFormatsGuide = lazy(() => import("./pages/knowledge-center/CarrierTrackingFormatsGuide"));
 
 // Carrier landing pages
+const FedExTrackingPage = lazy(() => import("./pages/FedExTrackingPage"));
+const UPSTrackingPage = lazy(() => import("./pages/UPSTrackingPage"));
 const DHLTrackingPage = lazy(() => import("./pages/DHLTrackingPage"));
 const AmazonTrackingPage = lazy(() => import("./pages/AmazonTrackingPage"));
 const LaserShipTrackingPage = lazy(() => import("./pages/LaserShipTrackingPage"));
@@ -338,6 +340,8 @@ const App = () => (
           <Route path="/knowledge-center/carrier-tracking-formats" element={<CarrierTrackingFormatsGuide />} />
 
           {/* Carrier Tracking Landing Pages */}
+          <Route path="/fedex-tracking" element={<FedExTrackingPage />} />
+          <Route path="/ups-tracking" element={<UPSTrackingPage />} />
           <Route path="/dhl-tracking" element={<DHLTrackingPage />} />
           <Route path="/amazon-tracking" element={<AmazonTrackingPage />} />
           <Route path="/lasership-tracking" element={<LaserShipTrackingPage />} />

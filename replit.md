@@ -91,6 +91,14 @@ Key endpoints:
 - `src/components/ScrollReveal.tsx` — IntersectionObserver scroll-triggered reveal animations
 - `src/components/ArticleImageHeader.tsx` — Article-specific contextual image mapping (by slug keywords)
 
+## Carrier Landing Pages
+- `src/pages/FedExTrackingPage.tsx` — `/fedex-tracking` (FedEx brand colors, full tracking guide, number formats, delivery times)
+- `src/pages/UPSTrackingPage.tsx` — `/ups-tracking` (UPS brand colors, full tracking guide, 1Z number format, delivery times)
+- `src/pages/DHLTrackingPage.tsx` — `/dhl-tracking`
+- `src/pages/AmazonTrackingPage.tsx` — `/amazon-tracking`
+- `src/pages/LaserShipTrackingPage.tsx` — `/lasership-tracking`
+- `src/pages/carrier-landing/` — 12 additional carrier pages (Speedex, OnTrac, Doordash, etc.)
+
 ## Features
 - USPS package tracking pages (programmatic SEO — 4120 pages across 206 cities)
 - Admin dashboard at `/admin` (fully complete, URL hash tab persistence)
