@@ -292,6 +292,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
             {tab === "visitors" && <VisitorAnalyticsTab />}
             {tab === "apikeys" && <ApiKeysTab />}
             {tab === "ads" && <AdsManagerTab />}
+            {tab === "adsense" && <AdSenseManagerTab />}
             {tab === "settings" && <SiteSettingsTab />}
             {tab === "seo" && <SeoAuditTab />}
             {tab === "keywords" && <KeywordsTab />}
