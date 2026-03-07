@@ -5,7 +5,7 @@ import {
   TrendingUp, Eye, MousePointer, BarChart3, Globe, Shield,
   FileText, Mail, MapPin, Lock, Clock, CheckSquare, Square,
   MonitorSmartphone, Smartphone, PanelTop, PanelBottom, Columns,
-  BookOpen, ArrowRight,
+  BookOpen, ArrowRight, Wifi, WifiOff, RefreshCw, Key,
 } from "lucide-react";
 import {
   type AdSenseConfig,
@@ -35,6 +35,19 @@ export default function AdSenseManagerTab() {
   const [saved, setSaved] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('config');
   const [editingUnit, setEditingUnit] = useState<string | null>(null);
+
+  // OAuth state
+  const [oauthStatus, setOauthStatus] = useState<{ connected: boolean; hasCredentials: boolean }>({ connected: false, hasCredentials: false });
+  const [oauthClientId, setOauthClientId] = useState('');
+  const [oauthClientSecret, setOauthClientSecret] = useState('');
+  const [oauthSaving, setOauthSaving] = useState(false);
+  const [fetchingStats, setFetchingStats] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/adsense/oauth-status').then(r => r.ok ? r.json() : null).then(d => {
+      if (d) setOauthStatus(d);
+    }).catch(() => {});
+  }, []);
 
   const save = () => {
     setSaving(true);
@@ -337,10 +350,120 @@ export default function AdSenseManagerTab() {
             })}
           </div>
 
+          {/* Auto-fetch from API */}
+          <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 space-y-3">
+            <h4 className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+              {oauthStatus.connected ? <Wifi size={12} className="text-green-400" /> : <WifiOff size={12} className="text-slate-500" />}
+              Google AdSense API (OAuth)
+            </h4>
+
+            {oauthStatus.connected ? (
+              <div className="space-y-2">
+                <p className="text-[10px] text-green-400">✅ متصل — يمكنك جلب الإحصائيات تلقائياً</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      setFetchingStats(true);
+                      try {
+                        const r = await fetch('/api/adsense/stats');
+                        const d = await r.json();
+                        if (d.success && d.stats) {
+                          updateStats(d.stats);
+                          save();
+                        } else {
+                          alert(d.error || 'فشل جلب الإحصائيات');
+                        }
+                      } catch { alert('تعذر الاتصال بالسيرفر'); }
+                      setFetchingStats(false);
+                    }}
+                    disabled={fetchingStats}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 rounded-lg text-xs text-white disabled:opacity-50">
+                    {fetchingStats ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                    جلب الإحصائيات تلقائياً
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (confirm('هل تريد فصل حساب AdSense؟')) {
+                        await fetch('/api/adsense/oauth-disconnect', { method: 'POST' });
+                        setOauthStatus({ connected: false, hasCredentials: false });
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-red-900/50 hover:bg-red-800/50 border border-red-700/50 rounded-lg text-xs text-red-300">
+                    فصل الحساب
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-[10px] text-slate-500">
+                  اربط حساب AdSense عبر OAuth لجلب الإحصائيات تلقائياً. تحتاج Google Cloud OAuth Client ID.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-slate-400 block mb-1">OAuth Client ID</label>
+                    <input value={oauthClientId} onChange={e => setOauthClientId(e.target.value)}
+                      placeholder="xxxxx.apps.googleusercontent.com"
+                      className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 block mb-1">OAuth Client Secret</label>
+                    <input type="password" value={oauthClientSecret} onChange={e => setOauthClientSecret(e.target.value)}
+                      placeholder="GOCSPX-..."
+                      className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      if (!oauthClientId || !oauthClientSecret) return alert('أدخل Client ID و Secret أولاً');
+                      setOauthSaving(true);
+                      try {
+                        await fetch('/api/adsense/oauth-config', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ clientId: oauthClientId, clientSecret: oauthClientSecret }),
+                        });
+                        const urlRes = await fetch('/api/adsense/oauth-url');
+                        const { url } = await urlRes.json();
+                        window.open(url, '_blank', 'width=600,height=700');
+                        // Poll for connection
+                        const poll = setInterval(async () => {
+                          const s = await fetch('/api/adsense/oauth-status').then(r => r.json());
+                          if (s.connected) { setOauthStatus(s); clearInterval(poll); }
+                        }, 3000);
+                        setTimeout(() => clearInterval(poll), 120000);
+                      } catch { alert('تعذر الاتصال بالسيرفر'); }
+                      setOauthSaving(false);
+                    }}
+                    disabled={oauthSaving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs text-white disabled:opacity-50">
+                    {oauthSaving ? <Loader2 size={12} className="animate-spin" /> : <Key size={12} />}
+                    ربط حساب AdSense
+                  </button>
+                  <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-slate-300">
+                    <ExternalLink size={10} />Google Cloud Console
+                  </a>
+                </div>
+                <div className="bg-slate-900/50 border border-slate-700/30 rounded-lg p-3">
+                  <p className="text-[10px] text-slate-500 font-semibold mb-1">📋 خطوات الإعداد:</p>
+                  <ol className="text-[10px] text-slate-600 space-y-0.5 list-decimal list-inside">
+                    <li>افتح Google Cloud Console → APIs & Services → Credentials</li>
+                    <li>أنشئ OAuth 2.0 Client ID (Web application)</li>
+                    <li>أضف Redirect URI: <code className="bg-slate-800 px-1 rounded">https://yourdomain.com:3001/api/adsense/oauth-callback</code></li>
+                    <li>فعّل AdSense Management API من Library</li>
+                    <li>الصق Client ID و Secret هنا واضغط "ربط"</li>
+                  </ol>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Manual update & dashboard link */}
           <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-400">آخر تحديث: {config.stats.lastUpdated || 'لم يتم التحديث بعد'}</p>
-              <p className="text-[10px] text-slate-600 mt-0.5">أدخل الأرقام يدوياً من لوحة تحكم AdSense</p>
+              <p className="text-[10px] text-slate-600 mt-0.5">{oauthStatus.connected ? 'متصل عبر OAuth — اضغط "جلب تلقائي" أعلاه' : 'أدخل الأرقام يدوياً أو اربط OAuth'}</p>
             </div>
             <div className="flex gap-2">
               <button onClick={() => updateStats({ lastUpdated: new Date().toLocaleString('ar') })}
