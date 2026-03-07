@@ -1,0 +1,37 @@
+[
+  {
+    "id": "seed-1",
+    "type": "monitoring",
+    "status": "success",
+    "message": "خادم التطوير يعمل بنجاح على المنفذ 5000",
+    "time": "2026-03-07T08:13:36.874Z"
+  },
+  {
+    "id": "seed-2",
+    "type": "seo",
+    "status": "success",
+    "message": "تم تحميل 19 ملف Sitemap بنجاح",
+    "time": "2026-03-07T08:13:31.874Z"
+  },
+  {
+    "id": "seed-3",
+    "type": "content",
+    "status": "success",
+    "message": "تم الكشف عن 70 صفحة React في المشروع",
+    "time": "2026-03-07T08:13:26.874Z"
+  },
+  {
+    "id": "seed-4",
+    "type": "monitoring",
+    "status": "info",
+    "message": "نظام تتبع الزوار نشط — يجمع بيانات حقيقية",
+    "time": "2026-03-07T08:13:21.874Z"
+  },
+  {
+    "id": "seed-5",
+    "type": "git",
+    "status": "info",
+    "message": "مستودع Git متصل — الفرع: main",
+    "time": "2026-03-07T08:13:11.874Z"
+  }
+]

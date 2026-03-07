@@ -32,7 +32,7 @@ const Hero = () => {
     <section className="relative overflow-hidden min-h-[560px] md:min-h-[660px] flex items-center">
       {/* Background */}
       <div className="absolute inset-0">
-        <img src={heroBg} alt="hero bg - USPS Tracking" className="w-full h-full object-cover" loading="eager" fetchPriority="high" />
+        <img src={heroBg} alt="hero bg - USPS Tracking" className="w-full h-full object-cover" loading="eager" {...({'fetchpriority': 'high'} as any)} />
         <div className="absolute inset-0 hero-gradient opacity-[0.97]" />
       </div>
 

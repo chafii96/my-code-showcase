@@ -1,0 +1,72 @@
+[
+  {
+    "id": "usps",
+    "name": "USPS (Official)",
+    "description": "US Postal Service Web Tools API",
+    "category": "tracking",
+    "icon": "📮",
+    "enabled": true,
+    "status": "active",
+    "requestsToday": 0,
+    "requestsTotal": 0,
+    "successRate": 0,
+    "avgResponseTime": 0,
+    "accounts": []
+  },
+  {
+    "id": "ups",
+    "name": "UPS API",
+    "description": "United Parcel Service API",
+    "category": "tracking",
+    "icon": "🟫",
+    "enabled": false,
+    "status": "inactive",
+    "requestsToday": 0,
+    "requestsTotal": 0,
+    "successRate": 0,
+    "avgResponseTime": 0,
+    "accounts": []
+  },
+  {
+    "id": "fedex",
+    "name": "FedEx API",
+    "description": "FedEx Developer Portal API",
+    "category": "tracking",
+    "icon": "🟣",
+    "enabled": false,
+    "status": "inactive",
+    "requestsToday": 0,
+    "requestsTotal": 0,
+    "successRate": 0,
+    "avgResponseTime": 0,
+    "accounts": []
+  },
+  {
+    "id": "google-indexing",
+    "name": "Google Indexing API",
+    "description": "Google Search Console Indexing",
+    "category": "seo",
+    "icon": "🔍",
+    "enabled": false,
+    "status": "inactive",
+    "requestsToday": 0,
+    "requestsTotal": 0,
+    "successRate": 0,
+    "avgResponseTime": 0,
+    "accounts": []
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI API",
+    "description": "GPT-4 for content generation",
+    "category": "ai",
+    "icon": "🤖",
+    "enabled": false,
+    "status": "inactive",
+    "requestsToday": 0,
+    "requestsTotal": 0,
+    "successRate": 0,
+    "avgResponseTime": 0,
+    "accounts": []
+  }
+]

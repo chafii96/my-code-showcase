@@ -91,16 +91,38 @@ export default function PerformanceTab() {
         </div>
       )}
 
+      {perfData.buildInfo && (
+        <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-slate-300 mb-3">📦 معلومات البناء</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[
+              { label: 'حجم البناء الكلي', value: perfData.buildInfo.totalSize || '—', icon: '💾' },
+              { label: 'حجم JavaScript', value: perfData.buildInfo.jsSize || '—', icon: '⚡' },
+              { label: 'حجم CSS', value: perfData.buildInfo.cssSize || '—', icon: '🎨' },
+              { label: 'عدد الصفحات', value: perfData.buildInfo.pageCount || 0, icon: '📄' },
+              { label: 'عدد المكونات', value: perfData.buildInfo.componentCount || 0, icon: '🧩' },
+              { label: 'حالة البناء', value: perfData.buildInfo.built ? '✅ موجود' : '❌ غير موجود', icon: '🔨' },
+            ].map((item, i) => (
+              <div key={i} className="bg-slate-900/50 rounded-lg p-3 text-center">
+                <p className="text-xl mb-1">{item.icon}</p>
+                <p className="text-sm sm:text-base font-bold text-white">{item.value}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">{item.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {perfData.history?.length > 0 && (
         <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-slate-300 mb-3">📈 سجل الأداء</h3>
+          <h3 className="text-sm font-semibold text-slate-300 mb-3">📈 سجل الأداء (7 أيام)</h3>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={perfData.history} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 11 }} />
+              <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 10 }} tickFormatter={(d) => d.slice(5)} />
               <YAxis tick={{ fill: '#64748b', fontSize: 11 }} domain={[80, 100]} />
               <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, color: '#e2e8f0', fontSize: 12 }} />
-              <Line type="monotone" dataKey="score" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} />
+              <Line type="monotone" dataKey="score" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} name="درجة الأداء" />
             </LineChart>
           </ResponsiveContainer>
         </div>
