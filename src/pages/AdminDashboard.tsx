@@ -22,6 +22,7 @@ import DatabaseTab from "@/components/admin/DatabaseTab";
 import ActivityLogsTab from "@/components/admin/ActivityLogsTab";
 import GitTab from "@/components/admin/GitTab";
 import KeywordsTab from "@/components/admin/KeywordsTab";
+import PrerenderTab from "@/components/admin/PrerenderTab";
 
 // API Manager tabs (lazy loaded)
 const ApiOverviewTab = lazy(() => import("@/components/admin/api-manager/ApiOverviewTab"));

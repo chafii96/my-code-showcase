@@ -317,6 +317,95 @@ app.post('/api/run/:id', (req, res) => {
   req.on('close', () => { child.kill(); });
 });
 
+// ─── Prerender Manager API ───────────────────────────────────────────────────
+let prerenderProcess = null;
+
+app.get('/api/prerender/status', (req, res) => {
+  const prerenderDir = path.join(__dirname, '..', 'prerendered');
+  let totalPages = 0;
+  let totalSize = 0;
+  const countDir = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    const items = fs.readdirSync(dir, { withFileTypes: true });
+    for (const item of items) {
+      const p = path.join(dir, item.name);
+      if (item.isDirectory()) countDir(p);
+      else if (item.name.endsWith('.html')) { totalPages++; totalSize += fs.statSync(p).size; }
+    }
+  };
+  countDir(prerenderDir);
+  const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+  res.json({ totalPages, totalSize: `${sizeMB} MB` });
+});
+
+app.post('/api/prerender/stop', (req, res) => {
+  if (prerenderProcess) {
+    try { prerenderProcess.kill('SIGTERM'); } catch {}
+    prerenderProcess = null;
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/prerender/start', (req, res) => {
+  if (prerenderProcess) {
+    return res.status(409).json({ error: 'Prerender already running' });
+  }
+
+  const concurrency = req.query.concurrency || '5';
+  const waitTime = req.query.waitTime || '800';
+  const restartEvery = req.query.restartEvery || '200';
+  const skipExisting = req.query.skipExisting === 'true' ? '1' : '0';
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const env = {
+    ...process.env,
+    PRERENDER_CONCURRENCY: concurrency,
+    PRERENDER_WAIT: waitTime,
+    PRERENDER_RESTART_EVERY: restartEvery,
+    PRERENDER_SKIP_EXISTING: skipExisting,
+    PRERENDER_SSE: '1',
+  };
+
+  const child = exec(
+    `node ${path.join(__dirname, '..', 'scripts', 'prerender.cjs')}`,
+    { maxBuffer: 1024 * 1024 * 50, env, cwd: path.join(__dirname, '..') }
+  );
+  prerenderProcess = child;
+
+  child.stdout?.on('data', (data) => {
+    data.toString().split('\n').filter(Boolean).forEach(line => {
+      // Parse special SSE lines from the script
+      if (line.startsWith('SSE:')) {
+        res.write(`data: ${line.slice(4)}\n\n`);
+      } else {
+        res.write(`data: ${JSON.stringify({ type: 'log', line })}\n\n`);
+      }
+    });
+  });
+
+  child.stderr?.on('data', (data) => {
+    data.toString().split('\n').filter(Boolean).forEach(line => {
+      res.write(`data: ${JSON.stringify({ type: 'log', line: `[ERROR] ${line}` })}\n\n`);
+    });
+  });
+
+  child.on('close', (code) => {
+    prerenderProcess = null;
+    res.write(`data: ${JSON.stringify({ type: 'log', line: `[DONE] ✅ Process exited with code ${code}` })}\n\n`);
+    res.end();
+  });
+
+  req.on('close', () => {
+    if (prerenderProcess === child) {
+      try { child.kill('SIGTERM'); } catch {}
+      prerenderProcess = null;
+    }
+  });
+});
+
 // ─── Config (Site Settings) ──────────────────────────────────────────────────
 app.get('/api/config', (req, res) => {
   const config = readJSON('config.json', {
