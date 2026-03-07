@@ -209,8 +209,8 @@ async function prerenderPage(browser, route, attempt = 1) {
     const url = `${BASE_URL}${route}`;
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
     
-    // انتظار بسيط بدل networkidle0 (يسبب crash)
-    await new Promise(r => setTimeout(r, 2000));
+    // انتظار بسيط
+    await new Promise(r => setTimeout(r, WAIT_TIME));
     await page.waitForSelector('h1, [data-page-loaded]', { timeout: 5000 }).catch(() => {});
 
     let html = await page.content();
