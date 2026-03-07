@@ -110,7 +110,8 @@ const TrackingNumberPage = () => {
         title={`USPS Tracking ${number} — Status: ${status.name} | Live Updates`}
         description={`Track USPS package ${number}. Current status: ${status.name}. Last location: ${location.city}, ${location.state}. Get real-time delivery updates, tracking history, and estimated delivery for ${number}.`}
         keywords={`usps tracking ${number}, track ${number}, usps ${number} status, ${number} delivery, usps package ${number}, tracking number ${number}, usps ${number} location, ${number} usps tracking history`}
-        canonical={`https://uspostaltracking.com/track/${number}`}
+        canonical={`https://uspostaltracking.com/t/${number}`}
+        noindex={true}
       />
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(trackingSchema) }} />

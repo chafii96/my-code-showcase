@@ -614,6 +614,27 @@ function adminApiPlugin() {
       server.middlewares.use(async (req: any, res: any, next: any) => {
         const url = req.url || "";
 
+        // ── Permanent 301 redirects for legacy/alias URLs ─────────────────
+        const pageRedirects: Record<string, string> = {
+          '/track-without-number': '/guides/track-without-tracking-number',
+          '/track-without-number/': '/guides/track-without-tracking-number',
+          '/mobile-tracking': '/guides/usps-mobile-tracking',
+          '/mobile-tracking/': '/guides/usps-mobile-tracking',
+          '/tracking-number-format': '/guides/tracking-number-format',
+          '/tracking-number-format/': '/guides/tracking-number-format',
+          '/de': '/',
+          '/de/': '/',
+        };
+        const cleanUrl = url.split('?')[0];
+        if (pageRedirects[cleanUrl]) {
+          const qs = url.includes('?') ? '?' + url.split('?')[1] : '';
+          res.statusCode = 301;
+          res.setHeader('Location', pageRedirects[cleanUrl] + qs);
+          res.setHeader('Cache-Control', 'public, max-age=31536000');
+          res.end();
+          return;
+        }
+
         // CORS headers for all API routes
         if (url.startsWith("/api/")) {
           res.setHeader("Access-Control-Allow-Origin", "*");
@@ -2498,6 +2519,7 @@ function prerenderShellPlugin() {
       { slug: 'pre-shipment', label: 'Pre-Shipment', desc: 'label created, awaiting USPS pickup' },
       { slug: 'customs-clearance', label: 'Customs Clearance', desc: 'package is being processed by customs' },
       { slug: 'return-to-sender', label: 'Return to Sender', desc: 'package is being returned' },
+      { slug: 'return-initiated', label: 'Return Initiated', desc: 'a return has been initiated for your package' },
       { slug: 'alert', label: 'Alert', desc: 'there is an issue with your package' },
       { slug: 'label-created', label: 'Label Created', desc: 'shipping label has been created' },
       { slug: 'in-transit-to-next-facility', label: 'In Transit to Next Facility', desc: 'package is moving to the next USPS facility' },

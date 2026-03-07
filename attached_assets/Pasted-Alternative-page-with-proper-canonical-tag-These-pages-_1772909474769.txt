@@ -1,0 +1,89 @@
+Alternative page with proper canonical tag
+These pages aren't indexed or served on Google
+First detected: 03/03/2026
+Affected pages
+37
+07/12/2025
+06/01/2026
+05/02/2026
+60
+40
+20
+0
+Examples
+
+URL	Last crawled
+https://uspostaltracking.com/city/evansville-in
+3 Mar 2026
+https://uspostaltracking.com/locations/little-rock-ar
+2 Mar 2026
+https://uspostaltracking.com/locations/peoria-il
+2 Mar 2026
+https://uspostaltracking.com/locations/macon-ga
+2 Mar 2026
+https://uspostaltracking.com/city/tulsa-ok
+2 Mar 2026
+https://uspostaltracking.com/route/fort-worth-tx-to-oklahoma-city-ok
+2 Mar 2026
+https://uspostaltracking.com/city/davenport-iowa
+2 Mar 2026
+https://uspostaltracking.com/city/westminster-colorado
+2 Mar 2026
+https://uspostaltracking.com/city/altoona-pennsylvania
+2 Mar 2026
+https://uspostaltracking.com/status/in-transit
+2 Mar 2026
+https://uspostaltracking.com/route/san-diego-ca-to-boston-ma
+2 Mar 2026
+https://uspostaltracking.com/route/charlotte-nc-to-fort-worth-tx
+2 Mar 2026
+https://uspostaltracking.com/status/return-initiated
+2 Mar 2026
+https://uspostaltracking.com/route/columbus-oh-to-houston-tx
+2 Mar 2026
+https://uspostaltracking.com/city/manchester
+2 Mar 2026
+https://uspostaltracking.com/route/virginia-beach-to-denver
+2 Mar 2026
+https://uspostaltracking.com/city/pompano-beach
+2 Mar 2026
+https://uspostaltracking.com/route/virginia-beach-to-san-diego
+2 Mar 2026
+https://uspostaltracking.com/track-without-number
+2 Mar 2026
+https://uspostaltracking.com/route/san-jose-ca-to-boston-ma
+2 Mar 2026
+https://uspostaltracking.com/route/aurora-to-phoenix
+2 Mar 2026
+https://uspostaltracking.com/city/valdosta-georgia
+2 Mar 2026
+https://uspostaltracking.com/article/usps-schedule-pickup
+2 Mar 2026
+https://uspostaltracking.com/dmca
+1 Mar 2026
+https://uspostaltracking.com/disclaimer
+1 Mar 2026
+https://uspostaltracking.com/guides
+28 Feb 2026
+https://uspostaltracking.com/privacy-policy
+28 Feb 2026
+https://uspostaltracking.com/contact
+28 Feb 2026
+https://uspostaltracking.com/tracking-number-format
+28 Feb 2026
+https://uspostaltracking.com/mobile-tracking
+28 Feb 2026
+https://uspostaltracking.com/de/
+28 Feb 2026
+https://uspostaltracking.com/t/9205590100130869012684
+28 Feb 2026
+https://uspostaltracking.com/about
+28 Feb 2026
+https://uspostaltracking.com/guides/tracking-not-updating
+28 Feb 2026
+https://uspostaltracking.com/article
+28 Feb 2026
+https://uspostaltracking.com/guides/international-shipping-rates
+28 Feb 2026
+https://uspostaltracking.com/locations
+28 Feb 2026
