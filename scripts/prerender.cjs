@@ -358,6 +358,10 @@ async function main() {
   const totalSize = (getTotalSize(PRERENDER_DIR) / (1024 * 1024)).toFixed(2);
   console.log(`📦 حجم prerendered/: ${totalSize} MB`);
   console.log(`📁 المسار: ${PRERENDER_DIR}\n`);
+  
+  // Emit SSE summary
+  sse({ type: 'summary', success, failed: fail, elapsed: `${elapsed}s`, size: `${totalSize} MB` });
+  sse({ type: 'progress', total: routes.length, done: routes.length, success, failed: fail, phase: 'اكتمل ✅' });
 }
 
 main().then(() => {
