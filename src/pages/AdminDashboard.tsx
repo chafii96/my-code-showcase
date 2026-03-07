@@ -4,6 +4,7 @@ import {
   TrendingUp, Shield, Key, Database, GitBranch, Activity, Settings,
   ExternalLink, LogOut, Loader2, PanelLeftClose, PanelLeft, Menu,
   ChevronRight, Search, Bell, Server, HardDrive, Bug, Radar, ShieldAlert, FileText, Cog,
+  Globe,
 } from "lucide-react";
 import { Script } from "@/components/admin/types";
 import LoginGate, { SESSION_KEY, SESSION_DURATION } from "@/components/admin/LoginGate";
