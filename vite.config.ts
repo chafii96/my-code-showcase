@@ -902,39 +902,61 @@ function adminApiPlugin() {
               }
             }
 
-            // ── TrackingMore ─────────────────────────────────────────────
+            // ── TrackingMore (v3) ─────────────────────────────────────────
             if (provider.id === 'trackingmore' && !trackingResult) {
+              const tmStatusMap = (s: string) => { const v = (s || '').toLowerCase(); if (v === 'delivered') return 'delivered'; if (v === 'pickup') return 'out-for-delivery'; if (v === 'inforeceived') return 'label-created'; if (v === 'notfound' || v === 'expired') return 'in-transit'; return 'in-transit'; };
               for (const account of accounts) {
                 try {
-                  const r = await fetch('https://api.trackingmore.com/v4/trackings/realtime', { method: 'POST', headers: { 'Tracking-Api-Key': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ tracking_number: trackingNumber, carrier_code: 'usps' }), signal: AbortSignal.timeout(12000) });
+                  const r = await fetch('https://api.trackingmore.com/v3/trackings/realtime', { method: 'POST', headers: { 'Tracking-Api-Key': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ tracking_number: trackingNumber, carrier_code: 'usps', destination_code: 'US' }), signal: AbortSignal.timeout(20000) });
                   if (r.status === 402 || r.status === 429 || r.status === 403) { updateAccountUsage(provider.id, account.id, false, true); continue; }
                   if (r.ok) {
                     const d = await r.json();
-                    if (d.meta?.code === 200 && d.data) {
-                      const evts = (d.data.track_info || []).map((e: any) => ({ status: e.tracking_detail || '', detail: e.tracking_detail || '', location: e.location || '', date: e.tracking_time ? fmtDate(new Date(e.tracking_time * 1000).toISOString()) : '', time: e.tracking_time ? fmtTime(new Date(e.tracking_time * 1000).toISOString()) : '' }));
+                    if (d.code === 203) { updateAccountUsage(provider.id, account.id, false, true); continue; }
+                    if (d.code === 200 && d.data) {
+                      const originEvts: any[] = d.data.origin_info?.trackinfo || [];
+                      const destEvts: any[] = d.data.destination_info?.trackinfo || [];
+                      const allRaw = [...originEvts, ...destEvts];
+                      const evts = allRaw.map((e: any) => ({ status: e.tracking_detail || '', detail: e.tracking_detail || '', location: e.location || '', date: e.checkpoint_date ? fmtDate(e.checkpoint_date) : '', time: e.checkpoint_date ? fmtTime(e.checkpoint_date) : '' }));
                       updateAccountUsage(provider.id, account.id, true);
-                      if (evts.length > 0) { trackingResult = { ok: true, trackingNumber, status: inferStatus(d.data.latest_event?.tracking_detail || evts[0].status), statusLabel: d.data.latest_event?.tracking_detail || evts[0].status || 'In Transit', service: 'USPS Package', origin: d.data.origin_info?.trackinfo?.[0]?.location || '', destination: d.data.destination_info?.trackinfo?.[0]?.location || '', estimatedDelivery: d.data.scheduled_delivery || '', weight: '—', events: evts }; usedProvider = 'TrackingMore'; usedAccount = account.name; break; }
+                      if (evts.length > 0) {
+                        const deliveryStatus: string = d.data.delivery_status || '';
+                        const latestEvtStr: string = typeof d.data.latest_event === 'string' ? d.data.latest_event.split(',')[0] : evts[0].status;
+                        trackingResult = { ok: true, trackingNumber, status: tmStatusMap(deliveryStatus), statusLabel: latestEvtStr || evts[0].status || 'In Transit', service: 'USPS Package', origin: d.data.original || '', destination: d.data.destination || '', estimatedDelivery: d.data.scheduled_delivery_date || '', weight: '—', events: evts };
+                        usedProvider = 'TrackingMore'; usedAccount = account.name; break;
+                      }
                     } else { updateAccountUsage(provider.id, account.id, false); }
                   } else { updateAccountUsage(provider.id, account.id, false); }
                 } catch { updateAccountUsage(provider.id, account.id, false); }
               }
             }
 
-            // ── 17Track ──────────────────────────────────────────────────
+            // ── 17Track (v2.4) ───────────────────────────────────────────
             if (provider.id === '17track' && !trackingResult) {
+              const t17StatusMap = (s: string) => { switch ((s || '').toLowerCase()) { case 'delivered': return 'delivered'; case 'outfordelivery': case 'availableforpickup': return 'out-for-delivery'; case 'inforeceived': return 'label-created'; case 'exception': return 'alert'; default: return 'in-transit'; } };
+              const USPS_CARRIER_17 = 21051;
               for (const account of accounts) {
                 try {
-                  await fetch('https://api.17track.net/track/v2.2/register', { method: 'POST', headers: { '17token': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify([{ number: trackingNumber }]), signal: AbortSignal.timeout(5000) });
-                  const r = await fetch('https://api.17track.net/track/v2.2/gettrackinfo', { method: 'POST', headers: { '17token': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify([{ number: trackingNumber }]), signal: AbortSignal.timeout(12000) });
+                  await fetch('https://api.17track.net/track/v2.4/register', { method: 'POST', headers: { '17token': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify([{ number: trackingNumber, carrier: USPS_CARRIER_17, destination_country: 'US' }]), signal: AbortSignal.timeout(8000) });
+                  const r = await fetch('https://api.17track.net/track/v2.4/gettrackinfo', { method: 'POST', headers: { '17token': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify([{ number: trackingNumber, carrier: USPS_CARRIER_17 }]), signal: AbortSignal.timeout(15000) });
                   if (r.status === 402 || r.status === 429 || r.status === 403) { updateAccountUsage(provider.id, account.id, false, true); continue; }
                   if (r.ok) {
                     const d = await r.json();
                     const item = d.data?.accepted?.[0];
-                    if (item?.track) {
-                      const raw = [...(item.track.w0 || []), ...(item.track.w1 || [])];
-                      const evts = raw.map((e: any) => ({ status: e.z || e.d || '', detail: e.d || e.z || '', location: e.l || '', date: e.a ? fmtDate(e.a) : '', time: e.a ? fmtTime(e.a) : '' }));
+                    const trackInfo = item?.track_info;
+                    if (trackInfo) {
+                      const providers: any[] = trackInfo.tracking?.providers || [];
+                      const rawEvts = providers.flatMap((p: any) => p.events || []);
+                      const evts = rawEvts.map((e: any) => ({ status: e.description || '', detail: e.description || '', location: typeof e.location === 'string' ? e.location : [e.address?.city, e.address?.state, e.address?.country].filter(Boolean).join(', '), date: e.time_iso ? fmtDate(e.time_iso) : (e.time_raw?.date ? fmtDate(e.time_raw.date) : ''), time: e.time_iso ? fmtTime(e.time_iso) : (e.time_raw?.time || '') }));
                       updateAccountUsage(provider.id, account.id, true);
-                      if (evts.length > 0) { const e17 = item.track.e; let st = 'in-transit'; if (e17 === 40) st = 'delivered'; else if (e17 === 35) st = 'out-for-delivery'; else if (e17 <= 10) st = 'label-created'; trackingResult = { ok: true, trackingNumber, status: st, statusLabel: item.track.b || 'In Transit', service: 'USPS Package', origin: '', destination: '', estimatedDelivery: '', weight: '—', events: evts }; usedProvider = '17Track'; usedAccount = account.name; break; }
+                      if (evts.length > 0) {
+                        const latestStatus: string = trackInfo.latest_status?.status || '';
+                        const latestDesc: string = trackInfo.latest_event?.description || evts[0].status || 'In Transit';
+                        const origin: string = trackInfo.shipping_info?.shipper_address?.country || '';
+                        const dest: string = trackInfo.shipping_info?.recipient_address?.country || '';
+                        const estDelivery: string = trackInfo.time_metrics?.estimated_delivery_date?.from ? fmtDate(trackInfo.time_metrics.estimated_delivery_date.from) : '';
+                        trackingResult = { ok: true, trackingNumber, status: t17StatusMap(latestStatus), statusLabel: latestDesc, service: 'USPS Package', origin, destination: dest, estimatedDelivery: estDelivery, weight: '—', events: evts };
+                        usedProvider = '17Track'; usedAccount = account.name; break;
+                      }
                     } else { updateAccountUsage(provider.id, account.id, false); }
                   } else { updateAccountUsage(provider.id, account.id, false); }
                 } catch { updateAccountUsage(provider.id, account.id, false); }
