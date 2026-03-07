@@ -2642,15 +2642,31 @@ function prerenderShellPlugin() {
       }
     }
 
-    // ── City × Article pages (top 10 articles per city to keep shell count manageable) ──
-    const topArticles = articleSlugs.slice(0, 10);
+    // ── City × Article pages — all 30 articles per city (6,180 shells) ──
+    const cityArticleSlugs = [
+      'usps-tracking-not-updating-for-3-days','usps-tracking-not-updating-for-24-hours',
+      'usps-tracking-not-updating-for-a-week','usps-package-stuck-in-transit',
+      'usps-package-stuck-in-transit-for-2-weeks','usps-tracking-shows-delivered-but-no-package',
+      'usps-tracking-number-not-found','usps-tracking-number-not-working',
+      'usps-package-lost-in-transit','usps-package-delayed',
+      'usps-priority-mail-tracking','usps-first-class-mail-tracking',
+      'usps-media-mail-tracking','usps-certified-mail-tracking',
+      'usps-registered-mail-tracking','usps-express-mail-tracking',
+      'usps-flat-rate-box-tracking','usps-international-tracking',
+      'usps-tracking-number-format','how-to-track-usps-package-without-number',
+      'usps-informed-delivery-tracking','usps-package-out-for-delivery-but-not-delivered',
+      'usps-tracking-in-transit-arriving-late','usps-package-arrived-at-facility',
+      'usps-package-departed-facility','usps-package-accepted-at-facility',
+      'usps-package-awaiting-delivery-scan','usps-package-held-at-post-office',
+      'usps-redelivery-tracking','usps-package-return-to-sender',
+    ];
     for (const city of cities) {
-      for (const art of topArticles) {
-        const prettyArt = art.replace(/-/g, ' ').replace(/usps /i, 'USPS ').replace(/\b\w/g, c => c.toUpperCase());
+      for (const art of cityArticleSlugs) {
+        const prettyArt = art.replace(/-/g, ' ').replace(/usps /i, 'USPS ').replace(/how to /i, 'How to ').replace(/\b\w/g, c => c.toUpperCase());
         writeShell(
           `/city/${city.slug}/article/${art}`,
           `${prettyArt} in ${city.city}, ${city.stateCode} — 2026 Complete Guide`,
-          `${prettyArt} guide for ${city.city}, ${city.stateCode}. Local USPS tips, solutions, and contact info for the ${city.city} area.`
+          `${prettyArt} guide for ${city.city}, ${city.stateCode}. Local USPS tips, tracking solutions, and contact info for the ${city.city} area.`
         );
         count++;
       }
@@ -2664,6 +2680,30 @@ function prerenderShellPlugin() {
           `/city/${city.slug}/carrier/${cid}`,
           `${cname} Shipping & Tracking in ${city.city}, ${city.stateCode} — 2026 Guide`,
           `${cname} package tracking and delivery in ${city.city}, ${city.stateCode}. Track ${cname} packages, delivery times, and drop-off locations.`
+        );
+        count++;
+      }
+    }
+
+    // ── City × Topic pages — 10 slugs from sitemap-programmatic.xml (2,060 shells) ──
+    const cityTopics = [
+      { slug: 'tracking-not-updating', label: 'USPS Tracking Not Updating', desc: 'why USPS tracking is not updating and how to fix it' },
+      { slug: 'package-in-transit', label: 'USPS Package In Transit', desc: 'what USPS package in transit means and expected delivery' },
+      { slug: 'delivered-but-not-received', label: 'USPS Delivered But Not Received', desc: 'what to do when USPS shows delivered but you got nothing' },
+      { slug: 'tracking-number-format', label: 'USPS Tracking Number Format', desc: 'how to read and understand USPS tracking number formats' },
+      { slug: 'package-delayed', label: 'USPS Package Delayed', desc: 'why your USPS package is delayed and what to do' },
+      { slug: 'priority-mail-tracking', label: 'USPS Priority Mail Tracking', desc: 'how to track USPS Priority Mail packages' },
+      { slug: 'first-class-tracking', label: 'USPS First Class Tracking', desc: 'how to track USPS First Class Mail packages' },
+      { slug: 'certified-mail-tracking', label: 'USPS Certified Mail Tracking', desc: 'how to track USPS Certified Mail with return receipt' },
+      { slug: 'package-lost', label: 'USPS Package Lost', desc: 'how to find a lost USPS package and file a claim' },
+      { slug: 'delivery-time', label: 'USPS Delivery Time', desc: 'USPS delivery times by service type and destination' },
+    ];
+    for (const city of cities) {
+      for (const topic of cityTopics) {
+        writeShell(
+          `/city/${city.slug}/${topic.slug}`,
+          `${topic.label} in ${city.city}, ${city.stateCode} — 2026 Guide`,
+          `${topic.label} guide for ${city.city}, ${city.stateCode}. Learn ${topic.desc} for packages in the ${city.city} area.`
         );
         count++;
       }
@@ -2683,13 +2723,24 @@ function prerenderShellPlugin() {
       }
     }
 
-    // ── ZIP code pages (generate for all ZIP codes found in city data) ──
+    // ── ZIP code pages — read from usCities.ts AND sitemap-zipcodes.xml for full coverage ──
     const allZips = new Set<string>();
     try {
       const cityFile = fs.readFileSync(path.resolve(__dirname, 'src/data/usCities.ts'), 'utf8');
       const zipRegex = /"(\d{5})"/g;
       let zm;
       while ((zm = zipRegex.exec(cityFile)) !== null) allZips.add(zm[1]);
+    } catch {}
+    try {
+      const zipSitemapPath = path.resolve(__dirname, 'public', 'sitemap-zipcodes.xml');
+      if (fs.existsSync(zipSitemapPath)) {
+        const zipXml = fs.readFileSync(zipSitemapPath, 'utf8');
+        const zipMatches = zipXml.match(/\/zip\/(\d{5})<\/loc>/g) || [];
+        for (const m of zipMatches) {
+          const z = m.replace('/zip/', '').replace('</loc>', '');
+          allZips.add(z);
+        }
+      }
     } catch {}
     for (const zip of [...allZips].sort()) {
       writeShell(
@@ -3069,6 +3120,9 @@ export default defineConfig(({ mode }) => ({
     port: 5000,
     allowedHosts: true,
     hmr: { overlay: false },
+    watch: {
+      ignored: ['**/public/**', '**/.git/**', '**/node_modules/**'],
+    },
   },
   plugins: [
     react(),
