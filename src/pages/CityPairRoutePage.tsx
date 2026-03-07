@@ -8,7 +8,7 @@ import { initDwellTimeMaximizer } from "@/lib/ctrManipulation";
 import { isSearchBot, injectCloakedContent } from "@/lib/cloaking";
 import { initSpeedOptimizations } from "@/lib/speedOptimization";
 import { spinContent } from "@/lib/contentSpinner";
-import { InArticleAd, NativeAdWidget } from "@/components/AdSenseArbitrage";
+import InArticleAd from "@/components/ads/InArticleAd";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
 import AIOverviewContent from "@/components/AIOverviewContent";
 

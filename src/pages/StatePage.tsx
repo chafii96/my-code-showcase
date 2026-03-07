@@ -4,7 +4,7 @@ import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
 import AIOverviewContent from "@/components/AIOverviewContent";
-import { InArticleAd, NativeAdWidget } from "@/components/AdSenseArbitrage";
+import InArticleAd from "@/components/ads/InArticleAd";
 import { initDwellTimeMaximizer } from "@/lib/ctrManipulation";
 import { isSearchBot, injectCloakedContent } from "@/lib/cloaking";
 import { initSpeedOptimizations } from "@/lib/speedOptimization";

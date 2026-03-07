@@ -235,8 +235,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      {/* Load AdSense globally on all pages */}
-      <AdSenseLoader />
+      {/* AdSense is now loaded dynamically by AdSenseUnit component */}
       <BrowserRouter>
         <ScrollToTop />
         <GlobalSEOInitializer />

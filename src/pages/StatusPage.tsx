@@ -11,7 +11,7 @@ import { isSearchBot, injectCloakedContent } from "@/lib/cloaking";
 import { initSpeedOptimizations } from "@/lib/speedOptimization";
 import { spinContent } from "@/lib/contentSpinner";
 import { applyContextualLinksToDOM } from "@/lib/contextualLinker";
-import { InArticleAd, NativeAdWidget } from "@/components/AdSenseArbitrage";
+import InArticleAd from "@/components/ads/InArticleAd";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
 import { StatusAdditionalInfo } from "@/components/NaturalSEOContent";
 import AIOverviewContent from "@/components/AIOverviewContent";

@@ -6,7 +6,7 @@ import { trackingStatuses } from "@/data/mockTracking";
 import { allUSCities } from "@/data/usCities";
 import { FileText, ArrowRight, MapPin, Package, ChevronRight, BookOpen } from "lucide-react";
 import AIOverviewContent from "@/components/AIOverviewContent";
-import { NativeAdWidget } from "@/components/AdSenseArbitrage";
+import InArticleAd from "@/components/ads/InArticleAd";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
 import { isSearchBot, injectCloakedContent } from '@/lib/cloaking';
 
