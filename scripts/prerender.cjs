@@ -129,11 +129,13 @@ function getAllRoutes() {
         const htmlFiles = fs.readdirSync(path.join(programmaticDir, dir.name))
           .filter(f => f.endsWith('.html'))
           .map(f => f.replace('.html', ''));
-        // أضف أهم 100 صفحة programmatic فقط (لتقليل وقت الـ prerender)
-        htmlFiles.slice(0, 100).forEach(slug => {
+        // جميع الصفحات البرمجية (بدون حد)
+        const limit = Number(process.env.PRERENDER_PROGRAMMATIC_LIMIT || '0');
+        const selected = limit > 0 ? htmlFiles.slice(0, limit) : htmlFiles;
+        selected.forEach(slug => {
           routes.push(`/programmatic/${dir.name}/${slug}`);
         });
-        console.log(`🏭 ${htmlFiles.length} صفحة programmatic في ${dir.name} (أول 100)`);
+        console.log(`🏭 ${selected.length}/${htmlFiles.length} صفحة programmatic في ${dir.name}`);
       }
     }
   } catch {}
