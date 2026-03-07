@@ -3,7 +3,7 @@ import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import { Search, ArrowRight, Package, Clock, Shield, CheckCircle, Zap, Globe } from "lucide-react";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
-import { trackingStatuses } from "@/data/mockTracking";
+import { trackingStatuses } from "@/data/seoStaticData";
 import { AdSlot } from "@/components/ads/AdSlot";
 
 const PackageTrackerUSPSPage = () => {

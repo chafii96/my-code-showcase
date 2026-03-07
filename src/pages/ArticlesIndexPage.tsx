@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import { articleKeywords } from "@/data/usCities";
-import { trackingStatuses } from "@/data/mockTracking";
+import { trackingStatuses } from "@/data/seoStaticData";
 import { allUSCities } from "@/data/usCities";
 import { FileText, ArrowRight, MapPin, Package, ChevronRight, BookOpen } from "lucide-react";
 import AIOverviewContent from "@/components/AIOverviewContent";

@@ -1,5 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { faqData } from "@/data/mockTracking";
+import { faqData } from "@/data/seoStaticData";
 import { HelpCircle } from "lucide-react";
 
 const FAQSection = () => {

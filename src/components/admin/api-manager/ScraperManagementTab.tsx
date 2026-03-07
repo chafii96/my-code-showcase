@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { AlertTriangle, CheckCircle, Code, Globe, Play, Power, RefreshCw, Shield, XCircle } from "lucide-react";
-import { mockScrapers } from "./mockData";
 import { ScraperConfig } from "./types";
 import { useApiData, apiCall } from "./useApiData";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +21,7 @@ function ScraperStatusBadge({ status }: { status: ScraperConfig['status'] }) {
 }
 
 export default function ScraperManagementTab() {
-  const { data: scrapers, setData: setScrapers, isLive } = useApiData<ScraperConfig[]>('/scrapers', mockScrapers);
+  const { data: scrapers, setData: setScrapers, isLive } = useApiData<ScraperConfig[]>('/scrapers', []);
   const [editingSelectors, setEditingSelectors] = useState<string | null>(null);
 
   const toggleScraper = async (id: string) => {

@@ -3,7 +3,7 @@ import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import { useEffect, lazy, Suspense } from "react";
-import { trackingStatuses, majorLocations } from "@/data/mockTracking";
+import { trackingStatuses, majorLocations } from "@/data/seoStaticData";
 import { ArrowRight, MapPin, FileText, Truck, Shield, Clock, Globe, ChevronRight } from "lucide-react";
 import { AdSlot } from "@/components/ads/AdSlot";
 

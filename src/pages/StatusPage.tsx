@@ -3,7 +3,7 @@ import BreadcrumbSchema from "@/components/BreadcrumbSchema";
 import { useEffect } from "react";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { trackingStatuses } from "@/data/mockTracking";
+import { trackingStatuses } from "@/data/seoStaticData";
 import { ArrowLeft, ArrowRight, FileText, HelpCircle, Package, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { initDwellTimeMaximizer } from "@/lib/ctrManipulation";

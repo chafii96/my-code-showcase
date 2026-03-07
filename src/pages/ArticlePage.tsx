@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect } from "react";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { trackingStatuses, majorLocations } from "@/data/mockTracking";
+import { trackingStatuses, majorLocations } from "@/data/seoStaticData";
 import { allUSCities, articleKeywords } from "@/data/usCities";
 import { getArticleContent } from "@/data/articleContent";
 import { ArrowRight, Clock, Package, FileText, MapPin, Star } from "lucide-react";

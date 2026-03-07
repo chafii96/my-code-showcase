@@ -6,7 +6,7 @@
 
 import { Link } from "react-router-dom";
 import { allUSCities, articleKeywords } from "@/data/usCities";
-import { trackingStatuses, majorLocations } from "@/data/mockTracking";
+import { trackingStatuses, majorLocations } from "@/data/seoStaticData";
 import { ArrowRight, MapPin, FileText, Package } from "lucide-react";
 
 interface InternalLinkingHubProps {

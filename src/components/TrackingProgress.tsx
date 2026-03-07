@@ -1,5 +1,5 @@
 import { Package, Truck, MapPin, CheckCircle2, Clock } from "lucide-react";
-import type { TrackingData } from "@/data/mockTracking";
+import type { TrackingData } from "@/data/seoStaticData";
 
 const steps = [
   { key: "shipped", label: "Shipped", sublabel: "Label Created", icon: Package },

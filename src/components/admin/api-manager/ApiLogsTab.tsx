@@ -1,14 +1,13 @@
 import { useState, useMemo } from "react";
 import { Download, Search } from "lucide-react";
-import { mockTrackingLogs } from "./mockData";
 import { TrackingLog } from "./types";
 import { useApiData } from "./useApiData";
 
 export default function ApiLogsTab() {
-  const { data: logs, isLive } = useApiData<TrackingLog[]>('/tracking-logs?limit=100', mockTrackingLogs, { pollingInterval: 15000 });
+  const { data: logs, isLive } = useApiData<TrackingLog[]>('/tracking-logs?limit=100', [], { pollingInterval: 15000 });
   const [filters, setFilters] = useState({ provider: '', carrier: '', status: '', search: '' });
 
-  const safeData = Array.isArray(logs) ? logs : mockTrackingLogs;
+  const safeData = Array.isArray(logs) ? logs : [];
 
   const filtered = useMemo(() => {
     return safeData.filter(l => {

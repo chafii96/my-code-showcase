@@ -1,19 +1,19 @@
 import { Activity, Database, DollarSign, Server, TrendingUp, Zap } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { mockSystemStats, mockHourlyData, mockProviderUsage, mockTrackingLogs } from "./mockData";
 import { useApiData } from "./useApiData";
 import { SystemStats, TrackingLog } from "./types";
 
+const EMPTY_STATS: SystemStats = { totalRequestsToday: 0, cacheHitRate: 0, activeProvider: '—', apiCallsSaved: 0, estimatedCost: 0, successRate: 100 };
+
 export default function ApiOverviewTab() {
   const { data: stats, isLive: statsLive } = useApiData<SystemStats>(
-    '/system-stats', mockSystemStats, { pollingInterval: 15000 }
+    '/system-stats', EMPTY_STATS, { pollingInterval: 15000 }
   );
   const { data: logs } = useApiData<TrackingLog[]>(
-    '/tracking-logs?limit=20', mockTrackingLogs.slice(0, 20), { pollingInterval: 15000 }
+    '/tracking-logs?limit=20', [], { pollingInterval: 15000 }
   );
-
-  const hourlyData = mockHourlyData;
-  const providerUsage = mockProviderUsage;
+  const { data: hourlyData } = useApiData<any[]>('/system-stats/hourly', [], { pollingInterval: 60000 });
+  const { data: providerUsage } = useApiData<any[]>('/system-stats/provider-usage', [], { pollingInterval: 60000 });
 
   const statCards = [
     { label: 'إجمالي الطلبات اليوم', value: Number(stats.totalRequestsToday).toLocaleString(), icon: Activity, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
@@ -24,7 +24,7 @@ export default function ApiOverviewTab() {
     { label: 'نسبة النجاح', value: `${stats.successRate}%`, icon: TrendingUp, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
   ];
 
-  const recentLogs = Array.isArray(logs) ? logs.slice(0, 20) : mockTrackingLogs.slice(0, 20);
+  const recentLogs = Array.isArray(logs) ? logs.slice(0, 20) : [];
 
   return (
     <div className="space-y-6" dir="rtl">

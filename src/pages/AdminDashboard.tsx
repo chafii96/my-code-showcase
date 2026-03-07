@@ -44,8 +44,13 @@ export default function AdminDashboard() {
   return <AdminDashboardContent onLogout={handleLogout} />;
 }
 
+const VALID_TABS = new Set(['overview','tools','terminal','visitors','apikeys','ads','adsense','settings','seo','keywords','git','robots','content','performance','database','logs','prerender','api-overview','api-providers','api-cache','api-scrapers','api-carriers','api-ratelimit','api-logs','api-settings']);
+
 function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState<string>(() => {
+    const hash = window.location.hash.slice(1);
+    return VALID_TABS.has(hash) ? hash : 'overview';
+  });
   const [stats, setStats] = useState<any>({});
   const [sitemaps, setSitemaps] = useState<any[]>([]);
   const [scripts, setScripts] = useState<Script[]>([]);
@@ -55,6 +60,8 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => { window.location.hash = tab; }, [tab]);
 
   useEffect(() => { const t = setInterval(() => setCurrentTime(new Date()), 1000); return () => clearInterval(t); }, []);
 

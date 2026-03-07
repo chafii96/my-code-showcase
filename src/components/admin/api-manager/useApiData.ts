@@ -21,7 +21,7 @@ function saveToStorage<T>(endpoint: string, data: T) {
 }
 
 /**
- * Generic hook: fetches from backend API, falls back to localStorage, then to mock data.
+ * Generic hook: fetches from backend API, falls back to localStorage, then to fallback defaults.
  * All state changes are auto-persisted to localStorage.
  */
 export function useApiData<T>(

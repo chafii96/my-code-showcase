@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Ban, CheckCircle, Unlock } from "lucide-react";
-import { mockRateLimitRules } from "./mockData";
 import { RateLimitRule } from "./types";
 import { useApiData, apiCall } from "./useApiData";
 import { toast } from "@/hooks/use-toast";
@@ -19,7 +18,7 @@ export default function RateLimitingTab() {
     '/rate-limits/settings',
     { maxPerHour: 60, maxPerDay: 500, captchaThreshold: 30, blockVPN: false, blacklist: [], whitelist: [] }
   );
-  const { data: rules } = useApiData<RateLimitRule[]>('/rate-limits/top-ips', mockRateLimitRules, { pollingInterval: 30000 });
+  const { data: rules } = useApiData<RateLimitRule[]>('/rate-limits/top-ips', [], { pollingInterval: 30000 });
   const [blacklistText, setBlacklistText] = useState('');
   const [whitelistText, setWhitelistText] = useState('');
 

@@ -18,41 +18,6 @@ export interface TrackingData {
   events: TrackingEvent[];
 }
 
-const mockEvents: TrackingEvent[] = [
-  { date: "Feb 26, 2026", time: "8:32 AM", location: "Springfield, IL 62704", status: "Out for Delivery", detail: "Out for delivery, expected by 5:00 PM" },
-  { date: "Feb 26, 2026", time: "6:15 AM", location: "Springfield, IL 62704", status: "Arrived", detail: "Arrived at USPS Regional Destination Facility" },
-  { date: "Feb 25, 2026", time: "11:47 PM", location: "St. Louis, MO 63155", status: "In Transit", detail: "Departed USPS Regional Origin Facility" },
-  { date: "Feb 25, 2026", time: "4:22 PM", location: "St. Louis, MO 63155", status: "In Transit", detail: "Arrived at USPS Regional Origin Facility" },
-  { date: "Feb 25, 2026", time: "10:05 AM", location: "Kansas City, MO 64108", status: "In Transit", detail: "In Transit to Next Facility" },
-  { date: "Feb 24, 2026", time: "3:30 PM", location: "Kansas City, MO 64108", status: "Accepted", detail: "USPS picked up item" },
-  { date: "Feb 24, 2026", time: "1:15 PM", location: "Kansas City, MO 64108", status: "Shipped", detail: "Shipping Label Created, USPS Awaiting Item" },
-];
-
-export function generateMockTracking(trackingNumber: string): TrackingData {
-  const hash = trackingNumber.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
-  const statusIndex = hash % 4;
-  const statuses: TrackingData["status"][] = ["shipped", "in-transit", "out-for-delivery", "delivered"];
-  const statusLabels = ["Label Created", "In Transit to Destination", "Out for Delivery", "Delivered"];
-  const status = statuses[statusIndex];
-  const eventsToShow = status === "delivered" ? mockEvents.length : status === "out-for-delivery" ? 5 : status === "in-transit" ? 3 : 1;
-
-  const deliveredEvents = status === "delivered"
-    ? [{ date: "Feb 26, 2026", time: "2:14 PM", location: "Springfield, IL 62704", status: "Delivered", detail: "Delivered, Left with Individual" }, ...mockEvents]
-    : mockEvents.slice(mockEvents.length - eventsToShow);
-
-  return {
-    trackingNumber,
-    status,
-    statusLabel: statusLabels[statusIndex],
-    estimatedDelivery: status === "delivered" ? "Delivered Feb 26, 2026" : "Feb 27, 2026 by 8:00 PM",
-    shippingClass: "USPS Priority Mail",
-    origin: "Kansas City, MO 64108",
-    destination: "Springfield, IL 62704",
-    weight: "2 lbs 4 oz",
-    events: deliveredEvents,
-  };
-}
-
 export const trackingStatuses = [
   { slug: "in-transit-to-next-facility", name: "In Transit to Next Facility", description: "Your package is moving between USPS processing facilities. This status means your item has left one location and is en route to the next sorting center or distribution hub.", faq: "This usually takes 1-3 business days depending on distance." },
   { slug: "departed-shipping-partner-facility", name: "Departed Shipping Partner Facility", description: "Your package has left a third-party shipping partner's facility and is now in the USPS network. USPS partners with companies like UPS and FedEx for certain deliveries.", faq: "Updates may be delayed 24-48 hours as the package transfers between systems." },

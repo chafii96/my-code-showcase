@@ -3,7 +3,7 @@ import { CityStatsCard, ShippingComparisonWidget, SeasonalAdvisory } from "@/com
 import { useEffect } from "react";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { trackingStatuses } from "@/data/mockTracking";
+import { trackingStatuses } from "@/data/seoStaticData";
 import { allUSCities, articleKeywords } from "@/data/usCities";
 import { ArrowRight, MapPin, Package, Building, Clock, FileText, Star, Truck, Globe, Navigation, Zap, Shield, ChevronRight, BarChart3, Mail, AlertTriangle, TrendingUp, Users } from "lucide-react";
 import InArticleAd from "@/components/ads/InArticleAd";

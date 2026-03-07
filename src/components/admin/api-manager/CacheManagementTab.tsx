@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Database, Download, RefreshCw, Search, Trash2, Zap } from "lucide-react";
-import { mockCacheStats, mockCacheTTL, mockCacheEntries } from "./mockData";
 import { CacheEntry, CacheStats, CacheTTLSettings } from "./types";
 import { useApiData, apiCall } from "./useApiData";
 import { toast } from "@/hooks/use-toast";
 
 export default function CacheManagementTab() {
-  const { data: stats, isLive } = useApiData<CacheStats>('/cache/stats', mockCacheStats, { pollingInterval: 30000 });
-  const { data: ttl, setData: setTtl } = useApiData<CacheTTLSettings>('/cache/settings', mockCacheTTL);
-  const { data: entries, refetch: refetchEntries } = useApiData<CacheEntry[]>('/cache/entries', mockCacheEntries);
+  const { data: stats, isLive } = useApiData<CacheStats>('/cache/stats', { totalEntries: 0, hitRateToday: 0, memoryUsedMB: 0, apiCallsSaved: 0, moneySaved: 0 }, { pollingInterval: 30000 });
+  const { data: ttl, setData: setTtl } = useApiData<CacheTTLSettings>('/cache/settings', { delivered: 1440, inTransit: 120, outForDelivery: 30, pending: 60, exception: 15, preShipment: 60, unknown: 30, notFound: 30 });
+  const { data: entries, refetch: refetchEntries } = useApiData<CacheEntry[]>('/cache/entries', []);
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmFlush, setConfirmFlush] = useState(false);
 

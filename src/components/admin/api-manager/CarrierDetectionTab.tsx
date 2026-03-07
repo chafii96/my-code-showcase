@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Edit, Plus, Search, Trash2, Upload } from "lucide-react";
-import { mockCarrierPatterns } from "./mockData";
 import { CarrierPattern } from "./types";
 import { useApiData, apiCall } from "./useApiData";
 import { toast } from "@/hooks/use-toast";
 
 export default function CarrierDetectionTab() {
-  const { data: patterns, setData: setPatterns, isLive } = useApiData<CarrierPattern[]>('/carrier-patterns', mockCarrierPatterns);
+  const { data: patterns, setData: setPatterns, isLive } = useApiData<CarrierPattern[]>('/carrier-patterns', []);
   const [testInput, setTestInput] = useState('');
   const [detectedCarrier, setDetectedCarrier] = useState<string | null>(null);
 

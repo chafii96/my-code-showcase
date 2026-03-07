@@ -6,7 +6,22 @@
     "priority": 1,
     "icon": "🚀",
     "color": "#3b82f6",
-    "accounts": []
+    "accounts": [
+      {
+        "id": "ship24-1772876023081",
+        "usedToday": 0,
+        "successCount": 0,
+        "errorCount": 0,
+        "avgResponseTime": 0,
+        "lastUsed": "",
+        "status": "active",
+        "providerId": "ship24",
+        "name": "Ship24 - حساب 1",
+        "apiKey": "apik_APnKWGA1EbhweHsu6C5gNEav6wYKNM",
+        "dailyQuota": 1000,
+        "enabled": true
+      }
+    ]
   },
   {
     "id": "trackingmore",

@@ -5,7 +5,7 @@ import FAQSection from "@/components/FAQSection";
 import { Link } from "react-router-dom";
 import { Package, Truck, MapPin, Clock, Shield, CheckCircle, ArrowRight, Building, Search } from "lucide-react";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
-import { majorLocations } from "@/data/mockTracking";
+import { majorLocations } from "@/data/seoStaticData";
 import { AdSlot } from "@/components/ads/AdSlot";
 
 const PostOfficeTrackingPage = () => {

@@ -728,108 +728,145 @@ function adminApiPlugin() {
           return;
         }
 
-        // ── GET /api/usps-track/:trackingNumber — Real USPS API ──────────
+        // ── GET /api/usps-track/:trackingNumber — Failover: Ship24 → TrackingMore → 17Track → USPS XML ──
         const uspsMatch = url.match(/^\/api\/usps-track\/([A-Za-z0-9]+)$/);
         if (uspsMatch && req.method === "GET") {
-          const trackingNumber = uspsMatch[1];
-          const config = loadConfig();
-          const USERID = config.apiKeys?.uspsUserId || '';
-          const PASSWORD = config.apiKeys?.uspsPassword || '';
+          const trackingNumber = uspsMatch[1].toUpperCase();
+          const startTime = Date.now();
+          const clientIp = (req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").toString().split(",")[0].trim();
+          const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
+          const TRACKING_LOGS_FILE = path.join(ROOT, 'seo-data', 'tracking-logs.json');
 
-          if (!USERID) {
-            res.statusCode = 400;
+          const loadTrackCache = () => { try { return fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {}; } catch { return {}; } };
+          const saveTrackCache = (c: any) => { try { ensureDir(TRACKING_CACHE_FILE); fs.writeFileSync(TRACKING_CACHE_FILE, JSON.stringify(c)); } catch {} };
+          const addTrackLog = (providerUsed: string, accountUsed: string, cacheHit: boolean, status: 'success' | 'error', errorMsg?: string) => {
+            try {
+              let logs: any[] = fs.existsSync(TRACKING_LOGS_FILE) ? JSON.parse(fs.readFileSync(TRACKING_LOGS_FILE, 'utf8')) : [];
+              logs.push({ id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, timestamp: new Date().toISOString(), trackingNumberHash: trackingNumber.slice(0, 4) + '****' + trackingNumber.slice(-4), carrier: 'USPS', providerUsed, accountUsed, cacheHit, responseTimeMs: Date.now() - startTime, status, errorMessage: errorMsg, ipHash: clientIp.replace(/(\d+)\.(\d+)\.\d+\.\d+/, '$1.$2.xxx.xxx') });
+              if (logs.length > 10000) logs = logs.slice(-10000);
+              ensureDir(TRACKING_LOGS_FILE); fs.writeFileSync(TRACKING_LOGS_FILE, JSON.stringify(logs));
+            } catch {}
+          };
+          const inferStatus = (label: string) => { const l = label.toLowerCase(); if (l.includes('delivered')) return 'delivered'; if (l.includes('out for delivery')) return 'out-for-delivery'; if (l.includes('label') || l.includes('pre-shipment') || l.includes('accepted')) return 'label-created'; return 'in-transit'; };
+          const fmtDate = (iso: string) => { try { return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return iso; } };
+          const fmtTime = (iso: string) => { try { return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+
+          // ── Cache check ──────────────────────────────────────────────────
+          const cache = loadTrackCache();
+          if (cache[trackingNumber] && new Date(cache[trackingNumber].expiresAt) > new Date()) {
+            const entry = cache[trackingNumber];
+            entry.hitCount = (entry.hitCount || 0) + 1;
+            entry.lastHit = new Date().toISOString();
+            saveTrackCache(cache);
+            addTrackLog(entry.providerUsed || 'Cache', 'Cache', true, 'success');
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ ok: false, error: 'USPS API credentials not configured. Add USPS USERID in Admin → API Keys.' }));
+            res.end(JSON.stringify({ ...entry.data, cached: true }));
             return;
           }
 
-          const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>USPostalTracking</SourceId><TrackID ID="${trackingNumber}"/></TrackFieldRequest>`;
-          const apiUrl = `https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=${encodeURIComponent(xmlRequest)}`;
+          // ── Load providers sorted by priority ────────────────────────────
+          const providers = loadProviders().sort((a: any, b: any) => a.priority - b.priority);
+          let trackingResult: any = null;
+          let usedProvider = '';
+          let usedAccount = '';
 
-          try {
-            const fetchMod = await import('node:https');
-            const xmlResponse: string = await new Promise((resolve, reject) => {
-              fetchMod.default.get(apiUrl, { timeout: 12000 }, (resp) => {
-                let data = '';
-                resp.on('data', (chunk: Buffer) => data += chunk);
-                resp.on('end', () => resolve(data));
-              }).on('error', reject);
-            });
+          for (const provider of providers) {
+            if (!provider.enabled || trackingResult) continue;
+            const accounts = (provider.accounts || []).filter((a: any) => a.enabled && a.status !== 'exhausted' && a.apiKey && a.apiKey.trim() && a.apiKey !== 'N/A');
 
-            // Parse USPS XML
-            const extract = (tag: string) => {
-              const m = xmlResponse.match(new RegExp(`<${tag}>(.*?)</${tag}>`, 's'));
-              return m ? m[1].trim() : '';
-            };
-
-            // Check for API errors
-            const errNumber = xmlResponse.match(/<Number>(.*?)<\/Number>/);
-            if (errNumber && !xmlResponse.includes('<TrackDetail>') && !xmlResponse.includes('<TrackSummary>')) {
-              const errDesc = extract('Description') || 'Unknown error';
-              res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ ok: false, error: errDesc, trackingNumber, events: [] }));
-              return;
+            // ── Ship24 ───────────────────────────────────────────────────
+            if (provider.id === 'ship24') {
+              for (const account of accounts) {
+                try {
+                  const r = await fetch('https://api.ship24.com/public/v1/trackers', { method: 'POST', headers: { 'Authorization': `Bearer ${account.apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ trackingNumber }), signal: AbortSignal.timeout(12000) });
+                  if (r.ok) {
+                    const d = await r.json();
+                    const evts = (d.data?.tracker?.events || []).map((e: any) => ({ status: e.status || '', detail: e.status || '', location: [e.location?.city, e.location?.state, e.location?.countryCode].filter(Boolean).join(', '), date: e.occurrenceDatetime ? fmtDate(e.occurrenceDatetime) : '', time: e.occurrenceDatetime ? fmtTime(e.occurrenceDatetime) : '' }));
+                    if (evts.length > 0) { trackingResult = { ok: true, trackingNumber, status: inferStatus(evts[0].status), statusLabel: evts[0].status || 'In Transit', service: 'USPS Package', origin: '', destination: '', estimatedDelivery: '', weight: '—', events: evts }; usedProvider = 'Ship24'; usedAccount = account.name; break; }
+                  }
+                } catch {}
+              }
             }
 
-            const statusCategory = extract('StatusCategory');
-            const statusSummary = extract('StatusSummary');
-            const service = extract('Class');
-            const destCity = extract('DestinationCity');
-            const destState = extract('DestinationState');
-            const destZip = extract('DestinationZip');
-            const originCity = extract('OriginCity');
-            const originState = extract('OriginState');
-            const originZip = extract('OriginZip');
-            const deliveryDate = extract('ExpectedDeliveryDate');
-            const guaranteedDate = extract('GuaranteedDeliveryDate');
-
-            // Parse events
-            function parseTrackEvent(xml: string) {
-              const ex = (tag: string) => { const m = xml.match(new RegExp(`<${tag}>(.*?)</${tag}>`)); return m ? m[1].trim() : ''; };
-              const eventCity = ex('EventCity');
-              const eventState = ex('EventState');
-              const eventZip = ex('EventZIPCode');
-              return {
-                status: ex('Event'),
-                detail: ex('Event'),
-                location: eventCity ? `${eventCity}, ${eventState} ${eventZip}`.trim() : '',
-                date: ex('EventDate'),
-                time: ex('EventTime'),
-              };
+            // ── TrackingMore ─────────────────────────────────────────────
+            if (provider.id === 'trackingmore' && !trackingResult) {
+              for (const account of accounts) {
+                try {
+                  const r = await fetch('https://api.trackingmore.com/v4/trackings/realtime', { method: 'POST', headers: { 'Tracking-Api-Key': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ tracking_number: trackingNumber, carrier_code: 'usps' }), signal: AbortSignal.timeout(12000) });
+                  if (r.ok) {
+                    const d = await r.json();
+                    if (d.meta?.code === 200 && d.data) {
+                      const evts = (d.data.track_info || []).map((e: any) => ({ status: e.tracking_detail || '', detail: e.tracking_detail || '', location: e.location || '', date: e.tracking_time ? fmtDate(new Date(e.tracking_time * 1000).toISOString()) : '', time: e.tracking_time ? fmtTime(new Date(e.tracking_time * 1000).toISOString()) : '' }));
+                      if (evts.length > 0) { trackingResult = { ok: true, trackingNumber, status: inferStatus(d.data.latest_event?.tracking_detail || evts[0].status), statusLabel: d.data.latest_event?.tracking_detail || evts[0].status || 'In Transit', service: 'USPS Package', origin: d.data.origin_info?.trackinfo?.[0]?.location || '', destination: d.data.destination_info?.trackinfo?.[0]?.location || '', estimatedDelivery: d.data.scheduled_delivery || '', weight: '—', events: evts }; usedProvider = 'TrackingMore'; usedAccount = account.name; break; }
+                    }
+                  }
+                } catch {}
+              }
             }
 
-            const events: any[] = [];
-            const summaryMatch = xmlResponse.match(/<TrackSummary>(.*?)<\/TrackSummary>/s);
-            if (summaryMatch) events.push(parseTrackEvent(summaryMatch[1]));
-            const detailRegex = /<TrackDetail>(.*?)<\/TrackDetail>/gs;
-            let dm;
-            while ((dm = detailRegex.exec(xmlResponse)) !== null) events.push(parseTrackEvent(dm[1]));
+            // ── 17Track ──────────────────────────────────────────────────
+            if (provider.id === '17track' && !trackingResult) {
+              for (const account of accounts) {
+                try {
+                  await fetch('https://api.17track.net/track/v2.2/register', { method: 'POST', headers: { '17token': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify([{ number: trackingNumber }]), signal: AbortSignal.timeout(5000) });
+                  const r = await fetch('https://api.17track.net/track/v2.2/gettrackinfo', { method: 'POST', headers: { '17token': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify([{ number: trackingNumber }]), signal: AbortSignal.timeout(12000) });
+                  if (r.ok) {
+                    const d = await r.json();
+                    const item = d.data?.accepted?.[0];
+                    if (item?.track) {
+                      const raw = [...(item.track.w0 || []), ...(item.track.w1 || [])];
+                      const evts = raw.map((e: any) => ({ status: e.z || e.d || '', detail: e.d || e.z || '', location: e.l || '', date: e.a ? fmtDate(e.a) : '', time: e.a ? fmtTime(e.a) : '' }));
+                      if (evts.length > 0) { const e17 = item.track.e; let st = 'in-transit'; if (e17 === 40) st = 'delivered'; else if (e17 === 35) st = 'out-for-delivery'; else if (e17 <= 10) st = 'label-created'; trackingResult = { ok: true, trackingNumber, status: st, statusLabel: item.track.b || 'In Transit', service: 'USPS Package', origin: '', destination: '', estimatedDelivery: '', weight: '—', events: evts }; usedProvider = '17Track'; usedAccount = account.name; break; }
+                    }
+                  }
+                } catch {}
+              }
+            }
 
-            let status = 'in-transit';
-            const cat = statusCategory.toLowerCase();
-            if (cat.includes('delivered')) status = 'delivered';
-            else if (cat.includes('out for delivery')) status = 'out-for-delivery';
-            else if (cat.includes('alert') || cat.includes('exception')) status = 'alert';
-            else if (cat.includes('accepted') || cat.includes('pre-shipment')) status = 'label-created';
-
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({
-              ok: true,
-              trackingNumber,
-              status,
-              statusLabel: statusCategory || statusSummary || 'In Transit',
-              service: service || 'USPS Package',
-              origin: originCity ? `${originCity}, ${originState} ${originZip}` : '',
-              destination: destCity ? `${destCity}, ${destState} ${destZip}` : '',
-              estimatedDelivery: guaranteedDate || deliveryDate || '',
-              events,
-            }));
-          } catch (e: any) {
-            console.error('USPS API error:', e.message);
-            res.statusCode = 500;
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ ok: false, error: 'USPS API request failed. Please try again later.' }));
+            // ── USPS XML API (via scraper slot or if USPS key configured) ─
+            if ((provider.id === 'scraper' || provider.id === 'usps') && !trackingResult) {
+              const config = loadConfig();
+              const USERID = config.apiKeys?.uspsUserId || '';
+              if (USERID) {
+                try {
+                  const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>USPostalTracking</SourceId><TrackID ID="${trackingNumber}"/></TrackFieldRequest>`;
+                  const apiUrl = `https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=${encodeURIComponent(xmlRequest)}`;
+                  const fetchMod = await import('node:https');
+                  const xmlResponse: string = await new Promise((resolve, reject) => { fetchMod.default.get(apiUrl, { timeout: 12000 }, (resp) => { let data = ''; resp.on('data', (c: Buffer) => data += c); resp.on('end', () => resolve(data)); }).on('error', reject); });
+                  const extract = (tag: string) => { const m = xmlResponse.match(new RegExp(`<${tag}>(.*?)</${tag}>`, 's')); return m ? m[1].trim() : ''; };
+                  const errNum = xmlResponse.match(/<Number>(.*?)<\/Number>/);
+                  if (!errNum || xmlResponse.includes('<TrackDetail>') || xmlResponse.includes('<TrackSummary>')) {
+                    const statusCategory = extract('StatusCategory'); const statusSummary = extract('StatusSummary');
+                    const parseXmlEvent = (xml: string) => { const ex = (tag: string) => { const m = xml.match(new RegExp(`<${tag}>(.*?)</${tag}>`)); return m ? m[1].trim() : ''; }; const ec = ex('EventCity'); const es = ex('EventState'); const ez = ex('EventZIPCode'); return { status: ex('Event'), detail: ex('Event'), location: ec ? `${ec}, ${es} ${ez}`.trim() : '', date: ex('EventDate'), time: ex('EventTime') }; };
+                    const evts: any[] = [];
+                    const sm = xmlResponse.match(/<TrackSummary>(.*?)<\/TrackSummary>/s); if (sm) evts.push(parseXmlEvent(sm[1]));
+                    const dr = /<TrackDetail>(.*?)<\/TrackDetail>/gs; let dm; while ((dm = dr.exec(xmlResponse)) !== null) evts.push(parseXmlEvent(dm[1]));
+                    if (evts.length > 0) { const cat = statusCategory.toLowerCase(); let st = 'in-transit'; if (cat.includes('delivered')) st = 'delivered'; else if (cat.includes('out for delivery')) st = 'out-for-delivery'; else if (cat.includes('alert') || cat.includes('exception')) st = 'alert'; else if (cat.includes('accepted') || cat.includes('pre-shipment')) st = 'label-created'; const oc = extract('OriginCity'); const os2 = extract('OriginState'); const oz = extract('OriginZip'); const dc = extract('DestinationCity'); const ds = extract('DestinationState'); const dz = extract('DestinationZip'); trackingResult = { ok: true, trackingNumber, status: st, statusLabel: statusCategory || statusSummary || 'In Transit', service: extract('Class') || 'USPS Package', origin: oc ? `${oc}, ${os2} ${oz}` : '', destination: dc ? `${dc}, ${ds} ${dz}` : '', estimatedDelivery: extract('GuaranteedDeliveryDate') || extract('ExpectedDeliveryDate') || '', weight: '—', events: evts }; usedProvider = 'USPS XML'; usedAccount = 'USPS API'; }
+                  }
+                } catch {}
+              }
+            }
           }
+
+          if (!trackingResult) {
+            addTrackLog('None', 'None', false, 'error', 'No providers configured or all failed');
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: false, error: 'No tracking information found. Configure API keys in Admin → API Manager → Providers, or enter your USPS API credentials in Admin → API Keys.', trackingNumber }));
+            return;
+          }
+
+          // ── Cache the result ─────────────────────────────────────────────
+          try {
+            const ttlCfg = fs.existsSync(CACHE_SETTINGS_FILE) ? JSON.parse(fs.readFileSync(CACHE_SETTINGS_FILE, 'utf8')) : {};
+            const ttlMap: Record<string, number> = { delivered: ttlCfg.delivered || 1440, 'out-for-delivery': ttlCfg.outForDelivery || 30, 'in-transit': ttlCfg.inTransit || 120, 'label-created': ttlCfg.preShipment || 60, alert: ttlCfg.exception || 15 };
+            const ttlMin = ttlMap[trackingResult.status] || ttlCfg.unknown || 30;
+            cache[trackingNumber] = { trackingNumberHash: trackingNumber.slice(0, 4) + '****' + trackingNumber.slice(-4), carrier: 'USPS', status: trackingResult.statusLabel, cachedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + ttlMin * 60000).toISOString(), hitCount: 0, lastHit: new Date().toISOString(), providerUsed: usedProvider, data: trackingResult };
+            saveTrackCache(cache);
+          } catch {}
+
+          addTrackLog(usedProvider, usedAccount, false, 'success');
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(trackingResult));
           return;
         }
 
@@ -1285,24 +1322,65 @@ function adminApiPlugin() {
             if (fs.existsSync(TRACKING_LOGS_FILE)) {
               try { logs = JSON.parse(fs.readFileSync(TRACKING_LOGS_FILE, 'utf8')); } catch {}
             }
-            if (logs.length === 0) {
-              const carriers = ['USPS', 'FedEx', 'UPS', 'DHL'];
-              const providers = ['Ship24', 'TrackingMore', 'Custom Scraper'];
-              const statuses: ('success' | 'error')[] = ['success', 'success', 'success', 'success', 'error'];
-              logs = Array.from({ length: 50 }, (_, i) => ({
-                id: `log-${i}`, timestamp: new Date(Date.now() - i * 300000).toISOString(),
-                trackingNumberHash: `${['9400', '9205', '9261'][i % 3]}****${String(1000 + i).slice(-4)}`,
-                carrier: carriers[i % 4], providerUsed: providers[i % 3],
-                accountUsed: `${providers[i % 3]} - Account 1`,
-                cacheHit: i % 3 === 0, responseTimeMs: Math.floor(Math.random() * 400) + 80,
-                status: statuses[i % 5],
-                errorMessage: statuses[i % 5] === 'error' ? 'Quota exceeded' : undefined,
-                ipHash: `192.168.${(i % 10)}.xxx`,
-              }));
-            }
             const limit = parseInt(new URL(`http://x${url}`).searchParams.get('limit') || '100');
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify(logs.slice(0, limit)));
+          } catch { res.end(JSON.stringify([])); }
+          return;
+        }
+
+        // ── GET /api/system-stats/hourly ──────────────────────────────────
+        if (url === "/api/system-stats/hourly" && req.method === "GET") {
+          try {
+            const TRACKING_LOGS_FILE = path.join(ROOT, 'seo-data', 'tracking-logs.json');
+            let logs: any[] = [];
+            if (fs.existsSync(TRACKING_LOGS_FILE)) {
+              try { logs = JSON.parse(fs.readFileSync(TRACKING_LOGS_FILE, 'utf8')); } catch {}
+            }
+            const hourMap: Record<string, { requests: number; cacheHits: number; apiCalls: number }> = {};
+            const now = new Date();
+            for (let h = 23; h >= 0; h--) {
+              const d = new Date(now); d.setHours(d.getHours() - h, 0, 0, 0);
+              const key = `${String(d.getHours()).padStart(2, '0')}:00`;
+              hourMap[key] = { requests: 0, cacheHits: 0, apiCalls: 0 };
+            }
+            logs.forEach((log: any) => {
+              try {
+                const d = new Date(log.timestamp);
+                const diff = (now.getTime() - d.getTime()) / 3600000;
+                if (diff <= 24) {
+                  const key = `${String(d.getHours()).padStart(2, '0')}:00`;
+                  if (hourMap[key]) {
+                    hourMap[key].requests++;
+                    if (log.cacheHit) hourMap[key].cacheHits++;
+                    else hourMap[key].apiCalls++;
+                  }
+                }
+              } catch {}
+            });
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(Object.entries(hourMap).map(([hour, v]) => ({ hour, ...v }))));
+          } catch { res.end(JSON.stringify([])); }
+          return;
+        }
+
+        // ── GET /api/system-stats/provider-usage ──────────────────────────
+        if (url === "/api/system-stats/provider-usage" && req.method === "GET") {
+          try {
+            const TRACKING_LOGS_FILE = path.join(ROOT, 'seo-data', 'tracking-logs.json');
+            let logs: any[] = [];
+            if (fs.existsSync(TRACKING_LOGS_FILE)) {
+              try { logs = JSON.parse(fs.readFileSync(TRACKING_LOGS_FILE, 'utf8')); } catch {}
+            }
+            const providerMap: Record<string, number> = {};
+            logs.forEach((log: any) => { if (log.providerUsed) providerMap[log.providerUsed] = (providerMap[log.providerUsed] || 0) + 1; });
+            const total = Object.values(providerMap).reduce((s, v) => s + v, 0) || 1;
+            const colors: Record<string, string> = { 'Ship24': '#3b82f6', 'TrackingMore': '#10b981', '17Track': '#f59e0b', 'Custom Scraper': '#8b5cf6', 'USPS': '#6366f1' };
+            const result = Object.entries(providerMap).map(([name, count]) => ({
+              name, value: Math.round(count / total * 100), color: colors[name] || '#64748b'
+            }));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(result));
           } catch { res.end(JSON.stringify([])); }
           return;
         }
@@ -1316,8 +1394,23 @@ function adminApiPlugin() {
 
         // ── GET /api/cache/stats ──────────────────────────────────────────
         if (url === "/api/cache/stats" && req.method === "GET") {
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ totalEntries: 48293, hitRateToday: 72.4, memoryUsedMB: 234.7, apiCallsSaved: 34821, moneySaved: 174.10 }));
+          try {
+            const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
+            const TRACKING_LOGS_FILE = path.join(ROOT, 'seo-data', 'tracking-logs.json');
+            const cacheData = fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {};
+            const entries = Object.values(cacheData) as any[];
+            const now = new Date();
+            const validEntries = entries.filter((e: any) => new Date(e.expiresAt) > now);
+            const totalHits = entries.reduce((s, e: any) => s + (e.hitCount || 0), 0);
+            const logs = fs.existsSync(TRACKING_LOGS_FILE) ? JSON.parse(fs.readFileSync(TRACKING_LOGS_FILE, 'utf8')) : [];
+            const todayLogs = (logs as any[]).filter((l: any) => new Date(l.timestamp).toDateString() === now.toDateString());
+            const cacheHits = todayLogs.filter((l: any) => l.cacheHit).length;
+            const hitRate = todayLogs.length > 0 ? Math.round(cacheHits / todayLogs.length * 100 * 10) / 10 : 0;
+            const apiCallsSaved = Math.round(totalHits * 0.9);
+            const memMB = Math.round(JSON.stringify(cacheData).length / 1024 / 1024 * 100) / 100;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ totalEntries: validEntries.length, hitRateToday: hitRate, memoryUsedMB: memMB, apiCallsSaved, moneySaved: parseFloat((apiCallsSaved * 0.005).toFixed(2)) }));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ totalEntries: 0, hitRateToday: 0, memoryUsedMB: 0, apiCallsSaved: 0, moneySaved: 0 })); }
           return;
         }
 
@@ -1350,32 +1443,44 @@ function adminApiPlugin() {
 
         // ── GET /api/cache/entries ────────────────────────────────────────
         if (url === "/api/cache/entries" && req.method === "GET") {
-          const statuses = ['Delivered', 'In Transit', 'Out for Delivery', 'Pending', 'Exception'];
-          const entries = Array.from({ length: 20 }, (_, i) => ({
-            trackingNumberHash: `${['9400', '9205', '9261', '9341'][i % 4]}****${String(1000 + i).slice(-4)}`,
-            carrier: ['USPS', 'FedEx', 'UPS', 'DHL'][i % 4],
-            status: statuses[i % 5],
-            cachedAt: new Date(Date.now() - i * 3600000).toISOString(),
-            expiresAt: new Date(Date.now() + (i + 1) * 1800000).toISOString(),
-            hitCount: Math.floor(Math.random() * 50) + 1,
-            lastHit: new Date(Date.now() - i * 600000).toISOString(),
-          }));
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify(entries));
+          try {
+            const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
+            const cacheData = fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {};
+            const now = new Date();
+            const entries = Object.entries(cacheData)
+              .filter(([, e]: any) => new Date(e.expiresAt) > now)
+              .map(([key, e]: any) => ({ trackingNumberHash: e.trackingNumberHash || key.slice(0, 4) + '****' + key.slice(-4), carrier: e.carrier || 'USPS', status: e.status || 'Unknown', cachedAt: e.cachedAt, expiresAt: e.expiresAt, hitCount: e.hitCount || 0, lastHit: e.lastHit || e.cachedAt }))
+              .slice(0, 100);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(entries));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify([])); }
           return;
         }
 
         // ── POST /api/cache/flush ─────────────────────────────────────────
         if (url === "/api/cache/flush" && req.method === "POST") {
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ ok: true, flushed: 48293, message: 'تم مسح الكاش بالكامل' }));
+          try {
+            const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
+            const cacheData = fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {};
+            const count = Object.keys(cacheData).length;
+            fs.writeFileSync(TRACKING_CACHE_FILE, '{}');
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true, flushed: count, message: `تم مسح ${count} إدخال من الكاش` }));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ ok: true, flushed: 0 })); }
           return;
         }
 
         // ── DELETE /api/cache/:hash ───────────────────────────────────────
         if (url.startsWith("/api/cache/") && req.method === "DELETE") {
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ ok: true }));
+          try {
+            const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
+            const hash = decodeURIComponent(url.slice('/api/cache/'.length));
+            const cacheData = fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {};
+            delete cacheData[hash];
+            fs.writeFileSync(TRACKING_CACHE_FILE, JSON.stringify(cacheData));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ ok: true })); }
           return;
         }
 

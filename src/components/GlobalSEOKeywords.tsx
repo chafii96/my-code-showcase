@@ -5,7 +5,7 @@
  */
 
 import { allUSCities, articleKeywords } from "@/data/usCities";
-import { trackingStatuses, majorLocations } from "@/data/mockTracking";
+import { trackingStatuses, majorLocations } from "@/data/seoStaticData";
 import { Link } from "react-router-dom";
 
 const GlobalSEOKeywords = () => {

@@ -3,7 +3,7 @@ import BreadcrumbSchema from "@/components/BreadcrumbSchema";
 import { allUSCities } from "@/data/usCities";
 import Layout from "@/components/Layout";
 import SEOHead from "@/components/SEOHead";
-import { majorLocations, trackingStatuses } from "@/data/mockTracking";
+import { majorLocations, trackingStatuses } from "@/data/seoStaticData";
 import { ArrowRight, MapPin, Building, Package, Clock, Truck, FileText, ChevronRight, Globe, Zap, BarChart3 } from "lucide-react";
 
 const locationContent: Record<string, { overview: string; tips: string[] }> = {

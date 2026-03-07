@@ -3,7 +3,7 @@ import SEOHead from "@/components/SEOHead";
 import { Link } from "react-router-dom";
 import { Package, Truck, MapPin, Clock, Shield, CheckCircle, ArrowRight, Search, Globe, Mail } from "lucide-react";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
-import { trackingStatuses, majorLocations } from "@/data/mockTracking";
+import { trackingStatuses, majorLocations } from "@/data/seoStaticData";
 import { AdSlot } from "@/components/ads/AdSlot";
 
 const PostalTrackingPage = () => {
