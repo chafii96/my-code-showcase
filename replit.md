@@ -6,7 +6,8 @@ A React + Vite SPA for USPS package tracking with a fully-functional admin dashb
 ## Architecture
 - **Frontend**: React 18, TypeScript, Tailwind CSS, shadcn/ui components
 - **Routing**: React Router DOM v6
-- **API**: Inline Vite plugin in `vite.config.ts` that handles all `/api/*` routes (~2530+ lines total)
+- **API**: Inline Vite plugin in `vite.config.ts` that handles all `/api/*` routes (~3000+ lines total)
+- **Advanced Scraper Engine**: 5-layer USPS scraper (L1: tools.usps.com HTML/JSON, L2: USPS AJAX endpoint, L3: USPS Mobile, L4: PackageRadar API, L5: Parcelsapp), 20 UA pool, per-layer runtime stats, auto failover to USPS XML API
 - **Admin Dashboard**: `/admin` — password protected (default: `uspostal2024`), RTL layout, URL hash tab persistence
 - **Server (optional)**: `server/index.js` — standalone Express server (port 8080) for VPS/production
 

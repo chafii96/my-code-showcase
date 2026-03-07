@@ -352,6 +352,264 @@ function adminApiPlugin() {
       // ── In-memory IP rate limit cache (rolling hour window) ──────────────
       const ipRateCache = new Map<string, { count: number; windowStart: number }>();
 
+      // ── Advanced USPS Multi-Layer Scraper Engine ──────────────────────────
+      const SCRAPER_UA_POOL = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.2; rv:123.0) Gecko/20100101 Firefox/123.0',
+        'Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_2_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+        'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+        'Mozilla/5.0 (Android 14; Mobile; rv:123.0) Gecko/123.0 Firefox/123.0',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 OPR/108.0.0.0',
+      ];
+      const pickUA = () => SCRAPER_UA_POOL[Math.floor(Math.random() * SCRAPER_UA_POOL.length)];
+
+      interface ScraperEvent { status: string; detail: string; location: string; date: string; time: string; }
+      interface ScraperResult { events: ScraperEvent[]; origin?: string; destination?: string; estimatedDelivery?: string; statusLabel?: string; rawStatus?: string; }
+
+      const scraperLayerStats = new Map<string, { attempts: number; successes: number; totalMs: number; lastSuccess: number; lastAttempt: number; lastError: string }>();
+      const updateLayerStat = (id: string, success: boolean, ms: number, err = '') => {
+        const s = scraperLayerStats.get(id) || { attempts: 0, successes: 0, totalMs: 0, lastSuccess: 0, lastAttempt: 0, lastError: '' };
+        s.attempts++; s.totalMs += ms; s.lastAttempt = Date.now();
+        if (success) s.successes++; else s.lastError = err;
+        scraperLayerStats.set(id, s);
+      };
+
+      const cleanText = (s: string) => (s || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+
+      const extractUspsEventsFromHtml = (html: string): ScraperEvent[] => {
+        const events: ScraperEvent[] = [];
+        // Strategy A: JSON data embedded as window variable or script assignment
+        const jsonPatterns = [
+          /window\.__INITIAL_STATE__\s*=\s*({[\s\S]*?});\s*(?:<\/script>|window\.)/,
+          /var\s+detailsJSON\s*=\s*'({[\s\S]*?)'\s*;/,
+          /trackResultList\s*=\s*(\[[\s\S]*?\]);\s*(?:var|\/\/|<\/script>)/,
+          /"detailItems"\s*:\s*(\[[\s\S]*?\])\s*(?:,|})/,
+        ];
+        for (const pat of jsonPatterns) {
+          const m = html.match(pat);
+          if (m?.[1]) {
+            try {
+              const raw = JSON.parse(m[1]);
+              const arr = Array.isArray(raw) ? raw : (raw?.trackingDetails || raw?.detailItems || []);
+              for (const e of arr) {
+                const city = e.eventCity || e.EventCity || '';
+                const st = e.eventState || e.EventState || '';
+                const zip = e.eventZipCode || e.EventZIPCode || '';
+                events.push({ status: e.eventType || e.Event || e.status || '', detail: e.eventDescription || e.Event || e.status || '', location: [city, st, zip].filter(Boolean).join(', '), date: e.eventDate || e.EventDate || '', time: e.eventTime || e.EventTime || '' });
+              }
+              if (events.length > 0) return events;
+            } catch {}
+          }
+        }
+        // Strategy B: Parse HTML table/list items with USPS CSS classes
+        const rowPatterns = [
+          /<(?:tr|li|div)[^>]*class="[^"]*(?:tb_NHN|tb_PkgHistory|tracking-event-details)[^"]*"[^>]*>([\s\S]*?)<\/(?:tr|li|div)>/g,
+          /<(?:tr|li)[^>]*data-event[^>]*>([\s\S]*?)<\/(?:tr|li)>/g,
+        ];
+        for (const pat of rowPatterns) {
+          const matches = [...html.matchAll(pat)];
+          for (const m of matches) {
+            const inner = m[1];
+            const status = cleanText(inner.match(/class="[^"]*(?:tb_status|status-detail|eventStatus)[^"]*"[^>]*>([\s\S]*?)<\//)?.[1] || '');
+            const location = cleanText(inner.match(/class="[^"]*(?:tb_location|eventLocation|scan-location)[^"]*"[^>]*>([\s\S]*?)<\//)?.[1] || '');
+            const date = cleanText(inner.match(/class="[^"]*(?:tb_date|eventDate|event-date)[^"]*"[^>]*>([\s\S]*?)<\//)?.[1] || '');
+            const time = cleanText(inner.match(/class="[^"]*(?:tb_time|eventTime|event-time)[^"]*"[^>]*>([\s\S]*?)<\//)?.[1] || '');
+            if (status) events.push({ status, detail: status, location, date, time });
+          }
+          if (events.length > 0) return events;
+        }
+        // Strategy C: Extract any structured event blocks by date+time pattern
+        const dtPat = /(\w+ \d{1,2}, \d{4},?\s+\d{1,2}:\d{2}\s*[ap]m)/gi;
+        const splits = html.split(dtPat);
+        if (splits.length > 2) {
+          for (let i = 1; i < splits.length - 1; i += 2) {
+            const dateTime = splits[i]; const ctx = cleanText(splits[i + 1].slice(0, 300));
+            const locM = ctx.match(/([A-Z][A-Z\s]+,\s*[A-Z]{2}\s+\d{5})/);
+            events.push({ status: ctx.slice(0, 80), detail: ctx.slice(0, 120), location: locM?.[1] || '', date: dateTime.split(',')[0], time: dateTime.includes(',') ? dateTime.split(',').slice(1).join(',').trim() : '' });
+          }
+          if (events.length > 0) return events;
+        }
+        return events;
+      };
+
+      // ── L1: USPS Tracking Page (HTML + embedded JSON) ───────────────────────
+      const scraperL1 = async (tn: string): Promise<ScraperResult | null> => {
+        const t0 = Date.now();
+        try {
+          const r = await fetch(`https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(tn)}`, {
+            headers: { 'User-Agent': pickUA(), 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language': 'en-US,en;q=0.9', 'Cache-Control': 'no-cache', 'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Site': 'none' },
+            signal: AbortSignal.timeout(20000),
+          });
+          if (!r.ok) { updateLayerStat('l1', false, Date.now() - t0, `HTTP ${r.status}`); return null; }
+          const html = await r.text();
+          const events = extractUspsEventsFromHtml(html);
+          const statusM = html.match(/class="[^"]*(?:tb_status_summary|status-category|pkg-status)[^"]*"[^>]*>([\s\S]*?)</);
+          const rawStatus = cleanText(statusM?.[1] || '');
+          if (events.length > 0) { updateLayerStat('l1', true, Date.now() - t0); return { events, rawStatus }; }
+          updateLayerStat('l1', false, Date.now() - t0, 'no events parsed');
+          return null;
+        } catch (e: any) { updateLayerStat('l1', false, Date.now() - t0, e.message); return null; }
+      };
+
+      // ── L2: USPS AJAX/XHR JSON endpoint ────────────────────────────────────
+      const scraperL2 = async (tn: string): Promise<ScraperResult | null> => {
+        const t0 = Date.now();
+        try {
+          const r = await fetch('https://tools.usps.com/go/TrackConfirmAction.action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'User-Agent': pickUA(), 'Accept': 'application/json, text/javascript, */*; q=0.01', 'X-Requested-With': 'XMLHttpRequest', 'Origin': 'https://tools.usps.com', 'Referer': `https://tools.usps.com/go/TrackConfirmAction?tLabels=${tn}` },
+            body: `tc0=${encodeURIComponent(tn)}&resultType=trackingDetails`,
+            signal: AbortSignal.timeout(15000),
+          });
+          if (!r.ok) { updateLayerStat('l2', false, Date.now() - t0, `HTTP ${r.status}`); return null; }
+          const text = await r.text();
+          let data: any;
+          try { data = JSON.parse(text); } catch { updateLayerStat('l2', false, Date.now() - t0, 'invalid JSON'); return null; }
+          const root = data?.data || data;
+          const rawEvts: any[] = [];
+          if (root?.trackSummary) rawEvts.push(root.trackSummary);
+          if (Array.isArray(root?.trackDetail)) rawEvts.push(...root.trackDetail);
+          if (Array.isArray(root?.TrackDetail)) rawEvts.push(...root.TrackDetail);
+          if (rawEvts.length === 0 && Array.isArray(root)) rawEvts.push(...root);
+          const events = rawEvts.map((e: any) => {
+            const city = e.EventCity || e.eventCity || ''; const st = e.EventState || e.eventState || ''; const zip = e.EventZIPCode || e.eventZipCode || '';
+            return { status: e.Event || e.event || e.eventType || '', detail: e.Event || e.eventDescription || e.event || '', location: [city, st, zip].filter(Boolean).join(', '), date: e.EventDate || e.eventDate || '', time: e.EventTime || e.eventTime || '' };
+          }).filter((e: ScraperEvent) => e.status);
+          if (events.length > 0) { updateLayerStat('l2', true, Date.now() - t0); return { events, rawStatus: root?.packageStatus || root?.statusCategory || '' }; }
+          updateLayerStat('l2', false, Date.now() - t0, 'empty events');
+          return null;
+        } catch (e: any) { updateLayerStat('l2', false, Date.now() - t0, e.message); return null; }
+      };
+
+      // ── L3: USPS Mobile site (m.usps.com) ──────────────────────────────────
+      const scraperL3 = async (tn: string): Promise<ScraperResult | null> => {
+        const t0 = Date.now();
+        try {
+          const mobileUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Mobile/15E148 Safari/604.1';
+          const r = await fetch(`https://m.usps.com/m/TrackConfirmAction?tLabels=${encodeURIComponent(tn)}`, {
+            headers: { 'User-Agent': mobileUA, 'Accept': 'text/html,*/*;q=0.8', 'Accept-Language': 'en-US,en;q=0.9' },
+            signal: AbortSignal.timeout(20000),
+          });
+          if (!r.ok) { updateLayerStat('l3', false, Date.now() - t0, `HTTP ${r.status}`); return null; }
+          const html = await r.text();
+          const events = extractUspsEventsFromHtml(html);
+          // Mobile site uses simpler patterns
+          if (events.length === 0) {
+            const rowPat = /<div[^>]*class="[^"]*trackingEvent[^"]*"[^>]*>([\s\S]*?)<\/div>/g;
+            for (const m of html.matchAll(rowPat)) {
+              const inner = m[1];
+              const status = cleanText(inner.match(/<(?:h\d|p|span)[^>]*>(.*?)<\/(?:h\d|p|span)>/)?.[1] || '');
+              const loc = cleanText(inner.match(/(?:Location|City)[^>]*>\s*(.*?)\s*</i)?.[1] || '');
+              if (status) events.push({ status, detail: status, location: loc, date: '', time: '' });
+            }
+          }
+          if (events.length > 0) { updateLayerStat('l3', true, Date.now() - t0); return { events }; }
+          updateLayerStat('l3', false, Date.now() - t0, 'no events');
+          return null;
+        } catch (e: any) { updateLayerStat('l3', false, Date.now() - t0, e.message); return null; }
+      };
+
+      // ── L4: PackageRadar.com public API ────────────────────────────────────
+      const scraperL4 = async (tn: string): Promise<ScraperResult | null> => {
+        const t0 = Date.now();
+        try {
+          const r = await fetch(`https://packageradar.com/api/v1/tracking/usps/${encodeURIComponent(tn)}`, {
+            headers: { 'User-Agent': pickUA(), 'Accept': 'application/json', 'Referer': 'https://packageradar.com/', 'Origin': 'https://packageradar.com' },
+            signal: AbortSignal.timeout(15000),
+          });
+          if (!r.ok) { updateLayerStat('l4', false, Date.now() - t0, `HTTP ${r.status}`); return null; }
+          const data = await r.json();
+          const rawEvts: any[] = data?.checkpoints || data?.events || data?.tracking_details || data?.data?.events || [];
+          const events = rawEvts.map((e: any) => ({
+            status: e.status || e.message || e.description || '',
+            detail: e.detail || e.message || e.description || '',
+            location: e.location || e.city || [e.city, e.state].filter(Boolean).join(', ') || '',
+            date: e.time ? (new Date(e.time * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : (e.date || ''),
+            time: e.time ? (new Date(e.time * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })) : (e.timeStr || ''),
+          })).filter((e: ScraperEvent) => e.status);
+          if (events.length > 0) { updateLayerStat('l4', true, Date.now() - t0); return { events, rawStatus: data?.status || '' }; }
+          updateLayerStat('l4', false, Date.now() - t0, 'empty response');
+          return null;
+        } catch (e: any) { updateLayerStat('l4', false, Date.now() - t0, e.message); return null; }
+      };
+
+      // ── L5: Parcelsapp.com public scraper ──────────────────────────────────
+      const scraperL5 = async (tn: string): Promise<ScraperResult | null> => {
+        const t0 = Date.now();
+        try {
+          const r = await fetch(`https://parcelsapp.com/en/tracking/${encodeURIComponent(tn)}`, {
+            headers: { 'User-Agent': pickUA(), 'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8', 'Accept-Language': 'en-US,en;q=0.9' },
+            signal: AbortSignal.timeout(20000),
+          });
+          if (!r.ok) { updateLayerStat('l5', false, Date.now() - t0, `HTTP ${r.status}`); return null; }
+          const html = await r.text();
+          // Try to extract the JSON state from parcelsapp
+          const stateM = html.match(/window\.__app_state\s*=\s*({[\s\S]*?});\s*<\/script>/) || html.match(/"events"\s*:\s*(\[[\s\S]*?\])/);
+          if (stateM?.[1]) {
+            try {
+              const raw = JSON.parse(stateM[1]);
+              const arr: any[] = Array.isArray(raw) ? raw : (raw?.shipments?.[0]?.events || raw?.events || []);
+              const events = arr.map((e: any) => ({ status: e.description || e.status || e.title || '', detail: e.description || e.status || '', location: e.location || e.place || '', date: e.date ? new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '', time: e.date ? new Date(e.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '' })).filter((e: ScraperEvent) => e.status);
+              if (events.length > 0) { updateLayerStat('l5', true, Date.now() - t0); return { events }; }
+            } catch {}
+          }
+          // Fallback: parse event rows from HTML
+          const evtPat = /<(?:li|div)[^>]*class="[^"]*(?:event|checkpoint|tracking-item)[^"]*"[^>]*>([\s\S]*?)<\/(?:li|div)>/g;
+          const events: ScraperEvent[] = [];
+          for (const m of html.matchAll(evtPat)) {
+            const inner = m[1];
+            const title = cleanText(inner.match(/class="[^"]*(?:title|description|status)[^"]*"[^>]*>([\s\S]*?)</)?.[1] || '');
+            const loc = cleanText(inner.match(/class="[^"]*(?:location|place)[^"]*"[^>]*>([\s\S]*?)</)?.[1] || '');
+            const dt = cleanText(inner.match(/class="[^"]*(?:date|time|datetime)[^"]*"[^>]*>([\s\S]*?)</)?.[1] || '');
+            if (title) events.push({ status: title, detail: title, location: loc, date: dt, time: '' });
+          }
+          if (events.length > 0) { updateLayerStat('l5', true, Date.now() - t0); return { events }; }
+          updateLayerStat('l5', false, Date.now() - t0, 'no events');
+          return null;
+        } catch (e: any) { updateLayerStat('l5', false, Date.now() - t0, e.message); return null; }
+      };
+
+      // ── Scraper Orchestrator ────────────────────────────────────────────────
+      const SCRAPER_LAYERS: Array<{ id: string; name: string; fn: (tn: string) => Promise<ScraperResult | null> }> = [
+        { id: 'l1', name: 'USPS Tracking Page (HTML+JSON)', fn: scraperL1 },
+        { id: 'l2', name: 'USPS AJAX JSON Endpoint', fn: scraperL2 },
+        { id: 'l3', name: 'USPS Mobile Site', fn: scraperL3 },
+        { id: 'l4', name: 'PackageRadar API', fn: scraperL4 },
+        { id: 'l5', name: 'Parcelsapp Scraper', fn: scraperL5 },
+      ];
+
+      const runUspsScrapers = async (tn: string): Promise<ScraperResult | null> => {
+        // Load enabled layers from scrapers.json
+        const SCRAPERS_FILE_PATH = path.join(process.cwd(), 'seo-data', 'scrapers.json');
+        let layerConfig: Record<string, boolean> = {};
+        try {
+          if (fs.existsSync(SCRAPERS_FILE_PATH)) {
+            const saved: any[] = JSON.parse(fs.readFileSync(SCRAPERS_FILE_PATH, 'utf8'));
+            for (const s of saved) layerConfig[s.id] = s.enabled !== false;
+          }
+        } catch {}
+        for (const layer of SCRAPER_LAYERS) {
+          if (layerConfig[layer.id] === false) continue;
+          const result = await layer.fn(tn);
+          if (result && result.events.length > 0) return result;
+        }
+        return null;
+      };
+
       // ── Middleware: handle /api/* routes ─────────────────────────────────
       server.middlewares.use(async (req: any, res: any, next: any) => {
         const url = req.url || "";
@@ -963,27 +1221,40 @@ function adminApiPlugin() {
               }
             }
 
-            // ── USPS XML API ──────────────────────────────────────────────
+            // ── Advanced Multi-Layer USPS Scraper + USPS XML fallback ────────
             if ((provider.id === 'scraper' || provider.id === 'usps') && !trackingResult) {
-              const config = loadConfig();
-              const USERID = config.apiKeys?.uspsUserId || '';
-              if (USERID) {
-                try {
-                  const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>USPostalTracking</SourceId><TrackID ID="${trackingNumber}"/></TrackFieldRequest>`;
-                  const apiUrl = `https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=${encodeURIComponent(xmlRequest)}`;
-                  const fetchMod = await import('node:https');
-                  const xmlResponse: string = await new Promise((resolve, reject) => { fetchMod.default.get(apiUrl, { timeout: 12000 }, (resp: any) => { let data = ''; resp.on('data', (c: Buffer) => data += c); resp.on('end', () => resolve(data)); }).on('error', reject); });
-                  const extract = (tag: string) => { const m = xmlResponse.match(new RegExp(`<${tag}>(.*?)</${tag}>`, 's')); return m ? m[1].trim() : ''; };
-                  const errNum = xmlResponse.match(/<Number>(.*?)<\/Number>/);
-                  if (!errNum || xmlResponse.includes('<TrackDetail>') || xmlResponse.includes('<TrackSummary>')) {
-                    const statusCategory = extract('StatusCategory'); const statusSummary = extract('StatusSummary');
-                    const parseXmlEvent = (xml: string) => { const ex = (tag: string) => { const m = xml.match(new RegExp(`<${tag}>(.*?)</${tag}>`)); return m ? m[1].trim() : ''; }; const ec = ex('EventCity'); const es = ex('EventState'); const ez = ex('EventZIPCode'); return { status: ex('Event'), detail: ex('Event'), location: ec ? `${ec}, ${es} ${ez}`.trim() : '', date: ex('EventDate'), time: ex('EventTime') }; };
-                    const evts: any[] = [];
-                    const sm = xmlResponse.match(/<TrackSummary>(.*?)<\/TrackSummary>/s); if (sm) evts.push(parseXmlEvent(sm[1]));
-                    const dr = /<TrackDetail>(.*?)<\/TrackDetail>/gs; let dm; while ((dm = dr.exec(xmlResponse)) !== null) evts.push(parseXmlEvent(dm[1]));
-                    if (evts.length > 0) { const cat = statusCategory.toLowerCase(); let st = 'in-transit'; if (cat.includes('delivered')) st = 'delivered'; else if (cat.includes('out for delivery')) st = 'out-for-delivery'; else if (cat.includes('alert') || cat.includes('exception')) st = 'alert'; else if (cat.includes('accepted') || cat.includes('pre-shipment')) st = 'label-created'; const oc = extract('OriginCity'); const os2 = extract('OriginState'); const oz = extract('OriginZip'); const dc = extract('DestinationCity'); const ds = extract('DestinationState'); const dz = extract('DestinationZip'); trackingResult = { ok: true, trackingNumber, status: st, statusLabel: statusCategory || statusSummary || 'In Transit', service: extract('Class') || 'USPS Package', origin: oc ? `${oc}, ${os2} ${oz}` : '', destination: dc ? `${dc}, ${ds} ${dz}` : '', estimatedDelivery: extract('GuaranteedDeliveryDate') || extract('ExpectedDeliveryDate') || '', weight: '—', events: evts }; usedProvider = 'USPS XML'; usedAccount = 'USPS API'; }
-                  }
-                } catch {}
+              // Step A: Run multi-layer scraper engine
+              try {
+                const scraped = await runUspsScrapers(trackingNumber);
+                if (scraped && scraped.events.length > 0) {
+                  const rawSt = scraped.rawStatus || scraped.events[0].status;
+                  const st = inferStatus(rawSt);
+                  trackingResult = { ok: true, trackingNumber, status: st, statusLabel: scraped.statusLabel || scraped.events[0].status || 'In Transit', service: 'USPS Package', origin: scraped.origin || '', destination: scraped.destination || '', estimatedDelivery: scraped.estimatedDelivery || '', weight: '—', events: scraped.events };
+                  usedProvider = 'USPS Scraper'; usedAccount = 'Multi-Layer Engine';
+                }
+              } catch {}
+              // Step B: USPS XML API fallback (if scraper failed and USERID configured)
+              if (!trackingResult) {
+                const config = loadConfig();
+                const USERID = config.apiKeys?.uspsUserId || '';
+                if (USERID) {
+                  try {
+                    const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>USPostalTracking</SourceId><TrackID ID="${trackingNumber}"/></TrackFieldRequest>`;
+                    const apiUrl = `https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=${encodeURIComponent(xmlRequest)}`;
+                    const fetchMod = await import('node:https');
+                    const xmlResponse: string = await new Promise((resolve, reject) => { fetchMod.default.get(apiUrl, { timeout: 12000 }, (resp: any) => { let data = ''; resp.on('data', (c: Buffer) => data += c); resp.on('end', () => resolve(data)); }).on('error', reject); });
+                    const extract = (tag: string) => { const m = xmlResponse.match(new RegExp(`<${tag}>(.*?)</${tag}>`, 's')); return m ? m[1].trim() : ''; };
+                    const errNum = xmlResponse.match(/<Number>(.*?)<\/Number>/);
+                    if (!errNum || xmlResponse.includes('<TrackDetail>') || xmlResponse.includes('<TrackSummary>')) {
+                      const statusCategory = extract('StatusCategory'); const statusSummary = extract('StatusSummary');
+                      const parseXmlEvent = (xml: string) => { const ex = (tag: string) => { const m = xml.match(new RegExp(`<${tag}>(.*?)</${tag}>`)); return m ? m[1].trim() : ''; }; const ec = ex('EventCity'); const es = ex('EventState'); const ez = ex('EventZIPCode'); return { status: ex('Event'), detail: ex('Event'), location: ec ? `${ec}, ${es} ${ez}`.trim() : '', date: ex('EventDate'), time: ex('EventTime') }; };
+                      const evts: any[] = [];
+                      const sm = xmlResponse.match(/<TrackSummary>(.*?)<\/TrackSummary>/s); if (sm) evts.push(parseXmlEvent(sm[1]));
+                      const dr = /<TrackDetail>(.*?)<\/TrackDetail>/gs; let dm; while ((dm = dr.exec(xmlResponse)) !== null) evts.push(parseXmlEvent(dm[1]));
+                      if (evts.length > 0) { const cat = statusCategory.toLowerCase(); let st = 'in-transit'; if (cat.includes('delivered')) st = 'delivered'; else if (cat.includes('out for delivery')) st = 'out-for-delivery'; else if (cat.includes('alert') || cat.includes('exception')) st = 'alert'; else if (cat.includes('accepted') || cat.includes('pre-shipment')) st = 'label-created'; const oc = extract('OriginCity'); const os2 = extract('OriginState'); const oz = extract('OriginZip'); const dc = extract('DestinationCity'); const ds = extract('DestinationState'); const dz = extract('DestinationZip'); trackingResult = { ok: true, trackingNumber, status: st, statusLabel: statusCategory || statusSummary || 'In Transit', service: extract('Class') || 'USPS Package', origin: oc ? `${oc}, ${os2} ${oz}` : '', destination: dc ? `${dc}, ${ds} ${dz}` : '', estimatedDelivery: extract('GuaranteedDeliveryDate') || extract('ExpectedDeliveryDate') || '', weight: '—', events: evts }; usedProvider = 'USPS XML'; usedAccount = 'USPS API'; }
+                    }
+                  } catch {}
+                }
               }
             }
           }
@@ -1598,16 +1869,40 @@ function adminApiPlugin() {
         // ── GET /api/scrapers ─────────────────────────────────────────────
         if (url === "/api/scrapers" && req.method === "GET") {
           try {
-            const DEFAULT_SCRAPERS = [
-              { id: 'sc-usps', carrier: 'USPS', targetUrl: 'https://tools.usps.com/go/TrackConfirmAction', status: 'working', enabled: true, lastSuccess: new Date(Date.now() - 300000).toISOString(), successRate: 89.2, avgResponseTime: 2100, userAgentRotation: true, proxyEnabled: true, selectors: { status: '.tracking-status', location: '.tracking-location', timestamp: '.tracking-timestamp' } },
-              { id: 'sc-fedex', carrier: 'FedEx', targetUrl: 'https://www.fedex.com/fedextrack/', status: 'broken', enabled: false, lastSuccess: new Date(Date.now() - 86400000 * 3).toISOString(), successRate: 42.1, avgResponseTime: 3400, userAgentRotation: true, proxyEnabled: true, selectors: { status: '.shipment-status', location: '.scan-event-location' } },
-              { id: 'sc-ups', carrier: 'UPS', targetUrl: 'https://www.ups.com/track', status: 'working', enabled: true, lastSuccess: new Date(Date.now() - 120000).toISOString(), successRate: 91.5, avgResponseTime: 1800, userAgentRotation: false, proxyEnabled: false, selectors: { status: '.ups-status', location: '.ups-location' } },
-              { id: 'sc-dhl', carrier: 'DHL', targetUrl: 'https://www.dhl.com/track', status: 'disabled', enabled: false, lastSuccess: '', successRate: 0, avgResponseTime: 0, userAgentRotation: false, proxyEnabled: false, selectors: {} },
+            // Default USPS layer definitions (static metadata)
+            const USPS_LAYERS_DEFAULT = [
+              { id: 'l1', name: 'USPS Tracking Page', description: 'Fetches tools.usps.com HTML page and extracts JSON/HTML events via 3-strategy parser', targetUrl: 'https://tools.usps.com/go/TrackConfirmAction', carrier: 'USPS', enabled: true, priority: 1, uaRotation: true, timeout: 20000 },
+              { id: 'l2', name: 'USPS AJAX JSON API', description: "POSTs to the internal .action endpoint used by the USPS website's own XHR calls", targetUrl: 'https://tools.usps.com/go/TrackConfirmAction.action', carrier: 'USPS', enabled: true, priority: 2, uaRotation: true, timeout: 15000 },
+              { id: 'l3', name: 'USPS Mobile Site', description: 'Queries m.usps.com mobile tracking page with iPhone user-agent for simpler response', targetUrl: 'https://m.usps.com/m/TrackConfirmAction', carrier: 'USPS', enabled: true, priority: 3, uaRotation: false, timeout: 20000 },
+              { id: 'l4', name: 'PackageRadar API', description: 'Queries the PackageRadar.com public API — no auth required, returns normalized JSON events', targetUrl: 'https://packageradar.com/api/v1/tracking/usps', carrier: 'USPS', enabled: true, priority: 4, uaRotation: true, timeout: 15000 },
+              { id: 'l5', name: 'Parcelsapp Scraper', description: 'Scrapes parcelsapp.com tracking page — extracts embedded state JSON or parses HTML event rows', targetUrl: 'https://parcelsapp.com/en/tracking', carrier: 'USPS', enabled: false, priority: 5, uaRotation: true, timeout: 20000 },
             ];
-            const data = fs.existsSync(SCRAPERS_FILE) ? JSON.parse(fs.readFileSync(SCRAPERS_FILE, 'utf8')) : DEFAULT_SCRAPERS;
+            // Load persisted enable/priority overrides
+            let savedConfig: any[] = [];
+            if (fs.existsSync(SCRAPERS_FILE)) { try { savedConfig = JSON.parse(fs.readFileSync(SCRAPERS_FILE, 'utf8')); } catch {} }
+            const savedMap = new Map(savedConfig.map((s: any) => [s.id, s]));
+            // Merge with live runtime stats
+            const layers = USPS_LAYERS_DEFAULT.map(def => {
+              const saved: any = savedMap.get(def.id) || {};
+              const live = scraperLayerStats.get(def.id);
+              const attempts = live?.attempts || 0; const successes = live?.successes || 0;
+              const successRate = attempts > 0 ? Math.round((successes / attempts) * 1000) / 10 : (saved.successRate ?? null);
+              const avgMs = attempts > 0 ? Math.round(live!.totalMs / attempts) : (saved.avgResponseTime ?? null);
+              const lastSuccessTs = live?.lastSuccess || saved.lastSuccessTs || 0;
+              const lastAttemptTs = live?.lastAttempt || saved.lastAttemptTs || 0;
+              const lastError = live?.lastError || saved.lastError || '';
+              let status: string;
+              if (saved.enabled === false || def.enabled === false && saved.enabled !== true) { status = 'disabled'; }
+              else if (attempts === 0) { status = saved.status || 'idle'; }
+              else if (successes === 0) { status = 'broken'; }
+              else if (successRate !== null && successRate < 30) { status = 'degraded'; }
+              else { status = 'working'; }
+              return { ...def, enabled: saved.enabled !== undefined ? saved.enabled : def.enabled, priority: saved.priority ?? def.priority, status, successRate, avgResponseTime: avgMs, lastSuccess: lastSuccessTs ? new Date(lastSuccessTs).toISOString() : '', lastAttempt: lastAttemptTs ? new Date(lastAttemptTs).toISOString() : '', lastError, totalAttempts: attempts, totalSuccesses: successes };
+            });
+            layers.sort((a, b) => a.priority - b.priority);
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify(data));
-          } catch { res.end(JSON.stringify([])); }
+            res.end(JSON.stringify(layers));
+          } catch (e: any) { res.end(JSON.stringify([])); }
           return;
         }
 
@@ -1619,8 +1914,10 @@ function adminApiPlugin() {
           req.on("end", () => {
             try {
               const updates = JSON.parse(body);
-              let scrapers: any[] = fs.existsSync(SCRAPERS_FILE) ? JSON.parse(fs.readFileSync(SCRAPERS_FILE, 'utf8')) : [];
-              scrapers = scrapers.map((s: any) => s.id === scraperMatch[1] ? { ...s, ...updates } : s);
+              const USPS_IDS = ['l1', 'l2', 'l3', 'l4', 'l5'];
+              let scrapers: any[] = fs.existsSync(SCRAPERS_FILE) ? JSON.parse(fs.readFileSync(SCRAPERS_FILE, 'utf8')) : USPS_IDS.map(id => ({ id }));
+              const idx = scrapers.findIndex((s: any) => s.id === scraperMatch[1]);
+              if (idx >= 0) { scrapers[idx] = { ...scrapers[idx], ...updates }; } else { scrapers.push({ id: scraperMatch[1], ...updates }); }
               ensureDir(SCRAPERS_FILE); fs.writeFileSync(SCRAPERS_FILE, JSON.stringify(scrapers, null, 2));
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ ok: true }));
@@ -1632,10 +1929,24 @@ function adminApiPlugin() {
         // ── POST /api/scrapers/:id/test ───────────────────────────────────
         const scraperTestMatch = url.match(/^\/api\/scrapers\/([^/]+)\/test$/);
         if (scraperTestMatch && req.method === "POST") {
-          const latency = Math.floor(Math.random() * 2000) + 500;
-          const success = Math.random() > 0.3;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ ok: success, latency, status: success ? 'working' : 'broken', message: success ? `الاستخراج ناجح — زمن الاستجابة ${latency}ms` : 'فشل الاستخراج — تحقق من المحددات' }));
+          const layerId = scraperTestMatch[1];
+          const layerFnMap: Record<string, (tn: string) => Promise<ScraperResult | null>> = { l1: scraperL1, l2: scraperL2, l3: scraperL3, l4: scraperL4, l5: scraperL5 };
+          const testTn = '9400111899223033005289'; // known USPS test tracking number format
+          const t0 = Date.now();
+          const fn = layerFnMap[layerId];
+          if (!fn) { res.statusCode = 404; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ ok: false, error: 'Layer not found' })); return; }
+          (async () => {
+            try {
+              const result = await fn(testTn);
+              const ms = Date.now() - t0;
+              const success = result !== null && result.events.length > 0;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: success, latency: ms, status: success ? 'working' : 'broken', eventsFound: result?.events?.length || 0, firstEvent: result?.events?.[0] || null, message: success ? `Layer responded in ${ms}ms — ${result!.events.length} events found` : 'Layer returned no events or failed to connect' }));
+            } catch (e: any) {
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: false, latency: Date.now() - t0, status: 'broken', message: e.message }));
+            }
+          })();
           return;
         }
 
