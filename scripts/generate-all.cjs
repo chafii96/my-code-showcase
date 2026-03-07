@@ -422,7 +422,7 @@ function main() {
   console.log(`║  Unique titles:        ${titleSet.size.toString().padStart(6)}`);
   console.log(`║  Duplicate titles:     ${duplicatesFound.toString().padStart(6)}`);
   console.log(`║  Total sitemap URLs:   ${totalUrls.toString().padStart(6)}`);
-  console.log(`║  Sitemaps in index:    ${validSitemaps.length.toString().padStart(6)}`);
+  console.log(`║  Sitemaps in index:    ${discoveredSitemaps.length.toString().padStart(6)}`);
   console.log('╠══════════════════════════════════════════════╣');
   console.log('║  NEXT STEPS:                                 ║');
   console.log('║  1. git add . && git commit && git push      ║');
