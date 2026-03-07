@@ -1,0 +1,98 @@
+[
+  {
+    "id": "ship24",
+    "name": "Ship24",
+    "enabled": true,
+    "priority": 1,
+    "icon": "🚀",
+    "color": "#3b82f6",
+    "accounts": [
+      {
+        "id": "s24-1",
+        "providerId": "ship24",
+        "name": "Ship24 - Account 1",
+        "apiKey": "",
+        "dailyQuota": 1000,
+        "usedToday": 0,
+        "enabled": true,
+        "lastUsed": "",
+        "successCount": 0,
+        "errorCount": 0,
+        "avgResponseTime": 0,
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "id": "trackingmore",
+    "name": "TrackingMore",
+    "enabled": true,
+    "priority": 2,
+    "icon": "📦",
+    "color": "#10b981",
+    "accounts": [
+      {
+        "id": "tm-1",
+        "providerId": "trackingmore",
+        "name": "TrackingMore - Account 1",
+        "apiKey": "",
+        "dailyQuota": 2000,
+        "usedToday": 0,
+        "enabled": true,
+        "lastUsed": "",
+        "successCount": 0,
+        "errorCount": 0,
+        "avgResponseTime": 0,
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "id": "17track",
+    "name": "17Track",
+    "enabled": false,
+    "priority": 3,
+    "icon": "🌐",
+    "color": "#f59e0b",
+    "accounts": [
+      {
+        "id": "17t-1",
+        "providerId": "17track",
+        "name": "17Track - Account 1",
+        "apiKey": "",
+        "dailyQuota": 500,
+        "usedToday": 0,
+        "enabled": true,
+        "lastUsed": "",
+        "successCount": 0,
+        "errorCount": 0,
+        "avgResponseTime": 0,
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "id": "scraper",
+    "name": "Custom Scraper",
+    "enabled": true,
+    "priority": 4,
+    "icon": "🕷️",
+    "color": "#8b5cf6",
+    "accounts": [
+      {
+        "id": "sc-1",
+        "providerId": "scraper",
+        "name": "Custom Scraper - Default",
+        "apiKey": "N/A",
+        "dailyQuota": 10000,
+        "usedToday": 0,
+        "enabled": true,
+        "lastUsed": "",
+        "successCount": 0,
+        "errorCount": 0,
+        "avgResponseTime": 0,
+        "status": "active"
+      }
+    ]
+  }
+]

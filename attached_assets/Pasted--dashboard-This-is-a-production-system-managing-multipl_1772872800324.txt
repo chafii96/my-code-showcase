@@ -1,0 +1,643 @@
+-----
+
+```
+
+اضف نضام الى dashboard الموجودة
+
+This is a production system managing multiple API providers with automatic failover.
+
+---
+
+## TECH STACK
+
+- Frontend: React + Tailwind CSS + shadcn/ui
+
+- Backend: Node.js + Express
+
+- Database: PostgreSQL (store configs, logs, stats)
+
+- Cache: Redis
+
+- Auth: JWT (admin only)
+
+---
+
+## CORE SYSTEM: Multi-Provider API Manager
+
+### Providers to integrate:
+
+1. Ship24 (primary)
+
+2. TrackingMore (secondary)
+
+3. 17Track (tertiary)
+
+4. Custom Scraper (fallback)
+
+### Each provider has:
+
+- Multiple API accounts (Account 1, 2, 3, 4, 5...)
+
+- Auto-rotation between accounts when quota is exhausted
+
+- Enable/disable toggle per account
+
+- Priority order (drag to reorder)
+
+- Daily quota limit tracking
+
+- Used requests counter
+
+- Success rate percentage
+
+- Average response time (ms)
+
+- Last used timestamp
+
+- Status indicator (active/exhausted/error/disabled)
+
+### Failover Logic:
+
+1. Try Account 1 of Provider 1 (Ship24)
+
+2. If quota exhausted → switch to Account 2 of Ship24
+
+3. If all Ship24 accounts exhausted → switch to Provider 2 (TrackingMore)
+
+4. If TrackingMore exhausted → switch to 17Track
+
+5. If 17Track exhausted → use Custom Scraper
+
+6. If all fail → return cached result or error
+
+7. Reset quotas daily at midnight UTC
+
+---
+
+## ADMIN DASHBOARD PAGES
+
+### 1. Main Dashboard (Overview)
+
+- Real-time stats cards:
+
+  * Total tracking requests today
+
+  * Cache hit rate (%)
+
+  * Active provider
+
+  * API calls saved by cache
+
+  * Total API cost this month (estimated)
+
+  * Success rate (%)
+
+- Live activity feed (last 20 tracking requests)
+
+- Charts:
+
+  * Requests per hour (last 24h) - line chart
+
+  * Provider usage distribution - pie chart
+
+  * Cache hits vs API calls - bar chart
+
+  * Success rate over time - area chart
+
+### 2. API Providers Management Page
+
+- Table of all providers (Ship24, TrackingMore, 17Track, Scraper)
+
+- For each provider:
+
+  * Master enable/disable toggle
+
+  * Priority badge (drag to reorder)
+
+  * Total accounts count
+
+  * Active accounts count
+
+  * Total quota remaining today
+
+  * Expand to see all accounts
+
+- For each account under a provider:
+
+  * Account name (e.g., "Ship24 - Account 1")
+
+  * API Key field (masked, show/hide button)
+
+  * Daily quota limit (editable input)
+
+  * Used today (progress bar)
+
+  * Remaining quota
+
+  * Status badge: Active / Exhausted / Error / Disabled
+
+  * Enable/disable toggle
+
+  * Delete button
+
+  * Test button (sends one test tracking request)
+
+  * Last used timestamp
+
+  * Success rate (%)
+
+  * Average response time
+
+- "Add New Account" button per provider (opens modal with API key input)
+
+- Manual rotation button (force switch to next account)
+
+### 3. Cache Management Page
+
+- Cache stats:
+
+  * Total cached entries
+
+  * Cache hit rate today (%)
+
+  * Memory used (MB)
+
+  * Estimated API calls saved
+
+  * Estimated money saved ($)
+
+- Cache TTL settings (editable):
+
+  * Delivered packages: 24 hours (default)
+
+  * In Transit: 2 hours (default)
+
+  * Out for Delivery: 30 minutes (default)
+
+  * Pending/Pre-shipment: 1 hour (default)
+
+  * Exception/Error: 15 minutes (default)
+
+  * Unknown status: 30 minutes (default)
+
+- Cache actions:
+
+  * Flush all cache button (with confirmation)
+
+  * Flush by tracking number (search input)
+
+  * Flush by carrier
+
+  * Export cache stats CSV
+
+- Cache entries table:
+
+  * Tracking number (masked: first 4 + last 4)
+
+  * Carrier
+
+  * Status
+
+  * Cached at
+
+  * Expires at
+
+  * Hit count
+
+  * Actions (delete, refresh)
+
+### 4. Custom Scraper Management Page
+
+- List of configured scrapers per carrier
+
+- For each scraper:
+
+  * Carrier name
+
+  * Target URL
+
+  * Scraper status (working/broken/disabled)
+
+  * Enable/disable toggle
+
+  * Last successful scrape timestamp
+
+  * Success rate (%)
+
+  * Average response time
+
+  * User agent rotation (on/off)
+
+  * Proxy settings (optional)
+
+  * Test button
+
+  * Edit selectors button (CSS/XPath selectors for data extraction)
+
+- Scraper health check (runs test on all scrapers)
+
+- Proxy pool management (add/remove proxies, test proxies)
+
+### 5. Carrier Detection Rules Page
+
+- Table of carrier detection patterns
+
+- Columns: Carrier name, Pattern (regex), Priority, Example number, Actions
+
+- Add/edit/delete patterns
+
+- Test input: enter tracking number → see which carrier is detected
+
+- Bulk import patterns (JSON)
+
+### 6. Rate Limiting & Protection Page
+
+- Settings:
+
+  * Max requests per IP per hour
+
+  * Max requests per IP per day
+
+  * Blacklist IPs
+
+  * Whitelist IPs
+
+  * Enable/disable CAPTCHA after X requests
+
+  * Block VPN/proxy requests (on/off)
+
+- Blocked IPs table with unblock option
+
+- Top IPs by request count today
+
+### 7. Logs & Analytics Page
+
+- Request logs table:
+
+  * Timestamp
+
+  * Tracking number (masked)
+
+  * Detected carrier
+
+  * Provider used
+
+  * Account used
+
+  * Cache hit? (yes/no)
+
+  * Response time (ms)
+
+  * Status (success/error)
+
+  * Error message (if any)
+
+  * IP (masked)
+
+- Filters: by provider, by carrier, by status, by date range
+
+- Export logs as CSV
+
+- Error analysis: most common errors today
+
+### 8. System Settings Page
+
+- General:
+
+  * Site name
+
+  * Admin email
+
+  * Timezone
+
+  * Default language
+
+- Notifications (email alerts):
+
+  * Alert when provider exhausted
+
+  * Alert when all providers fail
+
+  * Alert when cache hit rate drops below X%
+
+  * Alert when error rate exceeds X%
+
+  * Daily summary report
+
+- Maintenance mode toggle (returns friendly message to users)
+
+- API response format settings
+
+---
+
+## SMART CACHE SYSTEM (Advanced 1-hour base)
+
+### Logic:
+
+- Base TTL: 1 hour
+
+- Smart TTL based on status:
+
+  * "Delivered" → cache 24 hours (won't change)
+
+  * "Out for Delivery" → cache 20 minutes (changes fast)
+
+  * "In Transit" → cache 2 hours
+
+  * "Pending" → cache 1 hour
+
+  * "Exception" → cache 15 minutes
+
+  * "Pre-shipment" → cache 1 hour
+
+- Negative caching: cache "not found" results for 30 mins to avoid repeated API calls
+
+- Cache warming: if a tracking number is searched 3+ times, 
+
+  automatically refresh it every 30 minutes proactively
+
+- Stale-while-revalidate: return cached data immediately, 
+
+  refresh in background if TTL is 80% expired
+
+---
+
+## AUTOMATIC FAILOVER ENGINE
+
+```javascript
+
+// Pseudocode for failover logic
+
+async function trackPackage(trackingNumber) {
+
+  
+
+  // Step 1: Check cache
+
+  const cached = await cache.get(trackingNumber);
+
+  if (cached && !isStale(cached)) return cached;
+
+  
+
+  // Step 2: Get ordered list of active accounts
+
+  const accounts = await getActiveAccountsSorted(); 
+
+  // Returns: [Ship24-Acc1, Ship24-Acc2, Ship24-Acc3, 
+
+  //           TrackingMore-Acc1, 17Track-Acc1, Scraper]
+
+  
+
+  // Step 3: Try each account in order
+
+  for (const account of accounts) {
+
+    if (account.quotaExhausted) continue;
+
+    if (!account.enabled) continue;
+
+    
+
+    try {
+
+      const result = await callAPI(account, trackingNumber);
+
+      await updateAccountStats(account, 'success');
+
+      await cache.set(trackingNumber, result);
+
+      return result;
+
+    } catch (err) {
+
+      await updateAccountStats(account, 'error');
+
+      if (err.code === 'QUOTA_EXCEEDED') {
+
+        await markAccountExhausted(account);
+
+      }
+
+      continue; // try next account
+
+    }
+
+  }
+
+  
+
+  // Step 4: All failed, return stale cache if exists
+
+  if (cached) return { ...cached, stale: true };
+
+  
+
+  throw new Error('All providers exhausted');
+
+}
+
+```
+
+-----
+
+## DATABASE SCHEMA
+
+```sql
+
+-- API Providers
+
+providers (id, name, enabled, priority, created_at)
+
+-- API Accounts
+
+accounts (
+
+  id, provider_id, name, api_key_encrypted, 
+
+  daily_quota, used_today, enabled, 
+
+  last_used, success_count, error_count,
+
+  avg_response_time, status, created_at
+
+)
+
+-- Tracking Logs
+
+tracking_logs (
+
+  id, tracking_number_hash, carrier,
+
+  provider_used, account_used,
+
+  cache_hit, response_time_ms,
+
+  status, error_message, ip_hash,
+
+  created_at
+
+)
+
+-- Cache Entries (metadata only, actual cache in Redis)
+
+cache_meta (
+
+  tracking_number_hash, carrier, 
+
+  status, cached_at, expires_at, 
+
+  hit_count, last_hit
+
+)
+
+-- System Settings
+
+settings (key, value, updated_at)
+
+-- Rate Limit Rules
+
+rate_limits (ip_hash, requests_count, window_start, blocked)
+
+```
+
+-----
+
+## UI/UX REQUIREMENTS
+
+### Design:
+
+- Dark theme (professional admin look)
+
+- Sidebar navigation
+
+- Real-time updates (WebSocket or polling every 30 seconds)
+
+- Mobile responsive
+
+- Loading skeletons for data
+
+- Toast notifications for actions
+
+### Color coding:
+
+- Green = Active/Success
+
+- Yellow = Warning/Degraded
+
+- Red = Error/Exhausted/Disabled
+
+- Blue = Info/Cache hit
+
+- Gray = Disabled
+
+### Status indicators:
+
+- Animated green dot = currently active provider
+
+- Progress bars for quota usage
+
+- Color changes: green < 50% used, yellow 50-80%, red > 80%
+
+-----
+
+## ADDITIONAL SMART FEATURES
+
+1. **Auto-healing**: If a provider that was exhausted gets quota reset
+
+   (midnight), automatically re-enable it
+
+1. **Smart routing by carrier**:
+
+- Use Ship24 for international (better coverage)
+
+- Use TrackingMore for USPS/FedEx/UPS (faster)
+
+- Use scraper as last resort
+
+1. **Request deduplication**:
+
+   If 50 users track same number simultaneously,
+
+   make only 1 API call, return same result to all
+
+1. **Quota forecasting**:
+
+   Show estimated time until quota exhaustion based on current usage rate
+
+1. **Cost calculator**:
+
+   Show estimated monthly API cost based on current usage
+
+1. **Health monitoring**:
+
+- Ping each provider every 5 minutes
+
+- Auto-disable if 3 consecutive failures
+
+- Alert admin via email
+
+1. **A/B provider testing**:
+
+   Send X% of traffic to Provider A, Y% to Provider B
+
+   Compare accuracy and speed
+
+1. **Tracking number validation**:
+
+   Validate format before sending to API to save quota
+
+1. **Bulk tracking support**:
+
+   Allow tracking up to 10 numbers at once,
+
+   batch the API calls efficiently
+
+1. **Export & reporting**:
+
+- Daily PDF report of system health
+
+- CSV export of all stats
+
+- Weekly email summary
+
+-----
+
+## SECURITY
+
+- All API keys encrypted at rest (AES-256)
+
+- Admin login with 2FA
+
+- All logs anonymized (hash IPs and tracking numbers)
+
+- Rate limiting on admin endpoints
+
+- CORS configured for your domain only
+
+- Helmet.js for security headers
+
+-----
+
+## DEPLOYMENT NOTES
+
+- Runs on existing VPS with PM2
+
+- Redis on same server
+
+- PostgreSQL on same server
+
+- Environment variables in .env file
+
+- PM2 cluster mode for Node.js
+
+- Nginx reverse proxy (already configured)
+
+```
+
+---
+
+
+
+```
