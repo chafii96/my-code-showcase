@@ -2513,29 +2513,118 @@ function prerenderShellPlugin() {
       count++;
     }
 
-    // ── Status pages ──
+    // ── Status pages — all 51 slugs from sitemap-status.xml ──
     const statuses = [
       { slug: 'in-transit', label: 'In Transit', desc: 'package is moving through the USPS network' },
       { slug: 'out-for-delivery', label: 'Out for Delivery', desc: 'package is with carrier for delivery today' },
-      { slug: 'delivered', label: 'Delivered', desc: 'package has been delivered' },
+      { slug: 'delivered', label: 'Delivered', desc: 'package has been delivered successfully' },
       { slug: 'delivery-attempted', label: 'Delivery Attempted', desc: 'delivery was attempted but unsuccessful' },
       { slug: 'pre-shipment', label: 'Pre-Shipment', desc: 'label created, awaiting USPS pickup' },
       { slug: 'customs-clearance', label: 'Customs Clearance', desc: 'package is being processed by customs' },
-      { slug: 'return-to-sender', label: 'Return to Sender', desc: 'package is being returned' },
+      { slug: 'return-to-sender', label: 'Return to Sender', desc: 'package is being returned to sender' },
       { slug: 'return-initiated', label: 'Return Initiated', desc: 'a return has been initiated for your package' },
+      { slug: 'return-in-transit', label: 'Return In Transit', desc: 'returned package is moving back to sender' },
+      { slug: 'return-delivered', label: 'Return Delivered', desc: 'returned package has been delivered to sender' },
       { slug: 'alert', label: 'Alert', desc: 'there is an issue with your package' },
       { slug: 'label-created', label: 'Label Created', desc: 'shipping label has been created' },
       { slug: 'in-transit-to-next-facility', label: 'In Transit to Next Facility', desc: 'package is moving to the next USPS facility' },
+      { slug: 'in-transit-to-destination', label: 'In Transit to Destination', desc: 'package is on its way to the destination facility' },
       { slug: 'departed-shipping-partner-facility', label: 'Departed Shipping Partner', desc: 'package left the shipping partner facility' },
-      { slug: 'arrived-at-hub', label: 'Arrived at Hub', desc: 'package arrived at USPS hub' },
-      { slug: 'alert-notice-left', label: 'Alert Notice Left', desc: 'a delivery notice was left' },
-      { slug: 'held-at-post-office', label: 'Held at Post Office', desc: 'package is being held at post office' },
-      { slug: 'shipping-label-created', label: 'Shipping Label Created', desc: 'shipping label was created' },
+      { slug: 'departed-usps-facility', label: 'Departed USPS Facility', desc: 'package has left a USPS processing facility' },
+      { slug: 'departed-hub', label: 'Departed Hub', desc: 'package has departed a USPS hub facility' },
+      { slug: 'arrived-at-hub', label: 'Arrived at Hub', desc: 'package arrived at USPS hub facility' },
+      { slug: 'arrived-at-usps-facility', label: 'Arrived at USPS Facility', desc: 'package arrived at a USPS processing facility' },
+      { slug: 'arrived-at-destination', label: 'Arrived at Destination', desc: 'package has arrived at the destination facility' },
+      { slug: 'arrived-at-customs', label: 'Arrived at Customs', desc: 'package has arrived at customs inspection' },
+      { slug: 'arrived-at-destination-country', label: 'Arrived at Destination Country', desc: 'international package has arrived in the destination country' },
+      { slug: 'alert-notice-left', label: 'Alert Notice Left', desc: 'a delivery notice was left at the address' },
+      { slug: 'notice-left', label: 'Notice Left', desc: 'a notice was left because delivery could not be completed' },
+      { slug: 'held-at-post-office', label: 'Held at Post Office', desc: 'package is being held at the post office for pickup' },
+      { slug: 'held-for-customs', label: 'Held for Customs', desc: 'package is being held pending customs clearance' },
+      { slug: 'shipping-label-created', label: 'Shipping Label Created', desc: 'shipping label was created by the sender' },
+      { slug: 'shipment-received', label: 'Shipment Received', desc: 'USPS has received the shipment at a facility' },
+      { slug: 'package-accepted', label: 'Package Accepted', desc: 'USPS has accepted the package for delivery' },
+      { slug: 'accepted', label: 'Accepted', desc: 'package has been accepted into the USPS network' },
+      { slug: 'picked-up', label: 'Picked Up', desc: 'package has been picked up by the carrier' },
+      { slug: 'forwarded', label: 'Forwarded', desc: 'package has been forwarded to a new address' },
+      { slug: 'available-for-pickup', label: 'Available for Pickup', desc: 'package is ready for pickup at the post office' },
+      { slug: 'attempted-delivery', label: 'Attempted Delivery', desc: 'a delivery attempt was made but unsuccessful' },
+      { slug: 'address-corrected', label: 'Address Corrected', desc: 'the delivery address has been corrected by USPS' },
+      { slug: 'processing', label: 'Processing', desc: 'package is being processed at a USPS facility' },
+      { slug: 'sorting', label: 'Sorting', desc: 'package is being sorted at a USPS facility' },
+      { slug: 'item-dispatched', label: 'Item Dispatched', desc: 'item has been dispatched from a postal facility' },
+      { slug: 'origin-post-preparing', label: 'Origin Post Preparing', desc: 'the origin post office is preparing the shipment' },
+      { slug: 'international-dispatch', label: 'International Dispatch', desc: 'package has been dispatched for international delivery' },
+      { slug: 'customs-cleared', label: 'Customs Cleared', desc: 'package has cleared customs inspection' },
+      { slug: 'departed-customs', label: 'Departed Customs', desc: 'package has departed from customs' },
+      { slug: 'out-for-delivery-today', label: 'Out for Delivery Today', desc: 'package is loaded on a vehicle for delivery today' },
+      { slug: 'delivered-to-mailbox', label: 'Delivered to Mailbox', desc: 'package was delivered and placed in the mailbox' },
+      { slug: 'delivered-to-front-door', label: 'Delivered to Front Door', desc: 'package was delivered to the front door' },
+      { slug: 'delivered-to-parcel-locker', label: 'Delivered to Parcel Locker', desc: 'package was placed in a parcel locker' },
+      { slug: 'delivered-to-neighbor', label: 'Delivered to Neighbor', desc: 'package was delivered to a neighbor' },
+      { slug: 'delivered-to-safe-location', label: 'Delivered to Safe Location', desc: 'package was left in a safe location' },
+      { slug: 'delivery-scheduled', label: 'Delivery Scheduled', desc: 'delivery has been scheduled for a specific date' },
+      { slug: 'delivery-exception', label: 'Delivery Exception', desc: 'an exception has occurred with your delivery' },
+      { slug: 'package-damaged', label: 'Package Damaged', desc: 'the package has sustained damage during transit' },
+      { slug: 'package-lost', label: 'Package Lost', desc: 'the package has been reported as lost' },
+      { slug: 'weather-delay', label: 'Weather Delay', desc: 'delivery is delayed due to severe weather conditions' },
+      { slug: 'operational-delay', label: 'Operational Delay', desc: 'delivery is delayed due to operational issues' },
+      { slug: 'holiday-delay', label: 'Holiday Delay', desc: 'delivery is delayed due to a postal holiday' },
     ];
     for (const st of statuses) {
       writeShell(`/status/${st.slug}`, `USPS ${st.label} — What It Means & What to Do 2026`, `USPS tracking shows "${st.label}" — your ${st.desc}. Learn what this status means, expected timelines, and next steps.`);
       count++;
     }
+
+    // ── Route pages — read from sitemap files to cover all 950 routes ──
+    try {
+      const routeFiles = ['sitemap-routes.xml', 'sitemap-routes-2.xml'];
+      for (const routeFile of routeFiles) {
+        const routeSitemapPath = path.resolve(__dirname, 'public', routeFile);
+        if (fs.existsSync(routeSitemapPath)) {
+          const routeXml = fs.readFileSync(routeSitemapPath, 'utf8');
+          const routeMatches = routeXml.match(/\/route\/([^<]+)<\/loc>/g) || [];
+          for (const m of routeMatches) {
+            const slug = m.replace('/route/', '').replace('</loc>', '');
+            const parts = slug.split('-to-');
+            const fromRaw = parts[0] || slug;
+            const toRaw = parts[1] || '';
+            const fmtRoute = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace(/ ([A-Za-z]{2})$/, (_, code) => ` ${code.toUpperCase()}`);
+            const fromName = fmtRoute(fromRaw);
+            const toName = fmtRoute(toRaw);
+            const title = toName
+              ? `USPS Shipping from ${fromName} to ${toName} — Transit Times & Tracking 2026`
+              : `USPS Shipping Route: ${fromName} — Tracking & Transit Times 2026`;
+            const desc = toName
+              ? `USPS shipping from ${fromName} to ${toName}. Estimated transit times, delivery dates, Priority Mail, First-Class, and Ground Advantage rates. Track packages on this route.`
+              : `USPS shipping route for ${fromName}. Track packages, check transit times, and get delivery estimates.`;
+            writeShell(`/route/${slug}`, title, desc);
+            count++;
+          }
+        }
+      }
+    } catch (e: any) { /* route shell generation failed silently */ }
+
+    // ── Article pages — supplement with sitemap-articles.xml to cover all 299 ──
+    try {
+      const articleSitemapPath = path.resolve(__dirname, 'public', 'sitemap-articles.xml');
+      if (fs.existsSync(articleSitemapPath)) {
+        const artXml = fs.readFileSync(articleSitemapPath, 'utf8');
+        const artMatches = artXml.match(/\/article\/([^<]+)<\/loc>/g) || [];
+        const existingArticleSlugs = new Set(articleSlugs);
+        for (const m of artMatches) {
+          const slug = m.replace('/article/', '').replace('</loc>', '');
+          if (!existingArticleSlugs.has(slug)) {
+            const art = articleMap?.[slug];
+            const prettyTitle = slug.replace(/-/g, ' ').replace(/usps /i, 'USPS ').replace(/\b\w/g, c => c.toUpperCase());
+            const title = art ? art.title : `${prettyTitle} — Complete Guide 2026`;
+            const desc = art ? art.metaDescription : `Complete guide to ${prettyTitle.toLowerCase()}. Expert tips, solutions, and real-time USPS tracking help. Updated 2026.`;
+            writeShell(`/article/${slug}`, title, desc);
+            count++;
+          }
+        }
+      }
+    } catch (e: any) { /* article supplement failed silently */ }
 
     // ── City × Status pages ──
     const cityStatuses = ['in-transit','out-for-delivery','delivered','attempted-delivery','available-for-pickup',
