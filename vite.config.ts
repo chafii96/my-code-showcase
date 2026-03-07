@@ -2576,6 +2576,27 @@ function prerenderShellPlugin() {
       count++;
     }
 
+    // ── Location pages — read from sitemap-locations.xml (12 city locations) ──
+    try {
+      const locSitemapPath = path.resolve(__dirname, 'public', 'sitemap-locations.xml');
+      if (fs.existsSync(locSitemapPath)) {
+        const locXml = fs.readFileSync(locSitemapPath, 'utf8');
+        const locMatches = locXml.match(/\/locations\/([^<]+)<\/loc>/g) || [];
+        for (const m of locMatches) {
+          const slug = m.replace('/locations/', '').replace('</loc>', '');
+          const parts = slug.split('-');
+          const stateCode = parts[parts.length - 1].toUpperCase();
+          const cityName = parts.slice(0, -1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          writeShell(
+            `/locations/${slug}`,
+            `USPS Post Office Locations in ${cityName}, ${stateCode} — Hours, ZIP & Services 2026`,
+            `Find all USPS post office locations in ${cityName}, ${stateCode}. Get hours, ZIP codes, services, and real-time package tracking for ${cityName} area post offices.`
+          );
+          count++;
+        }
+      }
+    } catch (e: any) { /* locations shell generation failed silently */ }
+
     // ── Route pages — read from sitemap files to cover all 950 routes ──
     try {
       const routeFiles = ['sitemap-routes.xml', 'sitemap-routes-2.xml'];
@@ -2589,7 +2610,7 @@ function prerenderShellPlugin() {
             const parts = slug.split('-to-');
             const fromRaw = parts[0] || slug;
             const toRaw = parts[1] || '';
-            const fmtRoute = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace(/ ([A-Za-z]{2})$/, (_, code) => ` ${code.toUpperCase()}`);
+            const fmtRoute = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).replace(/ ([A-Za-z]{2})$/, (_, code) => `, ${code.toUpperCase()}`);
             const fromName = fmtRoute(fromRaw);
             const toName = fmtRoute(toRaw);
             const title = toName
