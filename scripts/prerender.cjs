@@ -19,10 +19,18 @@ const path = require('path');
 const DIST_DIR = path.resolve(__dirname, '..', 'dist');
 const PRERENDER_DIR = path.resolve(__dirname, '..', 'prerendered');
 const BASE_URL = 'http://localhost:3999';
-const CONCURRENCY = 1; // واحدة فقط لتجنب Connection closed
-const MAX_RETRIES = 3; // 3 محاولات
+const CONCURRENCY = Number(process.env.PRERENDER_CONCURRENCY || '5');
+const MAX_RETRIES = 3;
 const TIMEOUT = 20000;
-const RESTART_EVERY = 25; // إعادة تشغيل المتصفح كل 25 صفحة
+const RESTART_EVERY = Number(process.env.PRERENDER_RESTART_EVERY || '200');
+const WAIT_TIME = Number(process.env.PRERENDER_WAIT || '800');
+const SKIP_EXISTING = process.env.PRERENDER_SKIP_EXISTING === '1';
+const SSE_MODE = process.env.PRERENDER_SSE === '1';
+
+// SSE helper — sends structured events when run from admin panel
+function sse(obj) {
+  if (SSE_MODE) console.log('SSE:' + JSON.stringify(obj));
+}
 
 // ── قائمة الصفحات — يقرأ ديناميكياً من بيانات المشروع ─────────────────────
 function getAllRoutes() {
