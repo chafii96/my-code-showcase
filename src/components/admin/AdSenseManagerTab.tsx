@@ -5,7 +5,7 @@ import {
   TrendingUp, Eye, MousePointer, BarChart3, Globe, Shield,
   FileText, Mail, MapPin, Lock, Clock, CheckSquare, Square,
   MonitorSmartphone, Smartphone, PanelTop, PanelBottom, Columns,
-  BookOpen, ArrowRight,
+  BookOpen, ArrowRight, Wifi, WifiOff, RefreshCw, Key,
 } from "lucide-react";
 import {
   type AdSenseConfig,
