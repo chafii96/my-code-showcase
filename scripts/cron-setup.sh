@@ -30,19 +30,10 @@ echo "========================================" >> "$LOG_FILE"
 echo "SEO Cron Job - $(date)" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
 
-# Step 1: Regenerate all sitemaps
-echo "[1/3] Regenerating sitemaps..." >> "$LOG_FILE"
+# Step 1: Master sitemap update (generation + validation + optional ping)
+echo "[1/1] Running master sitemap update..." >> "$LOG_FILE"
 cd "$SITE_DIR"
 node scripts/sitemap-update.cjs --ping >> "$LOG_FILE" 2>&1
-
-# Step 2: Copy updated sitemaps to dist (production)
-echo "[2/3] Deploying sitemaps to dist..." >> "$LOG_FILE"
-cp public/sitemap*.xml dist/ 2>/dev/null
-echo "Sitemaps copied to dist/" >> "$LOG_FILE"
-
-# Step 3: Ping IndexNow with all URLs
-echo "[3/3] Pinging IndexNow..." >> "$LOG_FILE"
-node scripts/ping-indexnow.cjs >> "$LOG_FILE" 2>&1
 
 echo "" >> "$LOG_FILE"
 echo "✅ Cron job complete at $(date)" >> "$LOG_FILE"
