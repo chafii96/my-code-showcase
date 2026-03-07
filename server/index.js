@@ -1001,9 +1001,22 @@ const RATE_LIMITS_FILE = 'rate-limits.json';
 const TRACKING_LOGS_FILE = 'tracking-logs.json';
 const API_SETTINGS_FILE = 'api-settings.json';
 
+// Default providers (seeded when providers.json is empty)
+const DEFAULT_PROVIDERS = [
+  { id: 'ship24', name: 'Ship24', enabled: true, priority: 1, icon: '🚀', color: '#3b82f6', accounts: [] },
+  { id: 'trackingmore', name: 'TrackingMore', enabled: true, priority: 2, icon: '📦', color: '#10b981', accounts: [] },
+  { id: '17track', name: '17Track', enabled: true, priority: 3, icon: '🌍', color: '#f59e0b', accounts: [] },
+  { id: 'scraper', name: 'Custom Scraper', enabled: true, priority: 4, icon: '🕷️', color: '#ef4444', accounts: [] },
+];
+
 // ── Providers CRUD ──
 app.get('/api/providers', (req, res) => {
-  res.json(readJSON(PROVIDERS_FILE, []));
+  let providers = readJSON(PROVIDERS_FILE, []);
+  if (!providers.length) {
+    providers = DEFAULT_PROVIDERS;
+    writeJSON(PROVIDERS_FILE, providers);
+  }
+  res.json(providers);
 });
 
 app.post('/api/providers', (req, res) => {
