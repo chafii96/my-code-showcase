@@ -14,7 +14,10 @@ export interface ApiAccount {
   name: string;
   apiKey: string;
   dailyQuota: number;
+  monthlyQuota?: number;
   usedToday: number;
+  usedThisMonth?: number;
+  monthReset?: string;
   enabled: boolean;
   lastUsed: string;
   successCount: number;
@@ -84,7 +87,7 @@ export interface TrackingLog {
   accountUsed: string;
   cacheHit: boolean;
   responseTimeMs: number;
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'not_found';
   errorMessage?: string;
   ipHash: string;
 }

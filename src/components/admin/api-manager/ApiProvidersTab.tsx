@@ -17,7 +17,7 @@ function AddAccountModal({ provider, onClose, onAdd }: {
 }) {
   const [name, setName] = useState(`${provider.name} - حساب ${provider.accounts.length + 1}`);
   const [apiKey, setApiKey] = useState('');
-  const [dailyQuota, setDailyQuota] = useState(1000);
+  const [monthlyQuota, setMonthlyQuota] = useState(100);
   const [validating, setValidating] = useState(false);
   const [validated, setValidated] = useState<boolean | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -30,8 +30,8 @@ function AddAccountModal({ provider, onClose, onAdd }: {
     if (!apiKey.trim()) errs.apiKey = 'مفتاح API مطلوب';
     if (apiKey.trim().length < 8) errs.apiKey = 'مفتاح API قصير جداً (8 أحرف على الأقل)';
     if (apiKey.trim().length > 500) errs.apiKey = 'مفتاح API طويل جداً';
-    if (dailyQuota < 1) errs.dailyQuota = 'الحصة يجب أن تكون 1 على الأقل';
-    if (dailyQuota > 1000000) errs.dailyQuota = 'الحصة كبيرة جداً';
+    if (monthlyQuota < 1) errs.monthlyQuota = 'الحصة يجب أن تكون 1 على الأقل';
+    if (monthlyQuota > 1000000) errs.monthlyQuota = 'الحصة كبيرة جداً';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -62,8 +62,10 @@ function AddAccountModal({ provider, onClose, onAdd }: {
       providerId: provider.id,
       name: name.trim(),
       apiKey: apiKey.trim(),
-      dailyQuota,
+      dailyQuota: monthlyQuota,
+      monthlyQuota,
       usedToday: 0,
+      usedThisMonth: 0,
       enabled: true,
       lastUsed: '',
       successCount: 0,
@@ -122,12 +124,12 @@ function AddAccountModal({ provider, onClose, onAdd }: {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-400">الحصة اليومية</label>
-            <input type="number" value={dailyQuota} onChange={e => { setDailyQuota(+e.target.value); setErrors(p => ({ ...p, dailyQuota: '' })); }}
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${errors.dailyQuota ? 'border-red-500/50' : 'border-white/[0.08]'}`}
+            <label className="text-xs font-medium text-slate-400">الحصة الشهرية</label>
+            <input type="number" value={monthlyQuota} onChange={e => { setMonthlyQuota(+e.target.value); setErrors(p => ({ ...p, monthlyQuota: '' })); }}
+              className={`w-full bg-slate-800 border rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${errors.monthlyQuota ? 'border-red-500/50' : 'border-white/[0.08]'}`}
               min={1} max={1000000} dir="ltr" />
-            {errors.dailyQuota && <p className="text-[10px] text-red-400">{errors.dailyQuota}</p>}
-            <p className="text-[10px] text-slate-500">الحد الأقصى لاستدعاءات API يومياً لهذا الحساب</p>
+            {errors.monthlyQuota && <p className="text-[10px] text-red-400">{errors.monthlyQuota}</p>}
+            <p className="text-[10px] text-slate-500">الحد الأقصى لاستدعاءات API شهرياً لهذا الحساب (Ship24: 100/شهر)</p>
           </div>
         </div>
 
@@ -208,7 +210,7 @@ function AccountRow({ account, onToggle, onDelete, onTest }: {
         </div>
 
         <div className="w-full lg:w-48">
-          <QuotaBar used={account.usedToday} total={account.dailyQuota} />
+          <QuotaBar used={account.usedThisMonth ?? account.usedToday} total={account.monthlyQuota ?? account.dailyQuota} />
         </div>
 
         <div className="flex gap-4 text-[11px]">
@@ -261,8 +263,8 @@ function SortableProviderCard({
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : 'auto' as any };
 
   const activeAccounts = provider.accounts.filter(a => a.enabled).length;
-  const totalQuota = provider.accounts.reduce((sum, a) => sum + a.dailyQuota, 0);
-  const usedQuota = provider.accounts.reduce((sum, a) => sum + a.usedToday, 0);
+  const totalQuota = provider.accounts.reduce((sum, a) => sum + (a.monthlyQuota ?? a.dailyQuota), 0);
+  const usedQuota = provider.accounts.reduce((sum, a) => sum + (a.usedThisMonth ?? a.usedToday), 0);
 
   return (
     <div ref={setNodeRef} style={style} className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">

@@ -9,17 +9,20 @@
     "accounts": [
       {
         "id": "ship24-1772876023081",
-        "usedToday": 0,
+        "usedToday": 1,
         "successCount": 0,
-        "errorCount": 0,
+        "errorCount": 1,
         "avgResponseTime": 0,
-        "lastUsed": "",
+        "lastUsed": "2026-03-07T10:01:12.419Z",
         "status": "active",
         "providerId": "ship24",
         "name": "Ship24 - حساب 1",
         "apiKey": "apik_APnKWGA1EbhweHsu6C5gNEav6wYKNM",
         "dailyQuota": 1000,
-        "enabled": true
+        "enabled": true,
+        "usedThisMonth": 1,
+        "monthReset": "2026-3",
+        "monthlyQuota": 100
       }
     ]
   },
@@ -43,7 +46,8 @@
         "successCount": 0,
         "errorCount": 0,
         "avgResponseTime": 0,
-        "status": "active"
+        "status": "active",
+        "monthlyQuota": 500
       }
     ]
   },
@@ -67,7 +71,8 @@
         "successCount": 0,
         "errorCount": 0,
         "avgResponseTime": 0,
-        "status": "active"
+        "status": "active",
+        "monthlyQuota": 500
       }
     ]
   },
@@ -91,7 +96,8 @@
         "successCount": 0,
         "errorCount": 0,
         "avgResponseTime": 0,
-        "status": "active"
+        "status": "active",
+        "monthlyQuota": 10000
       }
     ]
   }

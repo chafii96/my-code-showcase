@@ -349,6 +349,9 @@ function adminApiPlugin() {
         }
       } catch {}
 
+      // ── In-memory IP rate limit cache (rolling hour window) ──────────────
+      const ipRateCache = new Map<string, { count: number; windowStart: number }>();
+
       // ── Middleware: handle /api/* routes ─────────────────────────────────
       server.middlewares.use(async (req: any, res: any, next: any) => {
         const url = req.url || "";
@@ -778,13 +781,13 @@ function adminApiPlugin() {
         if (uspsMatch && req.method === "GET") {
           const trackingNumber = uspsMatch[1].toUpperCase();
           const startTime = Date.now();
-          const clientIp = (req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").toString().split(",")[0].trim();
+          const clientIp = ((req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown") as string).split(",")[0].trim();
           const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
           const TRACKING_LOGS_FILE = path.join(ROOT, 'seo-data', 'tracking-logs.json');
 
-          const loadTrackCache = () => { try { return fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {}; } catch { return {}; } };
+          const loadTrackCache = (): any => { try { return fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {}; } catch { return {}; } };
           const saveTrackCache = (c: any) => { try { ensureDir(TRACKING_CACHE_FILE); fs.writeFileSync(TRACKING_CACHE_FILE, JSON.stringify(c)); } catch {} };
-          const addTrackLog = (providerUsed: string, accountUsed: string, cacheHit: boolean, status: 'success' | 'error', errorMsg?: string) => {
+          const addTrackLog = (providerUsed: string, accountUsed: string, cacheHit: boolean, status: 'success' | 'error' | 'not_found', errorMsg?: string) => {
             try {
               let logs: any[] = fs.existsSync(TRACKING_LOGS_FILE) ? JSON.parse(fs.readFileSync(TRACKING_LOGS_FILE, 'utf8')) : [];
               logs.push({ id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, timestamp: new Date().toISOString(), trackingNumberHash: trackingNumber.slice(0, 4) + '****' + trackingNumber.slice(-4), carrier: 'USPS', providerUsed, accountUsed, cacheHit, responseTimeMs: Date.now() - startTime, status, errorMessage: errorMsg, ipHash: clientIp.replace(/(\d+)\.(\d+)\.\d+\.\d+/, '$1.$2.xxx.xxx') });
@@ -795,41 +798,92 @@ function adminApiPlugin() {
           const inferStatus = (label: string) => { const l = label.toLowerCase(); if (l.includes('delivered')) return 'delivered'; if (l.includes('out for delivery')) return 'out-for-delivery'; if (l.includes('label') || l.includes('pre-shipment') || l.includes('accepted')) return 'label-created'; return 'in-transit'; };
           const fmtDate = (iso: string) => { try { return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return iso; } };
           const fmtTime = (iso: string) => { try { return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+          const getMonthKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}`; };
 
-          // ── Cache check ──────────────────────────────────────────────────
-          const cache = loadTrackCache();
-          if (cache[trackingNumber] && new Date(cache[trackingNumber].expiresAt) > new Date()) {
-            const entry = cache[trackingNumber];
-            entry.hitCount = (entry.hitCount || 0) + 1;
-            entry.lastHit = new Date().toISOString();
-            saveTrackCache(cache);
-            addTrackLog(entry.providerUsed || 'Cache', 'Cache', true, 'success');
+          // ── IP Rate Limiting ──────────────────────────────────────────────
+          const ipNow = Date.now();
+          const ipData = ipRateCache.get(clientIp) || { count: 0, windowStart: ipNow };
+          if (ipNow - ipData.windowStart > 3600000) { ipData.count = 0; ipData.windowStart = ipNow; }
+          ipData.count++;
+          ipRateCache.set(clientIp, ipData);
+          const ipHourLimit = (loadConfig().rateLimit?.maxPerHour) || 30;
+          if (ipData.count > ipHourLimit) {
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ ...entry.data, cached: true }));
+            res.end(JSON.stringify({ ok: false, error: 'Too many tracking requests. Please wait a few minutes before trying again.', rateLimited: true, trackingNumber }));
             return;
           }
 
-          // ── Load providers sorted by priority ────────────────────────────
-          const providers = loadProviders().sort((a: any, b: any) => a.priority - b.priority);
+          // ── Cache check (includes "not found" cache) ──────────────────────
+          const cache = loadTrackCache();
+          const cached = cache[trackingNumber];
+          if (cached && new Date(cached.expiresAt) > new Date()) {
+            cached.hitCount = (cached.hitCount || 0) + 1;
+            cached.lastHit = new Date().toISOString();
+            saveTrackCache(cache);
+            if (cached.notFound) {
+              addTrackLog(cached.providerUsed || 'Cache', 'Cache', true, 'not_found');
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: false, error: 'No tracking information found for this number. It may not exist or may take up to 24 hours to appear after the first USPS scan.', trackingNumber, cached: true }));
+            } else {
+              addTrackLog(cached.providerUsed || 'Cache', 'Cache', true, 'success');
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ...cached.data, cached: true }));
+            }
+            return;
+          }
+
+          // ── Account usage helpers ─────────────────────────────────────────
+          const updateAccountUsage = (providerId: string, accountId: string, success: boolean, forceExhaust = false) => {
+            try {
+              const mk = getMonthKey();
+              const provs = loadProviders().map((p: any) => ({
+                ...p,
+                accounts: (p.accounts || []).map((a: any) => {
+                  if (a.id !== accountId || p.id !== providerId) return a;
+                  const resetMonth = a.monthReset !== mk;
+                  const usedThisMonth = resetMonth ? 1 : (a.usedThisMonth || 0) + 1;
+                  const monthlyLimit = a.monthlyQuota || a.dailyQuota || 9999;
+                  const isExhausted = forceExhaust || usedThisMonth >= monthlyLimit;
+                  return { ...a, usedToday: (a.usedToday || 0) + 1, usedThisMonth, monthReset: mk, lastUsed: new Date().toISOString(), successCount: success ? (a.successCount || 0) + 1 : (a.successCount || 0), errorCount: !success ? (a.errorCount || 0) + 1 : (a.errorCount || 0), status: isExhausted ? 'exhausted' : 'active' };
+                })
+              }));
+              saveProviders(provs);
+            } catch {}
+          };
+          const isAccountActive = (a: any) => {
+            if (!a.enabled || !a.apiKey || !a.apiKey.trim() || a.apiKey === 'N/A') return false;
+            const mk = getMonthKey();
+            const usedThisMonth = a.monthReset !== mk ? 0 : (a.usedThisMonth || 0);
+            const monthlyLimit = a.monthlyQuota || a.dailyQuota || 9999;
+            if (usedThisMonth >= monthlyLimit) return false;
+            if (a.status === 'exhausted' && a.monthReset === mk) return false;
+            return true;
+          };
+
+          // ── Provider failover loop ────────────────────────────────────────
+          const allProviders = loadProviders().sort((a: any, b: any) => a.priority - b.priority);
           let trackingResult: any = null;
           let usedProvider = '';
           let usedAccount = '';
 
-          for (const provider of providers) {
+          for (const provider of allProviders) {
             if (!provider.enabled || trackingResult) continue;
-            const accounts = (provider.accounts || []).filter((a: any) => a.enabled && a.status !== 'exhausted' && a.apiKey && a.apiKey.trim() && a.apiKey !== 'N/A');
+            const accounts = (provider.accounts || []).filter(isAccountActive);
+            if (accounts.length === 0) continue;
 
             // ── Ship24 ───────────────────────────────────────────────────
             if (provider.id === 'ship24') {
               for (const account of accounts) {
                 try {
                   const r = await fetch('https://api.ship24.com/public/v1/trackers', { method: 'POST', headers: { 'Authorization': `Bearer ${account.apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ trackingNumber }), signal: AbortSignal.timeout(12000) });
+                  if (r.status === 402 || r.status === 429 || r.status === 403) { updateAccountUsage(provider.id, account.id, false, true); continue; }
                   if (r.ok) {
                     const d = await r.json();
                     const evts = (d.data?.tracker?.events || []).map((e: any) => ({ status: e.status || '', detail: e.status || '', location: [e.location?.city, e.location?.state, e.location?.countryCode].filter(Boolean).join(', '), date: e.occurrenceDatetime ? fmtDate(e.occurrenceDatetime) : '', time: e.occurrenceDatetime ? fmtTime(e.occurrenceDatetime) : '' }));
+                    updateAccountUsage(provider.id, account.id, true);
                     if (evts.length > 0) { trackingResult = { ok: true, trackingNumber, status: inferStatus(evts[0].status), statusLabel: evts[0].status || 'In Transit', service: 'USPS Package', origin: '', destination: '', estimatedDelivery: '', weight: '—', events: evts }; usedProvider = 'Ship24'; usedAccount = account.name; break; }
-                  }
-                } catch {}
+                  } else { updateAccountUsage(provider.id, account.id, false); }
+                } catch { updateAccountUsage(provider.id, account.id, false); }
               }
             }
 
@@ -838,14 +892,16 @@ function adminApiPlugin() {
               for (const account of accounts) {
                 try {
                   const r = await fetch('https://api.trackingmore.com/v4/trackings/realtime', { method: 'POST', headers: { 'Tracking-Api-Key': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ tracking_number: trackingNumber, carrier_code: 'usps' }), signal: AbortSignal.timeout(12000) });
+                  if (r.status === 402 || r.status === 429 || r.status === 403) { updateAccountUsage(provider.id, account.id, false, true); continue; }
                   if (r.ok) {
                     const d = await r.json();
                     if (d.meta?.code === 200 && d.data) {
                       const evts = (d.data.track_info || []).map((e: any) => ({ status: e.tracking_detail || '', detail: e.tracking_detail || '', location: e.location || '', date: e.tracking_time ? fmtDate(new Date(e.tracking_time * 1000).toISOString()) : '', time: e.tracking_time ? fmtTime(new Date(e.tracking_time * 1000).toISOString()) : '' }));
+                      updateAccountUsage(provider.id, account.id, true);
                       if (evts.length > 0) { trackingResult = { ok: true, trackingNumber, status: inferStatus(d.data.latest_event?.tracking_detail || evts[0].status), statusLabel: d.data.latest_event?.tracking_detail || evts[0].status || 'In Transit', service: 'USPS Package', origin: d.data.origin_info?.trackinfo?.[0]?.location || '', destination: d.data.destination_info?.trackinfo?.[0]?.location || '', estimatedDelivery: d.data.scheduled_delivery || '', weight: '—', events: evts }; usedProvider = 'TrackingMore'; usedAccount = account.name; break; }
-                    }
-                  }
-                } catch {}
+                    } else { updateAccountUsage(provider.id, account.id, false); }
+                  } else { updateAccountUsage(provider.id, account.id, false); }
+                } catch { updateAccountUsage(provider.id, account.id, false); }
               }
             }
 
@@ -855,20 +911,22 @@ function adminApiPlugin() {
                 try {
                   await fetch('https://api.17track.net/track/v2.2/register', { method: 'POST', headers: { '17token': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify([{ number: trackingNumber }]), signal: AbortSignal.timeout(5000) });
                   const r = await fetch('https://api.17track.net/track/v2.2/gettrackinfo', { method: 'POST', headers: { '17token': account.apiKey, 'Content-Type': 'application/json' }, body: JSON.stringify([{ number: trackingNumber }]), signal: AbortSignal.timeout(12000) });
+                  if (r.status === 402 || r.status === 429 || r.status === 403) { updateAccountUsage(provider.id, account.id, false, true); continue; }
                   if (r.ok) {
                     const d = await r.json();
                     const item = d.data?.accepted?.[0];
                     if (item?.track) {
                       const raw = [...(item.track.w0 || []), ...(item.track.w1 || [])];
                       const evts = raw.map((e: any) => ({ status: e.z || e.d || '', detail: e.d || e.z || '', location: e.l || '', date: e.a ? fmtDate(e.a) : '', time: e.a ? fmtTime(e.a) : '' }));
+                      updateAccountUsage(provider.id, account.id, true);
                       if (evts.length > 0) { const e17 = item.track.e; let st = 'in-transit'; if (e17 === 40) st = 'delivered'; else if (e17 === 35) st = 'out-for-delivery'; else if (e17 <= 10) st = 'label-created'; trackingResult = { ok: true, trackingNumber, status: st, statusLabel: item.track.b || 'In Transit', service: 'USPS Package', origin: '', destination: '', estimatedDelivery: '', weight: '—', events: evts }; usedProvider = '17Track'; usedAccount = account.name; break; }
-                    }
-                  }
-                } catch {}
+                    } else { updateAccountUsage(provider.id, account.id, false); }
+                  } else { updateAccountUsage(provider.id, account.id, false); }
+                } catch { updateAccountUsage(provider.id, account.id, false); }
               }
             }
 
-            // ── USPS XML API (via scraper slot or if USPS key configured) ─
+            // ── USPS XML API ──────────────────────────────────────────────
             if ((provider.id === 'scraper' || provider.id === 'usps') && !trackingResult) {
               const config = loadConfig();
               const USERID = config.apiKeys?.uspsUserId || '';
@@ -877,7 +935,7 @@ function adminApiPlugin() {
                   const xmlRequest = `<TrackFieldRequest USERID="${USERID}"><Revision>1</Revision><ClientIp>127.0.0.1</ClientIp><SourceId>USPostalTracking</SourceId><TrackID ID="${trackingNumber}"/></TrackFieldRequest>`;
                   const apiUrl = `https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XML=${encodeURIComponent(xmlRequest)}`;
                   const fetchMod = await import('node:https');
-                  const xmlResponse: string = await new Promise((resolve, reject) => { fetchMod.default.get(apiUrl, { timeout: 12000 }, (resp) => { let data = ''; resp.on('data', (c: Buffer) => data += c); resp.on('end', () => resolve(data)); }).on('error', reject); });
+                  const xmlResponse: string = await new Promise((resolve, reject) => { fetchMod.default.get(apiUrl, { timeout: 12000 }, (resp: any) => { let data = ''; resp.on('data', (c: Buffer) => data += c); resp.on('end', () => resolve(data)); }).on('error', reject); });
                   const extract = (tag: string) => { const m = xmlResponse.match(new RegExp(`<${tag}>(.*?)</${tag}>`, 's')); return m ? m[1].trim() : ''; };
                   const errNum = xmlResponse.match(/<Number>(.*?)<\/Number>/);
                   if (!errNum || xmlResponse.includes('<TrackDetail>') || xmlResponse.includes('<TrackSummary>')) {
@@ -893,20 +951,25 @@ function adminApiPlugin() {
             }
           }
 
+          // ── No result: cache "not found" with 5-min TTL ───────────────────
           if (!trackingResult) {
-            addTrackLog('None', 'None', false, 'error', 'No providers configured or all failed');
+            const nfCache = loadTrackCache();
+            nfCache[trackingNumber] = { notFound: true, providerUsed: 'None', cachedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 5 * 60000).toISOString(), hitCount: 0, lastHit: new Date().toISOString() };
+            saveTrackCache(nfCache);
+            addTrackLog('None', 'None', false, 'not_found', 'All providers returned no results');
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ ok: false, error: 'No tracking information found. Configure API keys in Admin → API Manager → Providers, or enter your USPS API credentials in Admin → API Keys.', trackingNumber }));
+            res.end(JSON.stringify({ ok: false, error: 'No tracking information found for this number. It may not exist or may take up to 24 hours to appear after the first USPS scan.', trackingNumber }));
             return;
           }
 
-          // ── Cache the result ─────────────────────────────────────────────
+          // ── Cache result with status-based TTL ────────────────────────────
           try {
             const ttlCfg = fs.existsSync(CACHE_SETTINGS_FILE) ? JSON.parse(fs.readFileSync(CACHE_SETTINGS_FILE, 'utf8')) : {};
             const ttlMap: Record<string, number> = { delivered: ttlCfg.delivered || 1440, 'out-for-delivery': ttlCfg.outForDelivery || 30, 'in-transit': ttlCfg.inTransit || 120, 'label-created': ttlCfg.preShipment || 60, alert: ttlCfg.exception || 15 };
             const ttlMin = ttlMap[trackingResult.status] || ttlCfg.unknown || 30;
-            cache[trackingNumber] = { trackingNumberHash: trackingNumber.slice(0, 4) + '****' + trackingNumber.slice(-4), carrier: 'USPS', status: trackingResult.statusLabel, cachedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + ttlMin * 60000).toISOString(), hitCount: 0, lastHit: new Date().toISOString(), providerUsed: usedProvider, data: trackingResult };
-            saveTrackCache(cache);
+            const updCache = loadTrackCache();
+            updCache[trackingNumber] = { trackingNumberHash: trackingNumber.slice(0, 4) + '****' + trackingNumber.slice(-4), carrier: 'USPS', status: trackingResult.statusLabel, cachedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + ttlMin * 60000).toISOString(), hitCount: 0, lastHit: new Date().toISOString(), providerUsed: usedProvider, data: trackingResult };
+            saveTrackCache(updCache);
           } catch {}
 
           addTrackLog(usedProvider, usedAccount, false, 'success');
