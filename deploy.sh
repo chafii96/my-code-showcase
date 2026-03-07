@@ -276,7 +276,7 @@ p "تثبيت الحزم + بناء المشروع"
 # ── حزم الفرونت ──
 info "تثبيت حزم الفرونت..."
 rm -rf node_modules/.vite 2>/dev/null
-npm ci 2>&1 || npm install --legacy-peer-deps 2>&1 || die "فشل تثبيت الحزم نهائياً"
+npm install --legacy-peer-deps 2>&1 || die "فشل تثبيت الحزم نهائياً"
 log "حزم الفرونت ✓"
 
 # ── Puppeteer ──
@@ -407,8 +407,12 @@ SSL_EXISTS=false
 SSL_CERT=""
 SSL_KEY=""
 
-# تحقق من acme.sh أولاً ثم certbot ثم المسار المخصص
-if [ -f "/etc/ssl/${APP}/cert.pem" ] && [ -f "/etc/ssl/${APP}/key.pem" ]; then
+# تحقق من acme.sh (fullchain) أولاً ثم certbot
+if [ -f "/etc/ssl/${APP}/fullchain.pem" ] && [ -f "/etc/ssl/${APP}/key.pem" ]; then
+  SSL_EXISTS=true
+  SSL_CERT="/etc/ssl/${APP}/fullchain.pem"
+  SSL_KEY="/etc/ssl/${APP}/key.pem"
+elif [ -f "/etc/ssl/${APP}/cert.pem" ] && [ -f "/etc/ssl/${APP}/key.pem" ]; then
   SSL_EXISTS=true
   SSL_CERT="/etc/ssl/${APP}/cert.pem"
   SSL_KEY="/etc/ssl/${APP}/key.pem"
@@ -444,8 +448,9 @@ server {
 }
 
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
     server_name ${ROOT_DOMAIN};
     root ${DIR}/dist;
     index index.html;
@@ -762,46 +767,35 @@ elif [ -n "$MAIN" ]; then
 
   SSL_DONE=false
 
-  # محاولة 1: certbot --nginx
-  if command -v certbot &>/dev/null && ! $SSL_DONE; then
+  # محاولة 1: acme.sh + ZeroSSL (الأولوية)
+  info "محاولة SSL عبر acme.sh + ZeroSSL..."
+  if [ ! -f ~/.acme.sh/acme.sh ]; then
+    curl https://get.acme.sh | sh -s email=$EMAIL 2>&1 || true
+    source ~/.bashrc 2>/dev/null || true
+  fi
+  if [ -f ~/.acme.sh/acme.sh ]; then
+    ~/.acme.sh/acme.sh --register-account -m $EMAIL --server zerossl 2>/dev/null || true
+    systemctl stop nginx 2>/dev/null
+    if ~/.acme.sh/acme.sh --issue $DA --standalone --server zerossl --force 2>&1; then
+      mkdir -p /etc/ssl/${APP}
+      ~/.acme.sh/acme.sh --install-cert -d $MAIN \
+        --key-file /etc/ssl/${APP}/key.pem \
+        --fullchain-file /etc/ssl/${APP}/fullchain.pem \
+        --reloadcmd "systemctl reload nginx" 2>&1
+      log "SSL (acme.sh/ZeroSSL) ✓"
+      SSL_DONE=true
+    fi
+    systemctl start nginx 2>/dev/null
+  fi
+
+  # محاولة 2: certbot --nginx (بديل)
+  if ! $SSL_DONE && command -v certbot &>/dev/null; then
     info "محاولة SSL عبر certbot --nginx..."
-    if certbot --nginx --non-interactive --agree-tos --email "$EMAIL" --redirect --hsts --staple-ocsp $DA 2>&1; then
+    if certbot --nginx --non-interactive --agree-tos --email "$EMAIL" --redirect $DA 2>&1; then
       log "SSL (certbot) ✓"
       SSL_DONE=true
     else
-      warn "certbot --nginx فشل"
-    fi
-  fi
-
-  # محاولة 2: certbot webroot
-  if ! $SSL_DONE && command -v certbot &>/dev/null; then
-    info "محاولة SSL عبر certbot webroot..."
-    if certbot certonly --webroot --webroot-path "${DIR}/dist" --non-interactive --agree-tos --email "$EMAIL" $DA 2>&1; then
-      log "SSL (certbot webroot) ✓"
-      SSL_DONE=true
-    fi
-  fi
-
-  # محاولة 3: acme.sh + ZeroSSL
-  if ! $SSL_DONE; then
-    info "محاولة SSL عبر acme.sh + ZeroSSL..."
-    if [ ! -f ~/.acme.sh/acme.sh ]; then
-      curl https://get.acme.sh | sh -s email=$EMAIL 2>&1 || true
-      source ~/.bashrc 2>/dev/null || true
-    fi
-    if [ -f ~/.acme.sh/acme.sh ]; then
-      ~/.acme.sh/acme.sh --register-account -m $EMAIL --server zerossl 2>/dev/null || true
-      systemctl stop nginx 2>/dev/null
-      if ~/.acme.sh/acme.sh --issue $DA --standalone --force 2>&1; then
-        mkdir -p /etc/ssl/${APP}
-        ~/.acme.sh/acme.sh --install-cert -d $MAIN \
-          --key-file /etc/ssl/${APP}/key.pem \
-          --fullchain-file /etc/ssl/${APP}/cert.pem \
-          --reloadcmd "systemctl reload nginx" 2>&1
-        log "SSL (acme.sh/ZeroSSL) ✓"
-        SSL_DONE=true
-      fi
-      systemctl start nginx 2>/dev/null
+      warn "certbot فشل أيضاً"
     fi
   fi
 
@@ -920,7 +914,7 @@ cp -r seo-data /tmp/seo-data-backup 2>/dev/null || true
 
 git stash 2>/dev/null || true
 git pull origin main 2>&1 || git pull origin master 2>&1
-npm ci 2>&1 || npm install --legacy-peer-deps 2>&1
+npm install --legacy-peer-deps 2>&1
 [ -f server/package.json ] && { cd server && npm install --legacy-peer-deps 2>&1 && cd "$DIR"; }
 
 # استعادة البيانات
