@@ -71,6 +71,9 @@ cat >> /tmp/current_cron << EOF
 
 # Weekly Sunday 2:00 AM: Full sitemap regeneration
 0 2 * * 0 cd $SITE_DIR && node scripts/sitemap-update.cjs --ping >> $LOG_DIR/weekly-sitemap.log 2>&1
+
+# Every hour: Auto-fetch AdSense stats via OAuth API
+0 * * * * cd $SITE_DIR && node scripts/adsense-stats-cron.cjs >> $LOG_DIR/adsense-stats.log 2>&1
 EOF
 
 # Install the new crontab

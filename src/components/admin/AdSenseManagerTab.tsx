@@ -7,6 +7,7 @@ import {
   MonitorSmartphone, Smartphone, PanelTop, PanelBottom, Columns,
   BookOpen, ArrowRight, Wifi, WifiOff, RefreshCw, Key,
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import {
   type AdSenseConfig,
   type AdUnitConfig,
@@ -370,10 +371,11 @@ export default function AdSenseManagerTab() {
                         if (d.success && d.stats) {
                           updateStats(d.stats);
                           save();
+                          toast({ title: '✅ تم', description: 'تم جلب الإحصائيات بنجاح من AdSense API' });
                         } else {
-                          alert(d.error || 'فشل جلب الإحصائيات');
+                          toast({ title: '❌ فشل', description: d.error || 'فشل جلب الإحصائيات', variant: 'destructive' });
                         }
-                      } catch { alert('تعذر الاتصال بالسيرفر'); }
+                      } catch { toast({ title: '❌ خطأ', description: 'تعذر الاتصال بالسيرفر', variant: 'destructive' }); }
                       setFetchingStats(false);
                     }}
                     disabled={fetchingStats}
@@ -415,7 +417,7 @@ export default function AdSenseManagerTab() {
                 <div className="flex gap-2">
                   <button
                     onClick={async () => {
-                      if (!oauthClientId || !oauthClientSecret) return alert('أدخل Client ID و Secret أولاً');
+                      if (!oauthClientId || !oauthClientSecret) return toast({ title: '⚠️ تنبيه', description: 'أدخل Client ID و Secret أولاً', variant: 'destructive' });
                       setOauthSaving(true);
                       try {
                         await fetch('/api/adsense/oauth-config', {
@@ -429,10 +431,10 @@ export default function AdSenseManagerTab() {
                         // Poll for connection
                         const poll = setInterval(async () => {
                           const s = await fetch('/api/adsense/oauth-status').then(r => r.json());
-                          if (s.connected) { setOauthStatus(s); clearInterval(poll); }
+                          if (s.connected) { setOauthStatus(s); clearInterval(poll); toast({ title: '✅ تم الربط', description: 'تم ربط حساب AdSense بنجاح' }); }
                         }, 3000);
                         setTimeout(() => clearInterval(poll), 120000);
-                      } catch { alert('تعذر الاتصال بالسيرفر'); }
+                      } catch { toast({ title: '❌ خطأ', description: 'تعذر الاتصال بالسيرفر', variant: 'destructive' }); }
                       setOauthSaving(false);
                     }}
                     disabled={oauthSaving}
