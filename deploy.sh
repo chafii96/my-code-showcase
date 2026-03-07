@@ -939,8 +939,10 @@ for d in public/city public/article public/zip public/state public/status public
   [ -d "$d" ] && rm -rf "$d"
 done
 
-# Master Generator (الصفحات البرمجية + السايتمابات)
+# تحديث carrier sitemap + Master Generator + التحقق من التغطية
+[ -f scripts/generate-carrier-sitemap.cjs ] && node scripts/generate-carrier-sitemap.cjs 2>&1 || true
 [ -f scripts/generate-all.cjs ] && node scripts/generate-all.cjs 2>&1 || true
+[ -f scripts/verify-sitemap-coverage.cjs ] && node scripts/verify-sitemap-coverage.cjs 2>&1 || true
 
 # Build
 npm run build:client-only 2>&1

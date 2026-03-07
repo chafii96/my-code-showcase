@@ -342,7 +342,7 @@ function main() {
       }
       
       fs.writeFileSync(filePath, html);
-      programmaticUrls.push({ loc: `${SITE_URL}/city/${city.slug}/${article.slug}`, priority: '0.5', changefreq: 'monthly' });
+      programmaticUrls.push({ loc: `${SITE_URL}/city/${city.slug}/article/${article.slug}`, priority: '0.5', changefreq: 'monthly' });
       totalPages++;
       console.log(`[PROGRESS] ${totalPages}/${totalExpected}`);
     }
