@@ -339,24 +339,43 @@ log "بناء ✓ — $(du -sh dist 2>/dev/null | cut -f1)"
 ###################################################################
 p "توليد Sitemaps + صفحات SEO"
 
-# Sitemaps
-for script in scripts/generate-sitemaps.cjs scripts/generate-sitemap-v2.cjs; do
-  if [ -f "$script" ]; then
-    info "تشغيل $(basename $script)..."
-    node "$script" 2>&1 && log "$(basename $script) ✓" || { warn "$(basename $script) فشل"; WARNINGS=$((WARNINGS+1)); }
-    break
+# Master Generator — يولّد كل الصفحات البرمجية + كل السايتمابات + السايتماب إندكس
+if [ -f scripts/generate-all.cjs ]; then
+  info "تشغيل generate-all.cjs (الصفحات البرمجية + كل السايتمابات)..."
+  node scripts/generate-all.cjs 2>&1 && log "generate-all.cjs ✓" || { warn "generate-all.cjs فشل"; WARNINGS=$((WARNINGS+1)); }
+else
+  # Fallback: سكريبتات منفصلة
+  for script in scripts/generate-sitemaps.cjs scripts/generate-sitemap-v2.cjs; do
+    if [ -f "$script" ]; then
+      info "تشغيل $(basename $script)..."
+      node "$script" 2>&1 && log "$(basename $script) ✓" || { warn "$(basename $script) فشل"; WARNINGS=$((WARNINGS+1)); }
+      break
+    fi
+  done
+  if [ -f scripts/programmatic-seo-generator.cjs ]; then
+    info "توليد الصفحات البرمجية..."
+    node scripts/programmatic-seo-generator.cjs 2>&1 && log "Programmatic pages ✓" || { warn "Programmatic فشل"; WARNINGS=$((WARNINGS+1)); }
   fi
-done
-
-# Programmatic SEO pages
-if [ -f scripts/programmatic-seo-generator.cjs ]; then
-  info "توليد الصفحات البرمجية..."
-  node scripts/programmatic-seo-generator.cjs 2>&1 && log "Programmatic pages ✓" || { warn "Programmatic فشل"; WARNINGS=$((WARNINGS+1)); }
 fi
 
 # إعادة البناء لتضمين الملفات المولّدة
 info "إعادة البناء النهائي..."
 npm run build:client-only 2>&1 && log "بناء نهائي ✓ — $(du -sh dist 2>/dev/null | cut -f1)" || warn "البناء النهائي فشل"
+
+# نسخ السايتمابات إلى dist/ (مهم! Vite لا ينسخ الملفات المولّدة بعد البناء)
+info "نسخ السايتمابات إلى dist/..."
+cp -f public/sitemap*.xml dist/ 2>/dev/null && log "سايتمابات → dist/ ✓" || warn "فشل نسخ السايتمابات"
+cp -f public/robots.txt dist/ 2>/dev/null || true
+
+# التحقق من اكتمال sitemap.xml
+SITEMAP_COUNT=$(grep -c '<sitemap>' dist/sitemap.xml 2>/dev/null || echo "0")
+SITEMAP_FILES=$(ls -1 public/sitemap-*.xml 2>/dev/null | wc -l)
+if [ "$SITEMAP_COUNT" -lt "$SITEMAP_FILES" ]; then
+  warn "sitemap.xml يحتوي $SITEMAP_COUNT فقط من أصل $SITEMAP_FILES سايتماب!"
+  WARNINGS=$((WARNINGS+1))
+else
+  log "sitemap.xml مكتمل: $SITEMAP_COUNT سايتماب ✓"
+fi
 
 ###################################################################
 # 10. Prerendering (اختياري)
@@ -919,12 +938,15 @@ for d in public/city public/article public/zip public/state public/status public
   [ -d "$d" ] && rm -rf "$d"
 done
 
-# Sitemaps
-[ -f scripts/generate-sitemaps.cjs ] && node scripts/generate-sitemaps.cjs 2>&1 || true
-[ -f scripts/programmatic-seo-generator.cjs ] && node scripts/programmatic-seo-generator.cjs 2>&1 || true
+# Master Generator (الصفحات البرمجية + السايتمابات)
+[ -f scripts/generate-all.cjs ] && node scripts/generate-all.cjs 2>&1 || true
 
 # Build
 npm run build:client-only 2>&1
+
+# نسخ السايتمابات إلى dist/
+cp -f public/sitemap*.xml dist/ 2>/dev/null || true
+cp -f public/robots.txt dist/ 2>/dev/null || true
 
 # Prerender (اختياري)
 [ -f scripts/prerender.cjs ] && timeout 1800 node scripts/prerender.cjs 2>&1 || true
