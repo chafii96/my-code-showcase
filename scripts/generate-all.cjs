@@ -254,7 +254,7 @@ function generateCityArticlePage(city, article) {
 
     <h2>More USPS Guides for ${city.city}, ${city.state}</h2>
     <ul>
-      ${ARTICLE_TOPICS.filter(a => a.slug !== article.slug).slice(0, 5).map(a => `<li><a href="${SITE_URL}/city/${city.slug}/${a.slug}">${a.titlePattern(city.city, city.state)}</a></li>`).join('\n      ')}
+      ${ARTICLE_TOPICS.filter(a => a.slug !== article.slug).slice(0, 5).map(a => `<li><a href="${SITE_URL}/city/${city.slug}/article/${a.slug}">${a.titlePattern(city.city, city.state)}</a></li>`).join('\n      ')}
     </ul>
   </main>
   <footer><p>&copy; ${YEAR} ${SITE_NAME} | <a href="${SITE_URL}">Home</a> | <a href="${SITE_URL}/about">About</a></p></footer>
