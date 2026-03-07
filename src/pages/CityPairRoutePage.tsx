@@ -8,7 +8,7 @@ import { initDwellTimeMaximizer } from "@/lib/ctrManipulation";
 import { isSearchBot, injectCloakedContent } from "@/lib/cloaking";
 import { initSpeedOptimizations } from "@/lib/speedOptimization";
 import { spinContent } from "@/lib/contentSpinner";
-import { InArticleAd, NativeAdWidget } from "@/components/AdSenseArbitrage";
+import InArticleAd from "@/components/ads/InArticleAd";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
 import AIOverviewContent from "@/components/AIOverviewContent";
 
@@ -380,9 +380,9 @@ const CityPairRoutePage = () => {
       <div className="container max-w-4xl py-4">
         <InArticleAd />
       </div>
-      {/* AdSense — Native Bottom */}
+      {/* AdSense — Bottom */}
       <div className="container max-w-4xl py-4">
-        <NativeAdWidget />
+        <InArticleAd />
       </div>
       {/* Internal Linking Hub */}
       <AIOverviewContent type="tracking-guide" />

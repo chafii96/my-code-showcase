@@ -6,7 +6,7 @@ import SEOHead from "@/components/SEOHead";
 import { trackingStatuses } from "@/data/mockTracking";
 import { allUSCities, articleKeywords } from "@/data/usCities";
 import { ArrowRight, MapPin, Package, Building, Clock, FileText, Star, Truck, Globe, Navigation, Zap, Shield, ChevronRight, BarChart3, Mail, AlertTriangle, TrendingUp, Users } from "lucide-react";
-import { InArticleAd, NativeAdWidget } from "@/components/AdSenseArbitrage";
+import InArticleAd from "@/components/ads/InArticleAd";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
 import AIOverviewContent from "@/components/AIOverviewContent";
 import { initSpeedOptimizations } from "@/lib/speedOptimization";
@@ -547,7 +547,7 @@ const CityLocationPage = () => {
             </div>
 
             {/* FAQ */}
-<NativeAdWidget />
+<InArticleAd />
             <InArticleAd />
 
             {/* Related Statuses */}

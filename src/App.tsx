@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import { AdSenseLoader } from "@/components/AdSenseArbitrage";
+// AdSense is now managed via adsense-config system
 import { useEffect, lazy, Suspense } from "react";
 import { initDwellTimeMaximizer } from "@/lib/ctrManipulation";
 import { generateEntitySchema } from "@/lib/knowledgeGraph";
@@ -235,8 +235,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      {/* Load AdSense globally on all pages */}
-      <AdSenseLoader />
+      {/* AdSense is now loaded dynamically by AdSenseUnit component */}
       <BrowserRouter>
         <ScrollToTop />
         <GlobalSEOInitializer />
