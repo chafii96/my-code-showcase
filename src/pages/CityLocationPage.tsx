@@ -547,7 +547,7 @@ const CityLocationPage = () => {
             </div>
 
             {/* FAQ */}
-<NativeAdWidget />
+<InArticleAd />
             <InArticleAd />
 
             {/* Related Statuses */}

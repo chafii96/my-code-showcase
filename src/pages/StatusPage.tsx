@@ -283,9 +283,9 @@ const StatusPage = () => {
       <div className="container max-w-4xl py-4">
         <InArticleAd />
       </div>
-      {/* AdSense — Native Bottom */}
+      {/* AdSense — Bottom */}
       <div className="container max-w-4xl py-4">
-        <NativeAdWidget />
+        <InArticleAd />
       </div>
       {/* Internal Linking Hub */}
       <AIOverviewContent type="tracking-guide" />

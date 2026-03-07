@@ -194,9 +194,9 @@ const LocationsIndexPage = () => {
           </div>
         </section>
 
-        {/* AdSense — Native Bottom */}
+        {/* AdSense — Bottom */}
         <div className="py-6">
-          <NativeAdWidget />
+          <InArticleAd />
         </div>
 
         {/* Internal Linking Hub */}

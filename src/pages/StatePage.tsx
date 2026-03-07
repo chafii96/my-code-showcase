@@ -375,7 +375,7 @@ const StatePage = () => {
         </section>
 
         <AIOverviewContent type="tracking-guide" />
-        <NativeAdWidget />
+        <InArticleAd />
         <InternalLinkingHub />
 
       </div>
