@@ -372,9 +372,9 @@ export default function AdSenseManagerTab() {
                           updateStats(d.stats);
                           save();
                         } else {
-                          alert(d.error || 'فشل جلب الإحصائيات');
+                          toast({ title: '❌ فشل', description: d.error || 'فشل جلب الإحصائيات', variant: 'destructive' });
                         }
-                      } catch { alert('تعذر الاتصال بالسيرفر'); }
+                      } catch { toast({ title: '❌ خطأ', description: 'تعذر الاتصال بالسيرفر', variant: 'destructive' }); }
                       setFetchingStats(false);
                     }}
                     disabled={fetchingStats}
