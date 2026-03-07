@@ -9,18 +9,18 @@
     "accounts": [
       {
         "id": "ship24-1772876023081",
-        "usedToday": 1,
+        "usedToday": 2,
         "successCount": 0,
-        "errorCount": 1,
+        "errorCount": 2,
         "avgResponseTime": 0,
-        "lastUsed": "2026-03-07T10:01:12.419Z",
+        "lastUsed": "2026-03-07T10:14:07.995Z",
         "status": "active",
         "providerId": "ship24",
         "name": "Ship24 - حساب 1",
         "apiKey": "apik_APnKWGA1EbhweHsu6C5gNEav6wYKNM",
         "dailyQuota": 1000,
         "enabled": true,
-        "usedThisMonth": 1,
+        "usedThisMonth": 2,
         "monthReset": "2026-3",
         "monthlyQuota": 100
       }

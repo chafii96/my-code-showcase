@@ -746,22 +746,22 @@ function adminApiPlugin() {
         const DEFAULT_FAILOVER_PROVIDERS = [
           { id: 'ship24', name: 'Ship24', enabled: true, priority: 1, icon: '🚀', color: '#3b82f6',
             accounts: [
-              { id: 's24-1', providerId: 'ship24', name: 'Ship24 - Account 1', apiKey: '', dailyQuota: 1000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
+              { id: 's24-1', providerId: 'ship24', name: 'Ship24 - Account 1', apiKey: '', dailyQuota: 100, monthlyQuota: 100, usedToday: 0, usedThisMonth: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
             ]
           },
           { id: 'trackingmore', name: 'TrackingMore', enabled: true, priority: 2, icon: '📦', color: '#10b981',
             accounts: [
-              { id: 'tm-1', providerId: 'trackingmore', name: 'TrackingMore - Account 1', apiKey: '', dailyQuota: 2000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
+              { id: 'tm-1', providerId: 'trackingmore', name: 'TrackingMore - Account 1', apiKey: '', dailyQuota: 500, monthlyQuota: 500, usedToday: 0, usedThisMonth: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
             ]
           },
           { id: '17track', name: '17Track', enabled: false, priority: 3, icon: '🌐', color: '#f59e0b',
             accounts: [
-              { id: '17t-1', providerId: '17track', name: '17Track - Account 1', apiKey: '', dailyQuota: 500, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
+              { id: '17t-1', providerId: '17track', name: '17Track - Account 1', apiKey: '', dailyQuota: 500, monthlyQuota: 500, usedToday: 0, usedThisMonth: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
             ]
           },
           { id: 'scraper', name: 'Custom Scraper', enabled: true, priority: 4, icon: '🕷️', color: '#8b5cf6',
             accounts: [
-              { id: 'sc-1', providerId: 'scraper', name: 'Custom Scraper - Default', apiKey: 'N/A', dailyQuota: 10000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
+              { id: 'sc-1', providerId: 'scraper', name: 'Custom Scraper - Default', apiKey: 'N/A', dailyQuota: 10000, monthlyQuota: 10000, usedToday: 0, usedThisMonth: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
             ]
           },
         ];
@@ -1357,6 +1357,17 @@ function adminApiPlugin() {
             const totalError = allAccounts.reduce((s: number, a: any) => s + (a.errorCount || 0), 0);
             const totalOps = totalSuccess + totalError;
             const activeProvider = providers.find((p: any) => p.enabled)?.name || 'غير محدد';
+            const TRACKING_LOGS_FILE = path.join(ROOT, 'seo-data', 'tracking-logs.json');
+            let cacheHitRate = 0; let apiCallsSaved = 0;
+            try {
+              const logs: any[] = fs.existsSync(TRACKING_LOGS_FILE) ? JSON.parse(fs.readFileSync(TRACKING_LOGS_FILE, 'utf8')) : [];
+              const todayStr = new Date().toDateString();
+              const todayLogs = logs.filter((l: any) => new Date(l.timestamp).toDateString() === todayStr);
+              const hits = todayLogs.filter((l: any) => l.cacheHit).length;
+              cacheHitRate = todayLogs.length > 0 ? Math.round(hits / todayLogs.length * 100) : 0;
+              const totalHits = logs.reduce((s: number, l: any) => s + (l.cacheHit ? 1 : 0), 0);
+              apiCallsSaved = totalHits;
+            } catch {}
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({
               totalProviders: providers.length,
@@ -1365,15 +1376,15 @@ function adminApiPlugin() {
               activeAccounts: activeAccounts.length,
               totalRequests: totalOps,
               totalRequestsToday: totalUsedToday,
-              cacheHitRate: 87,
-              apiCallsSaved: Math.floor(totalUsedToday * 0.87),
-              estimatedCost: parseFloat((totalUsedToday * 0.0005).toFixed(2)),
+              cacheHitRate,
+              apiCallsSaved,
+              estimatedCost: parseFloat((apiCallsSaved * 0.005).toFixed(2)),
               successRate: totalOps > 0 ? Math.round(totalSuccess / totalOps * 100) : 100,
               avgResponseTime: allAccounts.filter((a: any) => a.avgResponseTime > 0).reduce((s: number, a: any, _: any, arr: any) => s + a.avgResponseTime / arr.length, 0) | 0 || 145,
               activeProvider,
               uptime: process.uptime ? Math.round(process.uptime()) : 0,
             }));
-          } catch { res.end(JSON.stringify({ totalProviders: 4, activeProviders: 2, totalAccounts: 4, activeAccounts: 3, totalRequests: 0, totalRequestsToday: 0, cacheHitRate: 87, apiCallsSaved: 0, estimatedCost: 0, successRate: 100, avgResponseTime: 145, activeProvider: 'Ship24', uptime: 0 })); }
+          } catch { res.end(JSON.stringify({ totalProviders: 4, activeProviders: 2, totalAccounts: 4, activeAccounts: 3, totalRequests: 0, totalRequestsToday: 0, cacheHitRate: 0, apiCallsSaved: 0, estimatedCost: 0, successRate: 100, avgResponseTime: 145, activeProvider: 'Ship24', uptime: 0 })); }
           return;
         }
 

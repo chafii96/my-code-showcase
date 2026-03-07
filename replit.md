@@ -48,11 +48,16 @@ All admin tabs are fully functional with real data (zero mock data):
 ## Real API Provider Failover (Tracking)
 - `/api/usps-track/:number` tries providers in order: Ship24 → TrackingMore → 17Track → USPS XML
 - Config persisted in `seo-data/failover-providers.json`
-- Results cached in `seo-data/tracking-cache.json` (TTL varies by status)
-- Every request logged to `seo-data/tracking-logs.json`
+- Results cached in `seo-data/tracking-cache.json` (TTL varies by status; not-found entries: 5 min)
+- Every request logged to `seo-data/tracking-logs.json` (statuses: `success`, `error`, `not_found`)
 - Ship24: POST `https://api.ship24.com/public/v1/trackers` (Bearer auth)
 - TrackingMore: POST `https://api.trackingmore.com/v4/trackings/realtime` (Tracking-Api-Key header)
 - 17Track: POST to `https://api.17track.net/track/v2.2/...` (17token header)
+- **Monthly quota tracking**: `monthlyQuota`, `usedThisMonth`, `monthReset` (YYYY-M) per account
+- **IP rate limiting**: `ipRateCache` Map at configureServer scope (30 req/hr default, rolling window)
+- **Auto-exhaustion**: HTTP 402/429/403 → `status: 'exhausted'` (resets next calendar month)
+- **Account stats**: `successCount`, `errorCount`, `usedToday`, `usedThisMonth` updated after every call
+- **`isAccountActive()`**: checks enabled, non-empty key, monthly quota not exceeded, not exhausted this month
 
 ## API Endpoints (vite.config.ts — adminApiPlugin)
 Key endpoints:

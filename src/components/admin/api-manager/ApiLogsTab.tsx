@@ -3,6 +3,13 @@ import { Download, Search } from "lucide-react";
 import { TrackingLog } from "./types";
 import { useApiData } from "./useApiData";
 
+const STATUS_LABEL: Record<string, string> = { success: 'نجاح', error: 'خطأ', not_found: 'غير موجود' };
+const STATUS_COLOR: Record<string, string> = {
+  success: 'bg-emerald-500/20 text-emerald-400',
+  error: 'bg-red-500/20 text-red-400',
+  not_found: 'bg-amber-500/20 text-amber-400',
+};
+
 export default function ApiLogsTab() {
   const { data: logs, isLive } = useApiData<TrackingLog[]>('/tracking-logs?limit=100', [], { pollingInterval: 15000 });
   const [filters, setFilters] = useState({ provider: '', carrier: '', status: '', search: '' });
@@ -41,7 +48,22 @@ export default function ApiLogsTab() {
             {isLive ? '● متصل — تحديث 15 ثانية' : '○ غير متصل'}
           </span>
         </div>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20 hover:bg-slate-500/20 transition-colors">
+        <button
+          onClick={() => {
+            const headers = ['الوقت', 'رقم التتبع', 'الناقل', 'المزود', 'الحساب', 'كاش', 'وقت الاستجابة(مل)', 'الحالة', 'الخطأ', 'IP'];
+            const rows = filtered.map(l => [
+              new Date(l.timestamp).toLocaleString('en-US'),
+              l.trackingNumberHash, l.carrier, l.providerUsed, l.accountUsed,
+              l.cacheHit ? 'yes' : 'no', l.responseTimeMs,
+              l.status, l.errorMessage || '', l.ipHash
+            ]);
+            const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `tracking-logs-${Date.now()}.csv`; a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20 hover:bg-slate-500/20 transition-colors">
           <Download size={12} /> تصدير CSV
         </button>
       </div>
@@ -67,6 +89,7 @@ export default function ApiLogsTab() {
           <option value="">كل الحالات</option>
           <option value="success">نجاح</option>
           <option value="error">خطأ</option>
+          <option value="not_found">غير موجود</option>
         </select>
       </div>
 
@@ -104,8 +127,8 @@ export default function ApiLogsTab() {
                     {log.responseTimeMs}
                   </td>
                   <td className="py-2 px-3">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${log.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                      {log.status === 'success' ? 'نجاح' : 'خطأ'}
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${STATUS_COLOR[log.status] || 'bg-slate-500/20 text-slate-400'}`}>
+                      {STATUS_LABEL[log.status] || log.status}
                     </span>
                   </td>
                   <td className="py-2 px-3 text-red-400 truncate max-w-[120px]">{log.errorMessage || '—'}</td>
