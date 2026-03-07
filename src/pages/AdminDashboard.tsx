@@ -14,6 +14,7 @@ import TerminalTab from "@/components/admin/TerminalTab";
 import VisitorAnalyticsTab from "@/components/admin/VisitorAnalyticsTab";
 import ApiKeysTab from "@/components/admin/ApiKeysTab";
 import AdsManagerTab from "@/components/admin/AdsManagerTab";
+import AdSenseManagerTab from "@/components/admin/AdSenseManagerTab";
 import SiteSettingsTab from "@/components/admin/SiteSettingsTab";
 import SeoAuditTab from "@/components/admin/SeoAuditTab";
 import RobotsTab from "@/components/admin/RobotsTab";
