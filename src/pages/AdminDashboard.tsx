@@ -299,6 +299,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
             {tab === "performance" && <PerformanceTab />}
             {tab === "database" && <DatabaseTab />}
             {tab === "logs" && <ActivityLogsTab />}
+            {tab === "prerender" && <PrerenderTab />}
             {/* API Manager Tabs */}
             <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-blue-400" size={24} /></div>}>
               {tab === "api-overview" && <ApiOverviewTab />}
