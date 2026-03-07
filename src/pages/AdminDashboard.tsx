@@ -4,6 +4,7 @@ import {
   TrendingUp, Shield, Key, Database, GitBranch, Activity, Settings,
   ExternalLink, LogOut, Loader2, PanelLeftClose, PanelLeft, Menu,
   ChevronRight, Search, Bell, Server, HardDrive, Bug, Radar, ShieldAlert, FileText, Cog,
+  Globe,
 } from "lucide-react";
 import { Script } from "@/components/admin/types";
 import LoginGate, { SESSION_KEY, SESSION_DURATION } from "@/components/admin/LoginGate";
@@ -22,6 +23,7 @@ import DatabaseTab from "@/components/admin/DatabaseTab";
 import ActivityLogsTab from "@/components/admin/ActivityLogsTab";
 import GitTab from "@/components/admin/GitTab";
 import KeywordsTab from "@/components/admin/KeywordsTab";
+import PrerenderTab from "@/components/admin/PrerenderTab";
 
 // API Manager tabs (lazy loaded)
 const ApiOverviewTab = lazy(() => import("@/components/admin/api-manager/ApiOverviewTab"));
@@ -122,6 +124,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
     ]},
     { title: 'الأدوات', items: [
       { id: "tools", label: `الأدوات (${scripts.length})`, icon: Cpu },
+      { id: "prerender", label: "Prerender", icon: Globe },
       { id: "terminal", label: "Terminal", icon: Terminal, badge: !!running },
     ]},
     { title: 'المحتوى', items: [
@@ -296,6 +299,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
             {tab === "performance" && <PerformanceTab />}
             {tab === "database" && <DatabaseTab />}
             {tab === "logs" && <ActivityLogsTab />}
+            {tab === "prerender" && <PrerenderTab />}
             {/* API Manager Tabs */}
             <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-blue-400" size={24} /></div>}>
               {tab === "api-overview" && <ApiOverviewTab />}

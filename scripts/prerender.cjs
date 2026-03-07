@@ -19,10 +19,18 @@ const path = require('path');
 const DIST_DIR = path.resolve(__dirname, '..', 'dist');
 const PRERENDER_DIR = path.resolve(__dirname, '..', 'prerendered');
 const BASE_URL = 'http://localhost:3999';
-const CONCURRENCY = 1; // واحدة فقط لتجنب Connection closed
-const MAX_RETRIES = 3; // 3 محاولات
+const CONCURRENCY = Number(process.env.PRERENDER_CONCURRENCY || '5');
+const MAX_RETRIES = 3;
 const TIMEOUT = 20000;
-const RESTART_EVERY = 25; // إعادة تشغيل المتصفح كل 25 صفحة
+const RESTART_EVERY = Number(process.env.PRERENDER_RESTART_EVERY || '200');
+const WAIT_TIME = Number(process.env.PRERENDER_WAIT || '800');
+const SKIP_EXISTING = process.env.PRERENDER_SKIP_EXISTING === '1';
+const SSE_MODE = process.env.PRERENDER_SSE === '1';
+
+// SSE helper — sends structured events when run from admin panel
+function sse(obj) {
+  if (SSE_MODE) console.log('SSE:' + JSON.stringify(obj));
+}
 
 // ── قائمة الصفحات — يقرأ ديناميكياً من بيانات المشروع ─────────────────────
 function getAllRoutes() {
@@ -201,8 +209,8 @@ async function prerenderPage(browser, route, attempt = 1) {
     const url = `${BASE_URL}${route}`;
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
     
-    // انتظار بسيط بدل networkidle0 (يسبب crash)
-    await new Promise(r => setTimeout(r, 2000));
+    // انتظار بسيط
+    await new Promise(r => setTimeout(r, WAIT_TIME));
     await page.waitForSelector('h1, [data-page-loaded]', { timeout: 5000 }).catch(() => {});
 
     let html = await page.content();
@@ -242,18 +250,34 @@ async function prerenderPage(browser, route, attempt = 1) {
 // ── تشغيل مجمّع (واحدة تلو الأخرى عند الفشل) ─────────────────────────────
 async function prerenderBatch(browser, routes) {
   let success = 0, fail = 0;
+  const total = routes.length;
   
   for (let i = 0; i < routes.length; i += CONCURRENCY) {
     const batch = routes.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(batch.map(r => prerenderPage(browser, r)));
-    results.forEach(r => r ? success++ : fail++);
+
+    // Skip existing check
+    const toProcess = SKIP_EXISTING ? batch.filter(route => {
+      const outputPath = path.join(PRERENDER_DIR, route === '/' ? 'index.html' : `${route}/index.html`);
+      if (fs.existsSync(outputPath)) { success++; return false; }
+      return true;
+    }) : batch;
+
+    if (toProcess.length > 0) {
+      const results = await Promise.all(toProcess.map(r => prerenderPage(browser, r)));
+      results.forEach(r => r ? success++ : fail++);
+    }
+
+    // Emit SSE progress
+    const done = Math.min(i + CONCURRENCY, total);
+    sse({ type: 'progress', total, done, success, failed: fail, page: batch[batch.length - 1], phase: `جاري التوليد... (${done}/${total})` });
     
     // إعادة تشغيل المتصفح كل RESTART_EVERY صفحة لتجنب تسرب الذاكرة
     if ((i + CONCURRENCY) % RESTART_EVERY === 0 && i + CONCURRENCY < routes.length) {
       console.log(`  🔄 إعادة تشغيل المتصفح (${i + CONCURRENCY}/${routes.length})...`);
+      sse({ type: 'progress', total, done: i + CONCURRENCY, success, failed: fail, phase: '🔄 إعادة تشغيل المتصفح...' });
       try {
         await browser.close();
-        await new Promise(r => setTimeout(r, 2000)); // انتظار تحرير الذاكرة
+        await new Promise(r => setTimeout(r, 2000));
         const puppeteer = require('puppeteer');
         browser = await puppeteer.launch({
           headless: 'new',
@@ -296,6 +320,7 @@ async function main() {
 
   const routes = getAllRoutes();
   console.log(`📄 عدد الصفحات: ${routes.length}`);
+  sse({ type: 'progress', total: routes.length, done: 0, success: 0, failed: 0, phase: 'تحضير الصفحات...' });
 
   // تشغيل سيرفر مؤقت
   const server = await startTempServer();
@@ -333,6 +358,10 @@ async function main() {
   const totalSize = (getTotalSize(PRERENDER_DIR) / (1024 * 1024)).toFixed(2);
   console.log(`📦 حجم prerendered/: ${totalSize} MB`);
   console.log(`📁 المسار: ${PRERENDER_DIR}\n`);
+  
+  // Emit SSE summary
+  sse({ type: 'summary', success, failed: fail, elapsed: `${elapsed}s`, size: `${totalSize} MB` });
+  sse({ type: 'progress', total: routes.length, done: routes.length, success, failed: fail, phase: 'اكتمل ✅' });
 }
 
 main().then(() => {
