@@ -6,22 +6,7 @@
     "priority": 1,
     "icon": "🚀",
     "color": "#3b82f6",
-    "accounts": [
-      {
-        "id": "s24-1",
-        "providerId": "ship24",
-        "name": "Ship24 - Account 1",
-        "apiKey": "",
-        "dailyQuota": 1000,
-        "usedToday": 0,
-        "enabled": true,
-        "lastUsed": "",
-        "successCount": 0,
-        "errorCount": 0,
-        "avgResponseTime": 0,
-        "status": "active"
-      }
-    ]
+    "accounts": []
   },
   {
     "id": "trackingmore",

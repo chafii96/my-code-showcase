@@ -3,7 +3,6 @@ import { ChevronDown, ChevronRight, Eye, EyeOff, GripVertical, Play, Plus, Rotat
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { mockProviders } from "./mockData";
 import { ApiProvider, ApiAccount } from "./types";
 import { useApiData, apiCall } from "./useApiData";
 import { toast } from "@/hooks/use-toast";
@@ -314,9 +313,14 @@ function SortableProviderCard({
 }
 
 export default function ApiProvidersTab() {
-  const { data: providers, setData: setProviders, isLive } = useApiData<ApiProvider[]>(
-    '/providers', mockProviders, { pollingInterval: 30000 }
+  const { data: rawProviders, setData: setProviders, isLive, loading } = useApiData<ApiProvider[]>(
+    '/providers', [], { pollingInterval: 30000 }
   );
+
+  const providers = Array.isArray(rawProviders)
+    ? rawProviders.filter(p => typeof p.priority === 'number' && typeof p.color === 'string' && Array.isArray(p.accounts))
+    : [];
+
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ ship24: true });
   const [addModalProvider, setAddModalProvider] = useState<ApiProvider | null>(null);
 
@@ -405,23 +409,32 @@ export default function ApiProvidersTab() {
 
       <p className="text-[11px] text-slate-500">↕ اسحب المزودين لإعادة ترتيب الأولوية. التغييرات تُحفظ تلقائياً.</p>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={sortedProviders.map(p => p.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3">
-            {sortedProviders.map(provider => (
-              <SortableProviderCard key={provider.id} provider={provider}
-                expanded={!!expanded[provider.id]}
-                onToggleExpand={() => setExpanded(prev => ({ ...prev, [provider.id]: !prev[provider.id] }))}
-                onToggleProvider={() => toggleProvider(provider.id)}
-                onToggleAccount={(accountId) => toggleAccount(provider.id, accountId)}
-                onDeleteAccount={(accountId) => deleteAccount(provider.id, accountId)}
-                onTestAccount={testAccount}
-                onAddAccount={() => { setExpanded(prev => ({ ...prev, [provider.id]: true })); setAddModalProvider(provider); }}
-              />
-            ))}
+      {loading && sortedProviders.length === 0 ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="flex items-center gap-2 text-slate-500 text-xs">
+            <Loader2 size={16} className="animate-spin" />
+            <span>جاري تحميل المزودين...</span>
           </div>
-        </SortableContext>
-      </DndContext>
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sortedProviders.map(p => p.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {sortedProviders.map(provider => (
+                <SortableProviderCard key={provider.id} provider={provider}
+                  expanded={!!expanded[provider.id]}
+                  onToggleExpand={() => setExpanded(prev => ({ ...prev, [provider.id]: !prev[provider.id] }))}
+                  onToggleProvider={() => toggleProvider(provider.id)}
+                  onToggleAccount={(accountId) => toggleAccount(provider.id, accountId)}
+                  onDeleteAccount={(accountId) => deleteAccount(provider.id, accountId)}
+                  onTestAccount={testAccount}
+                  onAddAccount={() => { setExpanded(prev => ({ ...prev, [provider.id]: true })); setAddModalProvider(provider); }}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
 
       {addModalProvider && (
         <AddAccountModal provider={addModalProvider} onClose={() => setAddModalProvider(null)}

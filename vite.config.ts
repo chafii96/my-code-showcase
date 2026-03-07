@@ -1495,7 +1495,7 @@ function adminApiPlugin() {
 
         // ── GET/POST /api/rate-limits/settings ───────────────────────────
         if (url === "/api/rate-limits/settings") {
-          const DEFAULT_RLSETTINGS = { maxPerHour: 100, maxPerDay: 500, captchaAfter: 20, blockVpn: false, maintenanceMode: false, whitelist: [], blacklist: [] };
+          const DEFAULT_RLSETTINGS = { maxPerHour: 100, maxPerDay: 500, captchaThreshold: 20, blockVPN: false, maintenanceMode: false, whitelist: [], blacklist: [] };
           if (req.method === "GET") {
             try {
               const data = fs.existsSync(RATELIMIT_FILE) ? JSON.parse(fs.readFileSync(RATELIMIT_FILE, 'utf8')) : DEFAULT_RLSETTINGS;
