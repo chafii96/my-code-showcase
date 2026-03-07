@@ -7,6 +7,7 @@ import {
   MonitorSmartphone, Smartphone, PanelTop, PanelBottom, Columns,
   BookOpen, ArrowRight, Wifi, WifiOff, RefreshCw, Key,
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import {
   type AdSenseConfig,
   type AdUnitConfig,
