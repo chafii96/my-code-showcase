@@ -1,213 +1,447 @@
 #!/bin/bash
-set -e
+########################################################################
+#  🚀 US POSTAL TRACKING — ULTIMATE DEPLOY SCRIPT
+#  ═══════════════════════════════════════════════════════════════════
+#  سكريبت نشر شامل: يثبّت كل شيء، يُعدّ كل شيء، يشغّل كل شيء
+#
+#  الاستخدام:
+#    sudo bash deploy.sh                         ← بدون دومين = HTTP فقط
+#    sudo bash deploy.sh uspostaltracking.com     ← دومين واحد + SSL
+#    sudo bash deploy.sh uspostaltracking.com www.uspostaltracking.com
+#
+#  ما يفعله:
+#    1.  فحص الصلاحيات والنظام
+#    2.  إعداد Swap Memory (2G)
+#    3.  تحديث النظام + تثبيت الأدوات
+#    4.  Node.js 20 LTS + PM2
+#    5.  Nginx
+#    6.  Puppeteer + Chrome Dependencies
+#    7.  نسخ احتياطي + استنساخ المشروع
+#    8.  تثبيت الحزم + بناء المشروع
+#    9.  توليد Sitemaps + صفحات SEO
+#    10. Prerendering (اختياري)
+#    11. إعداد Nginx الكامل
+#    12. تشغيل الباكند (index.js:8080 + api-server.cjs:3001)
+#    13. SSL + تجديد تلقائي
+#    14. أمان + جدار ناري + سجلات
+#    15. Cron Jobs + SEO Automation
+#    16. أدوات مساعدة (update-site.sh, health-check.sh)
+#    17. فحص نهائي + ملخص
+########################################################################
 
-#══════════════════════════════════════════════════════════════
-#  US Postal Tracking — One-Click Full Deployment Script
-#  Usage: sudo bash deploy.sh
-#  First time: git clone <repo> /var/www/uspostaltracking
-#              cd /var/www/uspostaltracking && sudo bash deploy.sh
-#══════════════════════════════════════════════════════════════
+set +e  # لا نوقف عند أي خطأ — نتعامل يدوياً
 
-DOMAIN="uspostaltracking.com"
-APP_DIR="/var/www/uspostaltracking"
+# ── ألوان ──
+R='\033[0;31m'; G='\033[0;32m'; Y='\033[1;33m'
+B='\033[0;34m'; C='\033[0;36m'; BD='\033[1m'; N='\033[0m'
+
+log()  { echo -e "${G}✅ $1${N}"; }
+warn() { echo -e "${Y}⚠️  $1${N}"; }
+err()  { echo -e "${R}❌ $1${N}"; }
+die()  { echo -e "${R}❌ $1${N}"; exit 1; }
+info() { echo -e "${C}ℹ️  $1${N}"; }
+hr()   { echo -e "\n${BD}${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${N}"; echo -e "${BD}${B}  $1${N}"; echo -e "${BD}${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${N}\n"; }
+
+# ── إعدادات ──
+REPO="https://github.com/chafii96/my-code-showcase.git"
+APP="uspostaltracking"
+DIR="/var/www/${APP}"
+BAK="/var/www/backups"
 EMAIL="its.rabyawork@gmail.com"
-API_PORT=8080
+NVER="20"
+PORT_MAIN="8080"        # server/index.js — الباكند الرئيسي
+PORT_ADMIN="3001"       # server/api-server.cjs — لوحة التحكم
 SWAP_SIZE="2G"
+DOMAINS=("$@")
+MAIN="${DOMAINS[0]:-}"
+TOTAL=17; S=0
+SECONDS=0; ERRORS=0; WARNINGS=0
+p() { S=$((S+1)); hr "${S}/${TOTAL} — $1"; }
 
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
+echo -e "${C}"
+cat << 'ART'
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║   🚀  US POSTAL TRACKING — ULTIMATE DEPLOY  🚀            ║
+║   سكريبت شامل: يثبّت كل شيء، يُعدّ كل شيء، يشغّل كل شيء ║
+║                                                           ║
+║   Compatible: Ubuntu 22.04 / 24.04 / 25.x                 ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+ART
+echo -e "${N}"
 
-log()  { echo -e "${GREEN}✅ $1${NC}"; }
-warn() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-err()  { echo -e "${RED}❌ $1${NC}"; exit 1; }
-step() { echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"; echo -e "${CYAN}  $1${NC}"; echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"; }
+###################################################################
+# 1. فحص الصلاحيات والنظام
+###################################################################
+p "فحص الصلاحيات والنظام"
+[ "$EUID" -ne 0 ] && die "شغّل بـ root:\n  sudo bash deploy.sh uspostaltracking.com"
 
-TOTAL_STEPS=12
+UBUNTU_VER="unknown"
+[ -f /etc/os-release ] && UBUNTU_VER=$(grep VERSION_ID /etc/os-release | cut -d'"' -f2)
+log "root ✓ — Ubuntu ${UBUNTU_VER}"
 
-# ── Must be root ──────────────────────────────────────────────
-[[ $EUID -ne 0 ]] && err "Run as root: sudo bash deploy.sh"
-
-# ══════════════════════════════════════════════════════════════
-step "1/$TOTAL_STEPS — System Update & Dependencies"
-# ══════════════════════════════════════════════════════════════
-apt update && apt upgrade -y
-apt install -y curl git nginx socat ufw build-essential ca-certificates
-
-# ══════════════════════════════════════════════════════════════
-step "2/$TOTAL_STEPS — Swap Memory (for Puppeteer/Chrome)"
-# ══════════════════════════════════════════════════════════════
-if [ ! -f /swapfile ]; then
-  fallocate -l $SWAP_SIZE /swapfile
-  chmod 600 /swapfile
-  mkswap /swapfile
-  swapon /swapfile
-  echo '/swapfile none swap sw 0 0' >> /etc/fstab
-  log "Swap $SWAP_SIZE created and enabled"
+###################################################################
+# 2. إعداد Swap Memory (لـ Puppeteer/Chrome)
+###################################################################
+p "إعداد Swap Memory (${SWAP_SIZE})"
+if [ -f /swapfile ]; then
+  CURRENT_SWAP=$(swapon --show 2>/dev/null | tail -1 | awk '{print $3}' || echo "?")
+  log "Swap موجود (${CURRENT_SWAP})"
 else
-  log "Swap already exists ($(swapon --show | tail -1 | awk '{print $3}'))"
+  info "إنشاء ملف Swap بحجم ${SWAP_SIZE}..."
+  fallocate -l $SWAP_SIZE /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
+  chmod 600 /swapfile
+  mkswap /swapfile >/dev/null 2>&1
+  swapon /swapfile 2>/dev/null
+  grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  log "Swap ${SWAP_SIZE} ✓"
 fi
 
-# ══════════════════════════════════════════════════════════════
-step "3/$TOTAL_STEPS — Node.js 20 LTS"
-# ══════════════════════════════════════════════════════════════
-if ! command -v node &>/dev/null || [[ $(node -v | cut -d. -f1 | tr -d v) -lt 20 ]]; then
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-  apt install -y nodejs
+###################################################################
+# 3. تحديث النظام + تثبيت الأدوات
+###################################################################
+p "تحديث النظام + أدوات"
+export DEBIAN_FRONTEND=noninteractive
+
+info "تحديث قائمة الحزم..."
+apt-get update -qq 2>/dev/null || warn "apt-get update لم يكتمل بالكامل"
+
+# تثبيت ذكي — يتحقق من كل حزمة
+try_install() {
+  local pkg="$1"
+  if apt-cache show "$pkg" >/dev/null 2>&1; then
+    apt-get install -y -qq "$pkg" >/dev/null 2>&1 && return 0
+  fi
+  return 1
+}
+
+# حزم أساسية
+info "تثبيت الأدوات الأساسية..."
+for pkg in git curl wget unzip jq htop ufw logrotate dnsutils build-essential socat ca-certificates gnupg; do
+  try_install "$pkg" || warn "تعذر تثبيت $pkg"
+done
+log "أدوات أساسية ✓"
+
+# Certbot
+info "تثبيت Certbot..."
+try_install "certbot" || warn "certbot غير متوفر"
+try_install "python3-certbot-nginx" || warn "python3-certbot-nginx غير متوفر"
+
+###################################################################
+# 4. Node.js v20 + PM2
+###################################################################
+p "Node.js v${NVER} + PM2"
+NEED_NODE=true
+if command -v node &>/dev/null; then
+  CV=$(node -v | cut -dv -f2 | cut -d. -f1)
+  [ "$CV" -ge "$NVER" ] 2>/dev/null && NEED_NODE=false && log "Node $(node -v) موجود ✓"
 fi
-log "Node $(node -v) — npm $(npm -v)"
 
-# Install/update PM2 globally
-npm install -g pm2@latest
-log "PM2 $(pm2 -v)"
+if $NEED_NODE; then
+  info "تثبيت Node.js v${NVER}..."
+  curl -fsSL "https://deb.nodesource.com/setup_${NVER}.x" | bash - >/dev/null 2>&1
+  apt-get install -y -qq nodejs >/dev/null 2>&1
+  command -v node &>/dev/null && log "Node $(node -v) ✓" || die "فشل تثبيت Node.js"
+fi
 
-# ══════════════════════════════════════════════════════════════
-step "4/$TOTAL_STEPS — Puppeteer & Chrome Dependencies"
-# ══════════════════════════════════════════════════════════════
-CHROME_DEPS=(
-  libnss3 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1
-  libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libxshmfence1
-  libx11-xcb1 libxcb-dri3-0 libxss1 libxtst6
-  fonts-liberation fonts-noto-color-emoji xdg-utils wget
+npm install -g pm2@latest >/dev/null 2>&1
+command -v pm2 &>/dev/null && log "PM2 $(pm2 -v) ✓" || { warn "فشل تثبيت PM2"; WARNINGS=$((WARNINGS+1)); }
+
+###################################################################
+# 5. Nginx
+###################################################################
+p "Nginx"
+apt-get install -y -qq nginx >/dev/null 2>&1
+if command -v nginx &>/dev/null; then
+  systemctl enable nginx >/dev/null 2>&1
+  systemctl start nginx 2>/dev/null
+  log "Nginx $(nginx -v 2>&1 | cut -d/ -f2) ✓"
+else
+  die "فشل تثبيت Nginx"
+fi
+
+###################################################################
+# 6. Puppeteer + Chrome Dependencies
+###################################################################
+p "Puppeteer + Chrome Dependencies"
+
+# حزم مع بدائل لـ Ubuntu 24/25
+CHROME_PKGS_WITH_ALTS=(
+  "libatk1.0-0|libatk1.0-0t64"
+  "libatk-bridge2.0-0|libatk-bridge2.0-0t64"
+  "libcups2|libcups2t64"
+  "libdbus-1-3|libdbus-1-3t64"
+  "libdrm2|libdrm2t64"
+  "libgbm1|libgbm1t64"
+  "libgtk-3-0|libgtk-3-0t64"
+  "libnspr4|libnspr4t64"
+  "libnss3|libnss3t64"
+  "libx11-xcb1|libx11-xcb1t64"
+  "libxcomposite1|libxcomposite1t64"
+  "libxdamage1|libxdamage1t64"
+  "libxrandr2|libxrandr2t64"
+  "libxshmfence1|libxshmfence1t64"
+  "libglu1-mesa|libglu1-mesa-dev"
+  "libasound2|libasound2t64"
+  "libpango-1.0-0|libpango-1.0-0t64"
+  "libcairo2|libcairo2t64"
+  "libxfixes3|libxfixes3t64"
+  "libxcb1|libxcb1t64"
 )
 
-for pkg in "libatk1.0-0:libatk1.0-0t64" "libatk-bridge2.0-0:libatk-bridge2.0-0t64" \
-           "libcups2:libcups2t64" "libasound2:libasound2t64"; do
-  OLD="${pkg%%:*}"; NEW="${pkg##*:}"
-  if apt-cache show "$NEW" &>/dev/null 2>&1; then
-    CHROME_DEPS+=("$NEW")
+CHROME_PKGS_SIMPLE="ca-certificates fonts-liberation fonts-noto-color-emoji xdg-utils wget libxkbcommon0 libxcb-dri3-0 libxss1 libxtst6"
+
+INSTALLED_CHROME=0; FAILED_CHROME=0
+
+for pkg in $CHROME_PKGS_SIMPLE; do
+  try_install "$pkg" && INSTALLED_CHROME=$((INSTALLED_CHROME+1))
+done
+
+for entry in "${CHROME_PKGS_WITH_ALTS[@]}"; do
+  IFS='|' read -r pkg1 pkg2 <<< "$entry"
+  if try_install "$pkg1"; then
+    INSTALLED_CHROME=$((INSTALLED_CHROME+1))
+  elif try_install "$pkg2"; then
+    INSTALLED_CHROME=$((INSTALLED_CHROME+1))
   else
-    CHROME_DEPS+=("$OLD")
+    FAILED_CHROME=$((FAILED_CHROME+1))
   fi
 done
 
-apt install -y "${CHROME_DEPS[@]}"
-log "Chrome system dependencies installed"
+[ $FAILED_CHROME -gt 5 ] && { warn "فشل ${FAILED_CHROME} حزمة Chrome — Prerendering قد لا يعمل"; WARNINGS=$((WARNINGS+1)); } || log "مكتبات Chrome ✓ (${INSTALLED_CHROME} حزمة)"
 
-# ══════════════════════════════════════════════════════════════
-step "5/$TOTAL_STEPS — NPM Install & Native Rebuilds"
-# ══════════════════════════════════════════════════════════════
-cd "$APP_DIR"
-rm -rf node_modules/.vite
+###################################################################
+# 7. نسخ احتياطي + استنساخ المشروع
+###################################################################
+p "نسخ احتياطي + استنساخ المشروع"
 
-npm install --legacy-peer-deps
-npm install puppeteer --legacy-peer-deps
-npm rebuild sharp || warn "sharp rebuild failed — images may not optimize"
-npx puppeteer browsers install chrome
-log "All dependencies installed — Puppeteer + Chrome ready"
-
-# ══════════════════════════════════════════════════════════════
-step "6/$TOTAL_STEPS — Clean Old Files & Build"
-# ══════════════════════════════════════════════════════════════
-cd "$APP_DIR"
-
-# Clean old programmatic HTML (prevent thin pages overriding SPA)
-rm -rf public/city public/article public/zip public/state public/status public/locations
-rm -rf dist/city dist/article dist/zip dist/state dist/status dist/locations
-log "Old programmatic folders cleaned"
-
-echo "🔨 Building... this may take a few minutes"
-npm run build || err "Build failed! Check errors above."
-log "Build complete — $(du -sh dist | cut -f1)"
-
-# ══════════════════════════════════════════════════════════════
-step "7/$TOTAL_STEPS — Generate Sitemaps"
-# ══════════════════════════════════════════════════════════════
-cd "$APP_DIR"
-if [ -f "scripts/generate-sitemap-v2.cjs" ]; then
-  node scripts/generate-sitemap-v2.cjs && log "Sitemaps generated" || warn "Sitemap generation failed"
-else
-  warn "Sitemap script not found — skipping"
-fi
-
-# ══════════════════════════════════════════════════════════════
-step "8/$TOTAL_STEPS — PM2 API Server"
-# ══════════════════════════════════════════════════════════════
-cd "$APP_DIR"
-
-# Clean PM2 state completely to avoid stale process errors
+# إيقاف PM2 القديم
+pm2 delete "$APP" 2>/dev/null || true
+pm2 delete "${APP}-admin" 2>/dev/null || true
 pm2 kill 2>/dev/null || true
-rm -f ~/.pm2/dump.pm2
-sleep 2
 
-# Install server dependencies
-if [ -f "server/package.json" ]; then
-  cd server && npm install --legacy-peer-deps && cd ..
-  log "Server dependencies installed"
+if [ -d "$DIR" ]; then
+  mkdir -p "$BAK"
+  BK="${BAK}/${APP}_$(date +%Y%m%d_%H%M%S)"
+  mkdir -p "$BK"
+
+  # حفظ الملفات المهمة
+  for f in .env .env.production .env.local; do
+    [ -f "${DIR}/$f" ] && cp "${DIR}/$f" "$BK/" && info "حفظ $f"
+  done
+  [ -d "${DIR}/server/data" ] && cp -r "${DIR}/server/data" "$BK/server-data" && info "حفظ server/data"
+  [ -d "${DIR}/seo-data" ] && cp -r "${DIR}/seo-data" "$BK/seo-data" && info "حفظ seo-data"
+  [ -d "${DIR}/prerendered" ] && cp -r "${DIR}/prerendered" "$BK/prerendered" && info "حفظ prerendered"
+
+  rm -rf "$DIR"
+  log "تنظيف + نسخ احتياطي ✓ → $BK"
+else
+  info "تثبيت جديد"
 fi
 
-# Quick syntax check before starting
-echo "🔍 Checking server/index.js syntax..."
-node -c server/index.js || err "server/index.js has syntax errors! Fix them first."
+# استنساخ
+cd /root
+rm -rf "/tmp/${APP}" "/root/${APP}" 2>/dev/null || true
+git clone --depth 1 "$REPO" "$DIR" 2>&1
+[ ! -d "$DIR" ] && die "فشل استنساخ المشروع من GitHub"
+cd "$DIR"
 
-# Start API server with PM2
-pm2 start ecosystem.config.cjs --env production
-sleep 3
-
-# Verify API is responding
-API_TEST=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$API_PORT/api/health 2>/dev/null || echo "000")
-if [ "$API_TEST" = "200" ]; then
-  log "API server running ✓ (port $API_PORT)"
-else
-  warn "API returned HTTP $API_TEST — checking logs..."
-  pm2 logs uspostaltracking --lines 20 --nostream 2>/dev/null || true
-  
-  # Try direct start for debugging
-  echo "🔄 Retrying with direct node start..."
-  pm2 delete all 2>/dev/null || true
-  PORT=$API_PORT pm2 start server/index.js --name uspostaltracking --max-memory-restart 512M
-  sleep 3
-  API_TEST2=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$API_PORT/api/health 2>/dev/null || echo "000")
-  if [ "$API_TEST2" = "200" ]; then
-    log "API server running ✓ (fallback start)"
-  else
-    warn "API still not responding — check: pm2 logs uspostaltracking"
+# استعادة الملفات المحفوظة
+LB=""
+[ -d "$BAK" ] && LB=$(ls -td ${BAK}/${APP}_* 2>/dev/null | head -1) || true
+if [ -n "$LB" ] && [ -d "$LB" ]; then
+  for f in .env .env.production .env.local; do
+    [ -f "${LB}/$f" ] && cp "${LB}/$f" . && info "استعادة $f"
+  done
+  if [ -d "${LB}/server-data" ]; then
+    mkdir -p server/data
+    cp -rn "${LB}/server-data/"* server/data/ 2>/dev/null && info "استعادة server/data"
+  fi
+  if [ -d "${LB}/seo-data" ]; then
+    mkdir -p seo-data
+    cp -rn "${LB}/seo-data/"* seo-data/ 2>/dev/null && info "استعادة seo-data"
+  fi
+  if [ -d "${LB}/prerendered" ]; then
+    cp -r "${LB}/prerendered" . 2>/dev/null && info "استعادة prerendered ($(find prerendered -name '*.html' 2>/dev/null | wc -l) صفحة)"
   fi
 fi
+log "استنساخ ✓ — $(git log --oneline -1)"
 
-pm2 save
-pm2 startup systemd -u root --hp /root 2>/dev/null || true
-log "PM2 configured for auto-restart"
+###################################################################
+# 8. تثبيت الحزم + بناء المشروع
+###################################################################
+p "تثبيت الحزم + بناء المشروع"
 
-# ══════════════════════════════════════════════════════════════
-step "9/$TOTAL_STEPS — Nginx Configuration"
-# ══════════════════════════════════════════════════════════════
+# ── حزم الفرونت ──
+info "تثبيت حزم الفرونت..."
+rm -rf node_modules/.vite 2>/dev/null
+npm ci 2>&1 || npm install --legacy-peer-deps 2>&1 || die "فشل تثبيت الحزم نهائياً"
+log "حزم الفرونت ✓"
 
-# Remove any conflicting configs
-rm -f /etc/nginx/sites-enabled/default
-rm -f /etc/nginx/sites-enabled/uspostaltracking
-rm -f /etc/nginx/sites-available/uspostaltracking
+# ── Puppeteer ──
+info "تثبيت Puppeteer + تحميل Chrome..."
+PUPPETEER_OK=false
+npm install puppeteer --no-save --legacy-peer-deps 2>&1 && PUPPETEER_OK=true
+if $PUPPETEER_OK; then
+  npx puppeteer browsers install chrome 2>&1 && log "Puppeteer + Chrome ✓" || { warn "تحميل Chrome فشل"; PUPPETEER_OK=false; }
+else
+  warn "Puppeteer فشل — Prerendering سيتم تخطيه"
+  WARNINGS=$((WARNINGS+1))
+fi
 
-# Check if SSL certs exist
-SSL_CERT="/etc/ssl/uspostaltracking/cert.pem"
-SSL_KEY="/etc/ssl/uspostaltracking/key.pem"
+# ── إعادة بناء sharp ──
+npm rebuild sharp 2>&1 && log "sharp ✓" || warn "sharp rebuild فشل — تحسين الصور لن يعمل"
 
-if [ -f "$SSL_CERT" ] && [ -f "$SSL_KEY" ]; then
-  # ── HTTPS config (SSL already installed) ──
-  cat > /etc/nginx/sites-available/uspostaltracking.conf << 'NGINX'
+# ── حزم الباكند (server/) ──
+if [ -f server/package.json ]; then
+  info "تثبيت حزم الباكند..."
+  cd server
+  npm install --legacy-peer-deps 2>&1 || warn "فشل تثبيت حزم الباكند"
+  cd "$DIR"
+  log "حزم الباكند ✓"
+fi
+
+# ── مزامنة Config ──
+mkdir -p server/data seo-data
+if [ -f scripts/sync-config.cjs ]; then
+  info "مزامنة API Keys..."
+  node scripts/sync-config.cjs 2>&1 && log "مزامنة Config ✓" || warn "مزامنة Config فشلت"
+elif [ -f seo-data/config.json ] && [ -f server/data/config.json ]; then
+  node -e "
+    const fs = require('fs');
+    const seo = JSON.parse(fs.readFileSync('seo-data/config.json','utf8'));
+    const srv = JSON.parse(fs.readFileSync('server/data/config.json','utf8'));
+    srv.apiKeys = { ...(srv.apiKeys||{}), ...(seo.apiKeys||{}) };
+    fs.writeFileSync('server/data/config.json', JSON.stringify(srv, null, 2));
+  " 2>&1 && log "مزامنة Config ✓" || warn "مزامنة Config فشلت"
+elif [ -f seo-data/config.json ]; then
+  cp seo-data/config.json server/data/config.json 2>/dev/null
+  log "نسخ config → server/data/ ✓"
+fi
+
+[ ! -f .env ] && [ -f .env.example ] && cp .env.example .env && warn ".env.example → .env"
+
+# ── تنظيف ملفات HTML القديمة ──
+info "حذف ملفات HTML الثابتة القديمة..."
+for d in public/city public/article public/zip public/state public/status public/locations; do
+  [ -d "$d" ] && rm -rf "$d" && info "حذف $d"
+done
+
+# ── البناء الأول ──
+info "بناء المشروع (build:client-only)..."
+npm run build:client-only 2>&1
+[ ! -d dist ] && die "فشل بناء المشروع — dist/ غير موجود"
+log "بناء ✓ — $(du -sh dist 2>/dev/null | cut -f1)"
+
+###################################################################
+# 9. توليد Sitemaps + صفحات SEO
+###################################################################
+p "توليد Sitemaps + صفحات SEO"
+
+# Sitemaps
+for script in scripts/generate-sitemaps.cjs scripts/generate-sitemap-v2.cjs; do
+  if [ -f "$script" ]; then
+    info "تشغيل $(basename $script)..."
+    node "$script" 2>&1 && log "$(basename $script) ✓" || { warn "$(basename $script) فشل"; WARNINGS=$((WARNINGS+1)); }
+    break
+  fi
+done
+
+# Programmatic SEO pages
+if [ -f scripts/programmatic-seo-generator.cjs ]; then
+  info "توليد الصفحات البرمجية..."
+  node scripts/programmatic-seo-generator.cjs 2>&1 && log "Programmatic pages ✓" || { warn "Programmatic فشل"; WARNINGS=$((WARNINGS+1)); }
+fi
+
+# إعادة البناء لتضمين الملفات المولّدة
+info "إعادة البناء النهائي..."
+npm run build:client-only 2>&1 && log "بناء نهائي ✓ — $(du -sh dist 2>/dev/null | cut -f1)" || warn "البناء النهائي فشل"
+
+###################################################################
+# 10. Prerendering (اختياري)
+###################################################################
+p "Prerendering (Dynamic Rendering)"
+
+if $PUPPETEER_OK && [ -f scripts/prerender.cjs ]; then
+  if [ -d prerendered ] && [ "$(find prerendered -name '*.html' 2>/dev/null | wc -l)" -gt 100 ]; then
+    log "Prerendered pages موجودة بالفعل ($(find prerendered -name '*.html' | wc -l) صفحة) — تخطي"
+    info "لإعادة التوليد: node scripts/prerender.cjs أو من لوحة الإدارة"
+  else
+    info "توليد HTML للزواحف (قد يستغرق وقتاً)..."
+    timeout 1800 node scripts/prerender.cjs 2>&1 && log "Prerendering ✓ — $(find prerendered -name '*.html' 2>/dev/null | wc -l) صفحة" || { warn "Prerendering فشل — الموقع يعمل بدونه"; WARNINGS=$((WARNINGS+1)); }
+  fi
+else
+  info "تخطي Prerendering (Puppeteer غير متوفر أو prerender.cjs غير موجود)"
+  info "يمكنك تشغيله لاحقاً من لوحة الإدارة /admin → Prerender Manager"
+fi
+
+# Noindex thin pages
+[ -f scripts/noindex-programmatic.cjs ] && { info "إضافة noindex..."; node scripts/noindex-programmatic.cjs 2>&1 || true; }
+
+###################################################################
+# 11. إعداد Nginx الكامل
+###################################################################
+p "إعداد Nginx"
+
+SN="${DOMAINS[*]:-_}"
+ROOT_DOMAIN="${MAIN:-_}"
+
+# كشف وجود شهادات SSL
+SSL_EXISTS=false
+SSL_CERT=""
+SSL_KEY=""
+
+# تحقق من acme.sh أولاً ثم certbot ثم المسار المخصص
+if [ -f "/etc/ssl/${APP}/cert.pem" ] && [ -f "/etc/ssl/${APP}/key.pem" ]; then
+  SSL_EXISTS=true
+  SSL_CERT="/etc/ssl/${APP}/cert.pem"
+  SSL_KEY="/etc/ssl/${APP}/key.pem"
+elif [ -f "/etc/letsencrypt/live/${ROOT_DOMAIN}/fullchain.pem" ]; then
+  SSL_EXISTS=true
+  SSL_CERT="/etc/letsencrypt/live/${ROOT_DOMAIN}/fullchain.pem"
+  SSL_KEY="/etc/letsencrypt/live/${ROOT_DOMAIN}/privkey.pem"
+fi
+
+# إزالة الإعدادات القديمة
+rm -f /etc/nginx/sites-enabled/default 2>/dev/null
+rm -f /etc/nginx/sites-enabled/${APP} /etc/nginx/sites-enabled/${APP}.conf 2>/dev/null
+rm -f /etc/nginx/sites-available/${APP} /etc/nginx/sites-available/${APP}.conf 2>/dev/null
+
+if $SSL_EXISTS; then
+  info "شهادات SSL موجودة — إعداد HTTPS"
+  cat > /etc/nginx/sites-available/${APP} << NGEOF
+# www → root 301 redirect
 server {
     listen 80;
     listen [::]:80;
-    server_name uspostaltracking.com www.uspostaltracking.com;
-    return 301 https://$host$request_uri;
+    server_name ${SN};
+    return 301 https://${ROOT_DOMAIN}\$request_uri;
 }
 
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name uspostaltracking.com www.uspostaltracking.com;
+    server_name www.${ROOT_DOMAIN};
+    ssl_certificate ${SSL_CERT};
+    ssl_certificate_key ${SSL_KEY};
+    return 301 https://${ROOT_DOMAIN}\$request_uri;
+}
 
-    ssl_certificate /etc/ssl/uspostaltracking/cert.pem;
-    ssl_certificate_key /etc/ssl/uspostaltracking/key.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-
-    root /var/www/uspostaltracking/dist;
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${ROOT_DOMAIN};
+    root ${DIR}/dist;
     index index.html;
 
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-    add_header X-XSS-Protection "1; mode=block" always;
+    ssl_certificate ${SSL_CERT};
+    ssl_certificate_key ${SSL_KEY};
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
 
     # Gzip
     gzip on;
@@ -215,271 +449,629 @@ server {
     gzip_proxied any;
     gzip_comp_level 6;
     gzip_min_length 256;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
+    gzip_types text/plain text/css text/javascript application/json application/javascript application/xml application/xml+rss text/xml image/svg+xml font/woff2;
 
-    # API proxy
-    location /api/ {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 30s;
-    }
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 
     # Static assets — long cache
-    location /assets/ {
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif|mp4|webm)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
         access_log off;
+        try_files \$uri =404;
     }
 
-    location ~* \.(webp|png|jpg|jpeg|gif|ico|svg)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        access_log off;
+    # API Proxy → server/index.js (port ${PORT_MAIN})
+    location /api/ {
+        proxy_pass http://127.0.0.1:${PORT_MAIN};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 300s;
+        proxy_buffering off;
     }
 
-    location ~* \.(woff|woff2|ttf|otf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        access_log off;
+    # Admin API Proxy → server/api-server.cjs (port ${PORT_ADMIN})
+    location /admin-api/ {
+        rewrite ^/admin-api/(.*) /api/\$1 break;
+        proxy_pass http://127.0.0.1:${PORT_ADMIN};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 300s;
+        proxy_buffering off;
     }
 
-    # Programmatic SEO static HTML
+    # Programmatic SEO pages
     location /programmatic/ {
-        try_files $uri $uri/ =404;
+        try_files \$uri \$uri/ \$uri.html =404;
     }
 
-    # SPA dynamic routes — MUST use index.html fallback
-    location ~* ^/(city|article|zip|state|status|locations|tracking|admin|guides|knowledge-center)/ {
+    # SEO
+    location ~ /sitemap.*\.xml$ { expires 1d; add_header Cache-Control "public"; access_log off; }
+    location = /robots.txt { expires 1d; access_log off; }
+
+    # Force React SPA for dynamic routes
+    location ~* ^/(city|article|zip|state|status|locations|tracking|admin|guides|knowledge-center|track|t)(/|$) {
         try_files /index.html =404;
     }
 
-    # Sitemaps & robots
-    location ~* ^/(sitemap.*\.xml|robots\.txt|.*\.txt)$ {
-        expires 1d;
-        add_header Cache-Control "public";
-    }
-
     # SPA fallback
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+    location / { try_files \$uri \$uri/ /index.html; }
 
-    # Block dotfiles
-    location ~ /\. {
-        deny all;
-        access_log off;
-        log_not_found off;
-    }
+    # Block sensitive files
+    location ~ /\. { deny all; access_log off; log_not_found off; }
+    location ~ \.(env|git|bak|sql|log)$ { deny all; }
+
+    client_max_body_size 20M;
+    access_log /var/log/nginx/${APP}_access.log;
+    error_log  /var/log/nginx/${APP}_error.log;
 }
-NGINX
-  log "Nginx config: HTTPS mode"
+NGEOF
 else
-  # ── HTTP-only config (no SSL yet) ──
-  cat > /etc/nginx/sites-available/uspostaltracking.conf << 'NGINX'
+  info "بدون SSL — إعداد HTTP فقط"
+  cat > /etc/nginx/sites-available/${APP} << NGEOF
 server {
     listen 80;
     listen [::]:80;
-    server_name uspostaltracking.com www.uspostaltracking.com;
-    root /var/www/uspostaltracking/dist;
+    server_name ${SN};
+    root ${DIR}/dist;
     index index.html;
-
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     gzip on;
     gzip_vary on;
     gzip_proxied any;
     gzip_comp_level 6;
     gzip_min_length 256;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
+    gzip_types text/plain text/css text/javascript application/json application/javascript application/xml application/xml+rss text/xml image/svg+xml font/woff2;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif|mp4|webm)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+        try_files \$uri =404;
+    }
 
     location /api/ {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:${PORT_MAIN};
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 30s;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 300s;
+        proxy_buffering off;
     }
 
-    location /assets/ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        access_log off;
-    }
-
-    location ~* \.(webp|png|jpg|jpeg|gif|ico|svg)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        access_log off;
-    }
-
-    location ~* \.(woff|woff2|ttf|otf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        access_log off;
+    location /admin-api/ {
+        rewrite ^/admin-api/(.*) /api/\$1 break;
+        proxy_pass http://127.0.0.1:${PORT_ADMIN};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 300s;
+        proxy_buffering off;
     }
 
     location /programmatic/ {
-        try_files $uri $uri/ =404;
+        try_files \$uri \$uri/ \$uri.html =404;
     }
 
-    location ~* ^/(city|article|zip|state|status|locations|tracking|admin|guides|knowledge-center)/ {
+    location ~ /sitemap.*\.xml$ { expires 1d; add_header Cache-Control "public"; access_log off; }
+    location = /robots.txt { expires 1d; access_log off; }
+
+    location ~* ^/(city|article|zip|state|status|locations|tracking|admin|guides|knowledge-center|track|t)(/|$) {
         try_files /index.html =404;
     }
 
-    location ~* ^/(sitemap.*\.xml|robots\.txt|.*\.txt)$ {
-        expires 1d;
-        add_header Cache-Control "public";
-    }
+    location / { try_files \$uri \$uri/ /index.html; }
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+    location ~ /\. { deny all; access_log off; log_not_found off; }
+    location ~ \.(env|git|bak|sql|log)$ { deny all; }
 
-    location ~ /\. {
-        deny all;
-        access_log off;
-        log_not_found off;
-    }
+    client_max_body_size 20M;
+    access_log /var/log/nginx/${APP}_access.log;
+    error_log  /var/log/nginx/${APP}_error.log;
 }
-NGINX
-  log "Nginx config: HTTP mode (run SSL setup separately)"
+NGEOF
 fi
 
-ln -sf /etc/nginx/sites-available/uspostaltracking.conf /etc/nginx/sites-enabled/
-nginx -t || err "Nginx config test failed"
-systemctl restart nginx
-systemctl enable nginx
-log "Nginx configured and running"
-
-# ══════════════════════════════════════════════════════════════
-step "10/$TOTAL_STEPS — Firewall"
-# ══════════════════════════════════════════════════════════════
-ufw allow OpenSSH
-ufw allow 'Nginx Full'
-ufw --force enable
-log "Firewall configured"
-
-# ══════════════════════════════════════════════════════════════
-step "11/$TOTAL_STEPS — SSL (acme.sh + ZeroSSL)"
-# ══════════════════════════════════════════════════════════════
-if [ -f "$SSL_CERT" ] && [ -f "$SSL_KEY" ]; then
-  log "SSL certificates already exist"
+ln -sf /etc/nginx/sites-available/${APP} /etc/nginx/sites-enabled/
+if nginx -t 2>&1; then
+  systemctl reload nginx
+  log "Nginx ✓"
 else
-  echo "🔒 Installing SSL via acme.sh..."
-  
-  # Install acme.sh if not present
-  if [ ! -f ~/.acme.sh/acme.sh ]; then
-    curl https://get.acme.sh | sh -s email=$EMAIL
-    source ~/.bashrc 2>/dev/null || true
+  err "خطأ في إعداد Nginx — تحقق يدوياً: nginx -t"
+  ERRORS=$((ERRORS+1))
+fi
+
+###################################################################
+# 12. تشغيل الباكند بـ PM2 (كلا السيرفرين)
+###################################################################
+p "تشغيل الباكند بـ PM2"
+cd "$DIR"
+
+# قراءة API Keys
+USPS_UID=""; USPS_PWD=""
+if [ -f server/data/config.json ]; then
+  USPS_UID=$(node -e "try{const c=JSON.parse(require('fs').readFileSync('server/data/config.json','utf8'));console.log(c.apiKeys?.uspsUserId||'')}catch{}" 2>/dev/null) || true
+  USPS_PWD=$(node -e "try{const c=JSON.parse(require('fs').readFileSync('server/data/config.json','utf8'));console.log(c.apiKeys?.uspsPassword||'')}catch{}" 2>/dev/null) || true
+fi
+
+# فحص ملفات الباكند
+MAIN_SERVER=""; ADMIN_SERVER=""
+[ -f server/index.js ] && MAIN_SERVER="server/index.js"
+[ -f server/api-server.cjs ] && ADMIN_SERVER="server/api-server.cjs"
+
+# فحص Syntax قبل التشغيل
+if [ -n "$MAIN_SERVER" ]; then
+  info "فحص $MAIN_SERVER..."
+  node -c "$MAIN_SERVER" 2>&1 || { err "$MAIN_SERVER به أخطاء!"; ERRORS=$((ERRORS+1)); MAIN_SERVER=""; }
+fi
+if [ -n "$ADMIN_SERVER" ]; then
+  info "فحص $ADMIN_SERVER..."
+  node -c "$ADMIN_SERVER" 2>&1 || { err "$ADMIN_SERVER به أخطاء!"; ERRORS=$((ERRORS+1)); ADMIN_SERVER=""; }
+fi
+
+# إنشاء ecosystem.config.cjs الشامل
+cat > ecosystem.config.cjs << PMEOF
+module.exports = {
+  apps: [
+PMEOF
+
+if [ -n "$MAIN_SERVER" ]; then
+  cat >> ecosystem.config.cjs << PMEOF
+    {
+      name: '${APP}',
+      script: '${MAIN_SERVER}',
+      cwd: '${DIR}',
+      instances: 'max',
+      exec_mode: 'cluster',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: ${PORT_MAIN},
+        USPS_USERID: '${USPS_UID}',
+        USPS_PASSWORD: '${USPS_PWD}'
+      },
+      merge_logs: true,
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      max_restarts: 10,
+      restart_delay: 5000
+    },
+PMEOF
+fi
+
+if [ -n "$ADMIN_SERVER" ]; then
+  cat >> ecosystem.config.cjs << PMEOF
+    {
+      name: '${APP}-admin',
+      script: '${ADMIN_SERVER}',
+      cwd: '${DIR}',
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: ${PORT_ADMIN}
+      },
+      merge_logs: true,
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      max_restarts: 10,
+      restart_delay: 5000
+    },
+PMEOF
+fi
+
+cat >> ecosystem.config.cjs << PMEOF
+  ]
+};
+PMEOF
+
+# تشغيل PM2
+pm2 kill 2>/dev/null || true
+rm -f ~/.pm2/dump.pm2 2>/dev/null
+sleep 2
+
+if command -v pm2 &>/dev/null; then
+  pm2 start ecosystem.config.cjs 2>&1
+
+  sleep 3
+
+  # تحقق من الباكند الرئيسي
+  if [ -n "$MAIN_SERVER" ]; then
+    API_TEST=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${PORT_MAIN}/api/health 2>/dev/null || echo "000")
+    if [ "$API_TEST" = "200" ]; then
+      log "Backend الرئيسي (port ${PORT_MAIN}) ✓"
+    else
+      warn "Backend الرئيسي يرجع HTTP $API_TEST — تحقق: pm2 logs ${APP}"
+      WARNINGS=$((WARNINGS+1))
+    fi
   fi
-  
-  # Register with ZeroSSL
-  ~/.acme.sh/acme.sh --register-account -m $EMAIL --server zerossl 2>/dev/null || true
-  
-  # Stop nginx temporarily for standalone verification
-  systemctl stop nginx
-  
-  ~/.acme.sh/acme.sh --issue -d $DOMAIN -d www.$DOMAIN --standalone --force && {
-    mkdir -p /etc/ssl/uspostaltracking
-    ~/.acme.sh/acme.sh --install-cert -d $DOMAIN \
-      --key-file /etc/ssl/uspostaltracking/key.pem \
-      --fullchain-file /etc/ssl/uspostaltracking/cert.pem \
-      --reloadcmd "systemctl reload nginx"
-    log "SSL certificate installed"
-    
-    # Re-run nginx config with HTTPS
-    systemctl start nginx
-    warn "Re-run deploy.sh to switch Nginx to HTTPS mode"
-  } || {
-    warn "SSL failed — DNS A records must point to this server"
-    systemctl start nginx
-  }
-fi
 
-# ══════════════════════════════════════════════════════════════
-step "12/$TOTAL_STEPS — Final Verification"
-# ══════════════════════════════════════════════════════════════
-ERRORS=0
+  # تحقق من باكند الإدارة
+  if [ -n "$ADMIN_SERVER" ]; then
+    ADMIN_TEST=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${PORT_ADMIN}/api/health 2>/dev/null || echo "000")
+    if [ "$ADMIN_TEST" = "200" ]; then
+      log "Admin API (port ${PORT_ADMIN}) ✓"
+    else
+      warn "Admin API يرجع HTTP $ADMIN_TEST — تحقق: pm2 logs ${APP}-admin"
+      WARNINGS=$((WARNINGS+1))
+    fi
+  fi
 
-# Check Nginx
-if systemctl is-active --quiet nginx; then
-  log "Nginx: running"
+  pm2 save 2>/dev/null || true
+  pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
+  log "PM2 auto-startup ✓"
 else
-  warn "Nginx: NOT running"; ERRORS=$((ERRORS+1))
+  warn "PM2 غير متوفر — شغّل الباكند يدوياً"
+  WARNINGS=$((WARNINGS+1))
 fi
 
-# Check PM2
-PM2_STATUS=$(pm2 jlist 2>/dev/null | grep -o '"status":"online"' | head -1)
-if [ -n "$PM2_STATUS" ]; then
-  log "PM2 API: online"
+###################################################################
+# 13. SSL + تجديد تلقائي
+###################################################################
+p "SSL + تجديد تلقائي"
+
+if $SSL_EXISTS; then
+  log "شهادات SSL موجودة بالفعل"
+elif [ -n "$MAIN" ]; then
+  info "محاولة إصدار شهادة SSL..."
+  SIP4=$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null || echo "?")
+  info "IPv4: ${SIP4}"
+
+  DA=""
+  for d in "${DOMAINS[@]}"; do DA="$DA -d $d"; done
+
+  SSL_DONE=false
+
+  # محاولة 1: certbot --nginx
+  if command -v certbot &>/dev/null && ! $SSL_DONE; then
+    info "محاولة SSL عبر certbot --nginx..."
+    if certbot --nginx --non-interactive --agree-tos --email "$EMAIL" --redirect --hsts --staple-ocsp $DA 2>&1; then
+      log "SSL (certbot) ✓"
+      SSL_DONE=true
+    else
+      warn "certbot --nginx فشل"
+    fi
+  fi
+
+  # محاولة 2: certbot webroot
+  if ! $SSL_DONE && command -v certbot &>/dev/null; then
+    info "محاولة SSL عبر certbot webroot..."
+    if certbot certonly --webroot --webroot-path "${DIR}/dist" --non-interactive --agree-tos --email "$EMAIL" $DA 2>&1; then
+      log "SSL (certbot webroot) ✓"
+      SSL_DONE=true
+    fi
+  fi
+
+  # محاولة 3: acme.sh + ZeroSSL
+  if ! $SSL_DONE; then
+    info "محاولة SSL عبر acme.sh + ZeroSSL..."
+    if [ ! -f ~/.acme.sh/acme.sh ]; then
+      curl https://get.acme.sh | sh -s email=$EMAIL 2>&1 || true
+      source ~/.bashrc 2>/dev/null || true
+    fi
+    if [ -f ~/.acme.sh/acme.sh ]; then
+      ~/.acme.sh/acme.sh --register-account -m $EMAIL --server zerossl 2>/dev/null || true
+      systemctl stop nginx 2>/dev/null
+      if ~/.acme.sh/acme.sh --issue $DA --standalone --force 2>&1; then
+        mkdir -p /etc/ssl/${APP}
+        ~/.acme.sh/acme.sh --install-cert -d $MAIN \
+          --key-file /etc/ssl/${APP}/key.pem \
+          --fullchain-file /etc/ssl/${APP}/cert.pem \
+          --reloadcmd "systemctl reload nginx" 2>&1
+        log "SSL (acme.sh/ZeroSSL) ✓"
+        SSL_DONE=true
+      fi
+      systemctl start nginx 2>/dev/null
+    fi
+  fi
+
+  if $SSL_DONE; then
+    warn "أعد تشغيل deploy.sh لتحويل Nginx إلى HTTPS"
+
+    # تجديد تلقائي
+    cat > /usr/local/bin/ssl-renew.sh << 'SSLR'
+#!/bin/bash
+LOG="/var/log/ssl-renew.log"
+echo "[$(date '+%F %T')] checking..." >> "$LOG"
+certbot renew --quiet --deploy-hook "systemctl reload nginx" 2>> "$LOG" || true
+~/.acme.sh/acme.sh --renew-all --force 2>> "$LOG" || true
+echo "[$(date '+%F %T')] done ($?)" >> "$LOG"
+[ -f "$LOG" ] && [ $(wc -c < "$LOG") -gt 1048576 ] && tail -50 "$LOG" > "${LOG}.tmp" && mv "${LOG}.tmp" "$LOG"
+SSLR
+    chmod +x /usr/local/bin/ssl-renew.sh
+    TMP_CRON="/tmp/${APP}-ssl-cron.$$"
+    (crontab -l 2>/dev/null || true) | grep -v 'ssl-renew.sh' > "$TMP_CRON" || true
+    echo "0 3,15 * * * /usr/local/bin/ssl-renew.sh" >> "$TMP_CRON"
+    crontab "$TMP_CRON" 2>/dev/null && log "تجديد SSL تلقائي (03:00 + 15:00) ✓"
+    rm -f "$TMP_CRON"
+  else
+    warn "SSL فشل — تأكد من DNS:"
+    warn "  A Record: ${MAIN} → ${SIP4}"
+    WARNINGS=$((WARNINGS+1))
+  fi
 else
-  warn "PM2 API: not running"; ERRORS=$((ERRORS+1))
+  info "بدون دومين — HTTP فقط"
 fi
 
-# Check API directly
-API_HEALTH=$(curl -s http://127.0.0.1:$API_PORT/api/health 2>/dev/null)
-if echo "$API_HEALTH" | grep -q "ok"; then
-  log "API /health: ✓"
+###################################################################
+# 14. أمان + جدار ناري + سجلات
+###################################################################
+p "أمان + جدار ناري + سجلات"
+
+# UFW
+if command -v ufw &>/dev/null; then
+  ufw allow 22/tcp  >/dev/null 2>&1 || true
+  ufw allow 80/tcp  >/dev/null 2>&1 || true
+  ufw allow 443/tcp >/dev/null 2>&1 || true
+  ufw --force enable >/dev/null 2>&1 || true
+  log "UFW (22/80/443) ✓"
 else
-  warn "API /health: no response (run: pm2 logs uspostaltracking)"; ERRORS=$((ERRORS+1))
+  warn "UFW غير متوفر"
 fi
 
-# Check HTTP response
+# Logrotate
+cat > /etc/logrotate.d/${APP} << LR
+/var/log/${APP}-*.log /var/log/nginx/${APP}_*.log /var/log/ssl-renew.log {
+  daily
+  missingok
+  rotate 14
+  compress
+  delaycompress
+  notifempty
+  sharedscripts
+  postrotate
+    systemctl reload nginx >/dev/null 2>&1 || true
+    pm2 reloadLogs >/dev/null 2>&1 || true
+  endscript
+}
+LR
+log "تدوير السجلات (14 يوم) ✓"
+
+# صلاحيات
+chown -R www-data:www-data "${DIR}/dist" 2>/dev/null || true
+chmod -R 755 "${DIR}/dist" 2>/dev/null || true
+log "صلاحيات ✓"
+
+###################################################################
+# 15. Cron Jobs + SEO Automation
+###################################################################
+p "Cron Jobs + SEO Automation"
+
+# تثبيت Cron Jobs
+if [ -f "${DIR}/scripts/cron-setup.sh" ]; then
+  info "تثبيت Cron Jobs..."
+  bash "${DIR}/scripts/cron-setup.sh" 2>&1 && log "Cron Jobs ✓" || { warn "Cron Jobs فشل"; WARNINGS=$((WARNINGS+1)); }
+fi
+
+# IndexNow Ping
+if [ -f "${DIR}/scripts/ping-indexnow.cjs" ]; then
+  info "إرسال IndexNow ping..."
+  cd "$DIR"
+  node scripts/ping-indexnow.cjs 2>&1 && log "IndexNow ✓" || warn "IndexNow فشل"
+fi
+
+# Sitemap submission
+if [ -n "$MAIN" ]; then
+  info "إرسال Sitemap لمحركات البحث..."
+  SITEMAP_URL="https://${MAIN}/sitemap.xml"
+  curl -s "https://www.google.com/ping?sitemap=${SITEMAP_URL}" >/dev/null 2>&1 && info "Google ✓" || true
+  curl -s "https://www.bing.com/ping?sitemap=${SITEMAP_URL}" >/dev/null 2>&1 && info "Bing ✓" || true
+  curl -s "https://api.indexnow.org/indexnow?url=${SITEMAP_URL}&key=uspostaltracking2025indexnow" >/dev/null 2>&1 || true
+  log "Sitemap submission ✓"
+fi
+
+###################################################################
+# 16. أدوات مساعدة
+###################################################################
+p "أدوات مساعدة"
+
+# ── تحديث سريع ──
+cat > /usr/local/bin/update-site.sh << 'UPD'
+#!/bin/bash
+set +e
+DIR="/var/www/uspostaltracking"
+APP="uspostaltracking"
+echo "🔄 تحديث..."
+cd "$DIR" || { echo "❌ المجلد غير موجود"; exit 1; }
+
+# حفظ البيانات
+cp -r server/data /tmp/server-data-backup 2>/dev/null || true
+cp -r seo-data /tmp/seo-data-backup 2>/dev/null || true
+
+git pull origin main 2>&1 || git pull origin master 2>&1
+npm ci 2>&1 || npm install --legacy-peer-deps 2>&1
+[ -f server/package.json ] && { cd server && npm install --legacy-peer-deps 2>&1 && cd "$DIR"; }
+
+# استعادة البيانات
+[ -d /tmp/server-data-backup ] && { mkdir -p server/data; cp -rn /tmp/server-data-backup/* server/data/ 2>/dev/null; rm -rf /tmp/server-data-backup; }
+[ -d /tmp/seo-data-backup ] && { mkdir -p seo-data; cp -rn /tmp/seo-data-backup/* seo-data/ 2>/dev/null; rm -rf /tmp/seo-data-backup; }
+
+# مزامنة Config
+[ -f scripts/sync-config.cjs ] && node scripts/sync-config.cjs 2>&1 || true
+
+# تنظيف HTML القديم
+for d in public/city public/article public/zip public/state public/status public/locations; do
+  [ -d "$d" ] && rm -rf "$d"
+done
+
+# Sitemaps
+[ -f scripts/generate-sitemaps.cjs ] && node scripts/generate-sitemaps.cjs 2>&1 || true
+[ -f scripts/programmatic-seo-generator.cjs ] && node scripts/programmatic-seo-generator.cjs 2>&1 || true
+
+# Build
+npm run build:client-only 2>&1
+
+# Prerender (اختياري)
+[ -f scripts/prerender.cjs ] && timeout 1800 node scripts/prerender.cjs 2>&1 || true
+[ -f scripts/noindex-programmatic.cjs ] && node scripts/noindex-programmatic.cjs 2>&1 || true
+
+# Restart
+pm2 reload "$APP" 2>/dev/null || true
+pm2 reload "${APP}-admin" 2>/dev/null || true
+systemctl reload nginx 2>/dev/null || true
+
+# Ping
+[ -f scripts/ping-indexnow.cjs ] && node scripts/ping-indexnow.cjs 2>&1 || true
+
+echo "✅ تم — $(date)"
+UPD
+chmod +x /usr/local/bin/update-site.sh
+
+# ── فحص صحة ──
+cat > /usr/local/bin/health-check.sh << 'HC'
+#!/bin/bash
+APP="uspostaltracking"
+echo "═══════════════════════════════════"
+echo "  🏥 ${APP} — Health Check"
+echo "═══════════════════════════════════"
+echo "  Load:    $(cat /proc/loadavg | cut -d' ' -f1-3)"
+echo "  RAM:     $(free -h | awk '/Mem:/{printf "%s/%s",$3,$2}')"
+echo "  Swap:    $(free -h | awk '/Swap:/{printf "%s/%s",$3,$2}')"
+echo "  Disk:    $(df -h / | awk 'NR==2{printf "%s/%s (%s)",$3,$2,$5}')"
+echo "  Nginx:   $(systemctl is-active nginx 2>/dev/null || echo unknown)"
+echo "  PM2 Main:  $(pm2 jlist 2>/dev/null | jq -r '.[] | select(.name=="uspostaltracking") | .pm2_env.status // "off"' 2>/dev/null || echo off)"
+echo "  PM2 Admin: $(pm2 jlist 2>/dev/null | jq -r '.[] | select(.name=="uspostaltracking-admin") | .pm2_env.status // "off"' 2>/dev/null || echo off)"
+echo "  API 8080:  $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/health 2>/dev/null || echo down)"
+echo "  API 3001:  $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/api/health 2>/dev/null || echo down)"
+echo "  Cron:    $(crontab -l 2>/dev/null | grep -c uspostaltracking) jobs"
+echo "  Build:   $(du -sh /var/www/uspostaltracking/dist 2>/dev/null | cut -f1 || echo N/A)"
+echo "  Prerender: $(find /var/www/uspostaltracking/prerendered -name '*.html' 2>/dev/null | wc -l) pages"
+echo "  SSL:"
+certbot certificates 2>/dev/null | grep -E "Domains:|Expiry" || echo "    checking acme.sh..."
+~/.acme.sh/acme.sh --list 2>/dev/null | head -3 || echo "    none"
+echo "═══════════════════════════════════"
+HC
+chmod +x /usr/local/bin/health-check.sh
+
+# ── إعادة تشغيل سريع ──
+cat > /usr/local/bin/restart-site.sh << 'RST'
+#!/bin/bash
+echo "🔄 إعادة تشغيل..."
+pm2 reload uspostaltracking 2>/dev/null || true
+pm2 reload uspostaltracking-admin 2>/dev/null || true
+systemctl reload nginx 2>/dev/null || true
+echo "✅ تم — $(date)"
+pm2 status
+RST
+chmod +x /usr/local/bin/restart-site.sh
+
+log "أدوات مساعدة ✓ (update-site.sh, health-check.sh, restart-site.sh)"
+
+###################################################################
+# 17. الملخص النهائي + فحص شامل
+###################################################################
+p "فحص نهائي + ملخص"
+
+# فحوصات
+echo ""
+info "فحوصات نهائية..."
+
+# Nginx
+systemctl is-active --quiet nginx && log "Nginx: يعمل" || { warn "Nginx: متوقف"; ERRORS=$((ERRORS+1)); }
+
+# PM2 — Main
+PM2_MAIN=$(pm2 jlist 2>/dev/null | jq -r ".[] | select(.name==\"${APP}\") | .pm2_env.status" 2>/dev/null)
+[ "$PM2_MAIN" = "online" ] && log "PM2 Main (${PORT_MAIN}): online" || { warn "PM2 Main: ${PM2_MAIN:-not found}"; WARNINGS=$((WARNINGS+1)); }
+
+# PM2 — Admin
+PM2_ADMIN=$(pm2 jlist 2>/dev/null | jq -r ".[] | select(.name==\"${APP}-admin\") | .pm2_env.status" 2>/dev/null)
+[ "$PM2_ADMIN" = "online" ] && log "PM2 Admin (${PORT_ADMIN}): online" || { warn "PM2 Admin: ${PM2_ADMIN:-not found}"; WARNINGS=$((WARNINGS+1)); }
+
+# API Health
+API_H=$(curl -s http://127.0.0.1:${PORT_MAIN}/api/health 2>/dev/null)
+echo "$API_H" | grep -q "ok" && log "API /health ✓" || { warn "API /health لا يستجيب"; WARNINGS=$((WARNINGS+1)); }
+
+# Build
+[ -d "${DIR}/dist" ] && [ -f "${DIR}/dist/index.html" ] && log "Build: $(du -sh ${DIR}/dist | cut -f1)" || { warn "dist/index.html غير موجود!"; ERRORS=$((ERRORS+1)); }
+
+# Prerendered
+PRERENDER_COUNT=$(find "${DIR}/prerendered" -name "*.html" 2>/dev/null | wc -l)
+[ "$PRERENDER_COUNT" -gt 0 ] && log "Prerendered: ${PRERENDER_COUNT} صفحة" || info "بدون صفحات prerendered"
+
+# Sitemaps
+SITEMAP_URLS=$(grep -c "<loc>" ${DIR}/public/sitemap*.xml 2>/dev/null | awk -F: '{sum+=$2}END{print sum}')
+[ "$SITEMAP_URLS" -gt 0 ] && log "Sitemaps: ${SITEMAP_URLS} URL" || warn "لا توجد Sitemaps"
+
+# HTTP
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost" 2>/dev/null || echo "000")
-if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ]; then
-  log "HTTP response: $HTTP_CODE"
-else
-  warn "HTTP response: $HTTP_CODE"; ERRORS=$((ERRORS+1))
-fi
+[ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] && log "HTTP: ${HTTP_CODE}" || { warn "HTTP: ${HTTP_CODE}"; WARNINGS=$((WARNINGS+1)); }
 
-# Check dist/
-if [ -d "$APP_DIR/dist" ] && [ -f "$APP_DIR/dist/index.html" ]; then
-  log "Build output: $(du -sh $APP_DIR/dist | cut -f1)"
-else
-  warn "dist/index.html not found!"; ERRORS=$((ERRORS+1))
-fi
+# Cron
+CRON_COUNT=$(crontab -l 2>/dev/null | grep -c "${APP}" || echo "0")
+[ "$CRON_COUNT" -gt 0 ] && log "Cron Jobs: ${CRON_COUNT}" || info "بدون Cron Jobs"
 
-# Check prerendered/
-if [ -d "$APP_DIR/prerendered" ]; then
-  PRERENDER_COUNT=$(find "$APP_DIR/prerendered" -name "*.html" | wc -l)
-  log "Prerendered pages: $PRERENDER_COUNT"
-else
-  warn "No prerendered pages found"
-fi
+# النتيجة
+M=$((SECONDS/60)); SC=$((SECONDS%60))
+URL="http://$(hostname -I 2>/dev/null | awk '{print $1}')"
+[ -n "$MAIN" ] && URL="https://${MAIN}"
 
 echo ""
-echo -e "${GREEN}╔═══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${G}╔════════════════════════════════════════════════════════════════╗${N}"
+echo -e "${G}║                                                                ║${N}"
 if [ $ERRORS -eq 0 ]; then
-echo -e "${GREEN}║  🎉 DEPLOYMENT COMPLETE — ALL CHECKS PASSED             ║${NC}"
+  echo -e "${G}║       🎉  تم النشر الكامل بنجاح!  🎉                          ║${N}"
 else
-echo -e "${YELLOW}║  ⚠️  DEPLOYMENT COMPLETE — $ERRORS WARNING(S)                      ║${NC}"
+  echo -e "${Y}║       ⚠️  تم النشر مع ${ERRORS} خطأ — تحقق أعلاه                ║${N}"
 fi
-echo -e "${GREEN}╠═══════════════════════════════════════════════════════════╣${NC}"
-echo -e "${GREEN}║  Domain:   https://$DOMAIN                              ║${NC}"
-echo -e "${GREEN}║  Root:     $APP_DIR/dist                                ║${NC}"
-echo -e "${GREEN}║  API:      http://127.0.0.1:$API_PORT (proxied via /api/)        ║${NC}"
-echo -e "${GREEN}║  Admin:    https://$DOMAIN/admin                        ║${NC}"
-echo -e "${GREEN}╠═══════════════════════════════════════════════════════════╣${NC}"
-echo -e "${GREEN}║  Useful commands:                                        ║${NC}"
-echo -e "${GREEN}║    pm2 logs          — View API logs                     ║${NC}"
-echo -e "${GREEN}║    pm2 monit         — Monitor processes                 ║${NC}"
-echo -e "${GREEN}║    pm2 restart all   — Restart API                       ║${NC}"
-echo -e "${GREEN}║    nginx -t && systemctl reload nginx — Reload Nginx     ║${NC}"
-echo -e "${GREEN}║                                                          ║${NC}"
-echo -e "${GREEN}║  To update later:                                        ║${NC}"
-echo -e "${GREEN}║    cd $APP_DIR && git pull && sudo bash deploy.sh        ║${NC}"
-echo -e "${GREEN}╚═══════════════════════════════════════════════════════════╝${NC}"
+echo -e "${G}║                                                                ║${N}"
+echo -e "${G}╠════════════════════════════════════════════════════════════════╣${N}"
+echo -e "${G}║${N}  ⏱️  المدة:          ${C}${M}m ${SC}s${N}"
+echo -e "${G}║${N}  🌐  الموقع:         ${C}${URL}${N}"
+echo -e "${G}║${N}  🔧  لوحة الإدارة:   ${C}${URL}/admin${N}"
+echo -e "${G}║${N}  📊  Node:           ${C}$(node -v 2>/dev/null || echo N/A)${N}"
+echo -e "${G}║${N}  🔧  PM2:            ${C}$(pm2 -v 2>/dev/null || echo N/A)${N}"
+echo -e "${G}║${N}  🌍  Nginx:          ${C}$(nginx -v 2>&1 | cut -d/ -f2 || echo N/A)${N}"
+echo -e "${G}║${N}  🐧  Ubuntu:         ${C}${UBUNTU_VER}${N}"
+echo -e "${G}║${N}  🔒  SSL:            ${C}$($SSL_EXISTS && echo "✓" || echo "HTTP only")${N}"
+echo -e "${G}║${N}  🔥  Firewall:       ${C}UFW (22/80/443)${N}"
+echo -e "${G}║${N}  📦  Build:          ${C}$(du -sh ${DIR}/dist 2>/dev/null | cut -f1)${N}"
+echo -e "${G}║${N}  📄  Prerendered:    ${C}${PRERENDER_COUNT} pages${N}"
+echo -e "${G}║${N}  🗺️  Sitemaps:       ${C}${SITEMAP_URLS} URLs${N}"
+echo -e "${G}║${N}  ⏰  Cron Jobs:      ${C}${CRON_COUNT}${N}"
+echo -e "${G}║${N}  ⚠️  تحذيرات:       ${Y}${WARNINGS}${N}"
+echo -e "${G}║${N}  ❌  أخطاء:         ${R}${ERRORS}${N}"
+echo -e "${G}╠════════════════════════════════════════════════════════════════╣${N}"
+echo -e "${G}║${N}  ${Y}الخوادم:${N}"
+echo -e "${G}║${N}    ${C}:${PORT_MAIN}${N}  → server/index.js  (الباكند الرئيسي)"
+echo -e "${G}║${N}    ${C}:${PORT_ADMIN}${N}  → api-server.cjs   (لوحة التحكم + AdSense OAuth)"
+echo -e "${G}╠════════════════════════════════════════════════════════════════╣${N}"
+echo -e "${G}║${N}  ${Y}أوامر مفيدة:${N}"
+echo -e "${G}║${N}    ${C}update-site.sh${N}     تحديث كامل من GitHub"
+echo -e "${G}║${N}    ${C}health-check.sh${N}    فحص صحة شامل"
+echo -e "${G}║${N}    ${C}restart-site.sh${N}    إعادة تشغيل كل شيء"
+echo -e "${G}║${N}    ${C}pm2 logs${N}            سجلات التطبيق"
+echo -e "${G}║${N}    ${C}pm2 status${N}          حالة العمليات"
+echo -e "${G}║${N}    ${C}pm2 monit${N}           مراقبة حية"
+echo -e "${G}╠════════════════════════════════════════════════════════════════╣${N}"
+echo -e "${G}║${N}  ${Y}📝 لتحديث لاحق:${N}"
+echo -e "${G}║${N}    ${C}cd ${DIR} && git pull && sudo bash deploy.sh ${MAIN}${N}"
+echo -e "${G}║${N}    أو ببساطة: ${C}update-site.sh${N}"
+echo -e "${G}╚════════════════════════════════════════════════════════════════╝${N}"
+echo ""
+echo -e "${C}🎉 افتح ${URL} في المتصفح!${N}"
+echo ""
