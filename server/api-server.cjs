@@ -641,6 +641,214 @@ app.post('/api/indexnow', async (req, res) => {
   request.end();
 });
 
+// ─── AdSense OAuth & Stats ────────────────────────────────────────────────────
+
+const ADSENSE_OAUTH_FILE = path.join(ROOT, 'seo-data', 'adsense-oauth.json');
+
+function loadAdSenseOAuth() {
+  try {
+    if (fs.existsSync(ADSENSE_OAUTH_FILE)) {
+      return JSON.parse(fs.readFileSync(ADSENSE_OAUTH_FILE, 'utf8'));
+    }
+  } catch {}
+  return { clientId: '', clientSecret: '', refreshToken: '', accessToken: '', tokenExpiry: 0, connected: false };
+}
+
+function saveAdSenseOAuth(data) {
+  const dir = path.dirname(ADSENSE_OAUTH_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(ADSENSE_OAUTH_FILE, JSON.stringify(data, null, 2));
+}
+
+// Save OAuth credentials
+app.post('/api/adsense/oauth-config', (req, res) => {
+  const { clientId, clientSecret } = req.body;
+  if (!clientId || !clientSecret) return res.status(400).json({ error: 'clientId and clientSecret required' });
+  const current = loadAdSenseOAuth();
+  current.clientId = clientId;
+  current.clientSecret = clientSecret;
+  saveAdSenseOAuth(current);
+  res.json({ success: true });
+});
+
+// Get OAuth status
+app.get('/api/adsense/oauth-status', (req, res) => {
+  const data = loadAdSenseOAuth();
+  res.json({
+    connected: data.connected,
+    hasCredentials: !!(data.clientId && data.clientSecret),
+    tokenExpiry: data.tokenExpiry,
+  });
+});
+
+// Generate OAuth URL
+app.get('/api/adsense/oauth-url', (req, res) => {
+  const data = loadAdSenseOAuth();
+  if (!data.clientId) return res.status(400).json({ error: 'OAuth client ID not configured' });
+  const redirectUri = `${req.protocol}://${req.get('host')}/api/adsense/oauth-callback`;
+  const scope = 'https://www.googleapis.com/auth/adsense.readonly';
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(data.clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
+  res.json({ url, redirectUri });
+});
+
+// OAuth callback
+app.get('/api/adsense/oauth-callback', async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.status(400).send('Missing authorization code');
+  const data = loadAdSenseOAuth();
+  const redirectUri = `${req.protocol}://${req.get('host')}/api/adsense/oauth-callback`;
+
+  try {
+    const params = new URLSearchParams({
+      code,
+      client_id: data.clientId,
+      client_secret: data.clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+    });
+    const tokenReq = https.request('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(params.toString()) },
+    }, (tokenRes) => {
+      let body = '';
+      tokenRes.on('data', c => body += c);
+      tokenRes.on('end', () => {
+        try {
+          const tokens = JSON.parse(body);
+          if (tokens.error) return res.status(400).send(`OAuth error: ${tokens.error_description || tokens.error}`);
+          data.accessToken = tokens.access_token;
+          data.refreshToken = tokens.refresh_token || data.refreshToken;
+          data.tokenExpiry = Date.now() + (tokens.expires_in * 1000);
+          data.connected = true;
+          saveAdSenseOAuth(data);
+          res.send('<html><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>✅ AdSense Connected!</h1><p>يمكنك إغلاق هذه النافذة والعودة للوحة الإدارة</p><script>window.close()</script></body></html>');
+        } catch (e) { res.status(500).send('Parse error'); }
+      });
+    });
+    tokenReq.on('error', e => res.status(500).send(e.message));
+    tokenReq.write(params.toString());
+    tokenReq.end();
+  } catch (err) {
+    res.status(500).send(`Token exchange failed: ${err.message}`);
+  }
+});
+
+// Helper: HTTPS GET with auth
+function httpsGetJson(url, token) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const req = https.request({ hostname: u.hostname, path: u.pathname + u.search, headers: { Authorization: `Bearer ${token}` } }, (res) => {
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => { try { resolve(JSON.parse(body)); } catch { reject(new Error('Parse error')); } });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+// Refresh access token
+function refreshAdSenseToken() {
+  return new Promise((resolve, reject) => {
+    const data = loadAdSenseOAuth();
+    if (!data.refreshToken) return reject(new Error('No refresh token'));
+    const params = new URLSearchParams({
+      refresh_token: data.refreshToken,
+      client_id: data.clientId,
+      client_secret: data.clientSecret,
+      grant_type: 'refresh_token',
+    });
+    const req = https.request('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(params.toString()) },
+    }, (res) => {
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => {
+        const tokens = JSON.parse(body);
+        if (tokens.error) return reject(new Error(tokens.error_description || tokens.error));
+        data.accessToken = tokens.access_token;
+        data.tokenExpiry = Date.now() + (tokens.expires_in * 1000);
+        saveAdSenseOAuth(data);
+        resolve(data.accessToken);
+      });
+    });
+    req.on('error', reject);
+    req.write(params.toString());
+    req.end();
+  });
+}
+
+async function getAdSenseAccessToken() {
+  const data = loadAdSenseOAuth();
+  if (!data.connected) throw new Error('AdSense not connected');
+  if (Date.now() < data.tokenExpiry - 60000) return data.accessToken;
+  return refreshAdSenseToken();
+}
+
+// Fetch AdSense stats
+app.get('/api/adsense/stats', async (req, res) => {
+  try {
+    const accessToken = await getAdSenseAccessToken();
+    const accountsData = await httpsGetJson('https://adsense.googleapis.com/v2/accounts', accessToken);
+    if (!accountsData.accounts || !accountsData.accounts.length) {
+      return res.status(404).json({ error: 'No AdSense accounts found' });
+    }
+    const accountName = accountsData.accounts[0].name;
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+
+    const todayUrl = `https://adsense.googleapis.com/v2/${accountName}/reports:generate?dateRange=CUSTOM&startDate.year=${y}&startDate.month=${m}&startDate.day=${d}&endDate.year=${y}&endDate.month=${m}&endDate.day=${d}&metrics=ESTIMATED_EARNINGS&metrics=PAGE_VIEWS_RPM&metrics=IMPRESSIONS&metrics=CLICKS&metrics=PAGE_VIEWS_CTR`;
+    const monthUrl = `https://adsense.googleapis.com/v2/${accountName}/reports:generate?dateRange=CUSTOM&startDate.year=${y}&startDate.month=${m}&startDate.day=1&endDate.year=${y}&endDate.month=${m}&endDate.day=${d}&metrics=ESTIMATED_EARNINGS`;
+
+    const [todayData, monthData] = await Promise.all([
+      httpsGetJson(todayUrl, accessToken),
+      httpsGetJson(monthUrl, accessToken),
+    ]);
+
+    const todayRow = todayData.rows?.[0]?.cells || [];
+    const monthRow = monthData.rows?.[0]?.cells || [];
+    const stats = {
+      todayEarnings: parseFloat(todayRow[0]?.value || '0'),
+      rpm: parseFloat(todayRow[1]?.value || '0'),
+      impressions: parseInt(todayRow[2]?.value || '0'),
+      clicks: parseInt(todayRow[3]?.value || '0'),
+      ctr: parseFloat(todayRow[4]?.value || '0'),
+      monthEarnings: parseFloat(monthRow[0]?.value || '0'),
+      lastUpdated: new Date().toLocaleString('ar'),
+    };
+    res.json({ success: true, stats });
+  } catch (err) {
+    res.status(500).json({ error: err.message, manual: true });
+  }
+});
+
+// Disconnect OAuth
+app.post('/api/adsense/oauth-disconnect', (req, res) => {
+  saveAdSenseOAuth({ clientId: '', clientSecret: '', refreshToken: '', accessToken: '', tokenExpiry: 0, connected: false });
+  res.json({ success: true });
+});
+
+// Save/load AdSense config
+app.post('/api/adsense-config', (req, res) => {
+  const configFile = path.join(ROOT, 'seo-data', 'adsense-config.json');
+  const dir = path.dirname(configFile);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(configFile, JSON.stringify(req.body, null, 2));
+  res.json({ success: true });
+});
+
+app.get('/api/adsense-config', (req, res) => {
+  const configFile = path.join(ROOT, 'seo-data', 'adsense-config.json');
+  try {
+    if (fs.existsSync(configFile)) {
+      res.json(JSON.parse(fs.readFileSync(configFile, 'utf8')));
+    } else {
+      res.status(404).json({ error: 'not found' });
+    }
+  } catch { res.status(500).json({ error: 'read error' }); }
+});
+
 // ─── Start server ─────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 US Postal Tracking Admin API Server`);
@@ -659,5 +867,12 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   GET  /api/robots`);
   console.log(`   POST /api/robots`);
   console.log(`   GET  /api/env`);
+  console.log(`   --- AdSense OAuth ---`);
+  console.log(`   POST /api/adsense/oauth-config`);
+  console.log(`   GET  /api/adsense/oauth-status`);
+  console.log(`   GET  /api/adsense/oauth-url`);
+  console.log(`   GET  /api/adsense/oauth-callback`);
+  console.log(`   GET  /api/adsense/stats`);
+  console.log(`   POST /api/adsense/oauth-disconnect`);
   console.log(`\n✅ Ready!\n`);
 });
