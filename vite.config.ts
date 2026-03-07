@@ -3144,6 +3144,9 @@ export default defineConfig(({ mode }) => ({
     watch: {
       ignored: ['**/public/**', '**/.git/**', '**/node_modules/**'],
     },
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
   },
   plugins: [
     react(),
