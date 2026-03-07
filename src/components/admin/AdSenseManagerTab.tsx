@@ -371,6 +371,7 @@ export default function AdSenseManagerTab() {
                         if (d.success && d.stats) {
                           updateStats(d.stats);
                           save();
+                          toast({ title: '✅ تم', description: 'تم جلب الإحصائيات بنجاح من AdSense API' });
                         } else {
                           toast({ title: '❌ فشل', description: d.error || 'فشل جلب الإحصائيات', variant: 'destructive' });
                         }
