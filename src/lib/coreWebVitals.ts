@@ -292,7 +292,7 @@ export function initCoreWebVitalsOptimizer(): void {
     optimizeINP();
     
     // Check performance budget in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       const { passed, violations } = checkPerformanceBudget();
       if (!passed) {
         console.warn('⚠️ Performance budget violations:', violations);
