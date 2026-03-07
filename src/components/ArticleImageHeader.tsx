@@ -1,37 +1,37 @@
 import { Clock, User, Tag } from "lucide-react";
 
 const ARTICLE_IMAGE_MAP: Record<string, string> = {
-  "priority-mail": "/images/articles/priority-mail-box.png",
-  "certified-mail": "/images/articles/certified-mail.png",
-  "first-class": "/images/articles/first-class-mail.png",
-  "first-class-mail": "/images/articles/first-class-mail.png",
-  "media-mail": "/images/articles/media-mail.png",
-  "express-mail": "/images/articles/express-mail.png",
-  "priority-mail-express": "/images/articles/express-mail.png",
-  "ground-advantage": "/images/articles/ground-advantage.png",
-  "international": "/images/features/international-shipping.png",
-  "customs": "/images/articles/customs-forms.png",
-  "customs-clearance": "/images/articles/customs-forms.png",
-  "tracking-label": "/images/articles/tracking-label.png",
-  "barcode": "/images/articles/tracking-label.png",
-  "post-office": "/images/articles/post-office.png",
-  "lost": "/images/articles/package-late.png",
-  "delayed": "/images/articles/package-late.png",
-  "not-updating": "/images/articles/package-late.png",
-  "stuck": "/images/articles/package-late.png",
-  "return-to-sender": "/images/articles/package-return.png",
-  "return": "/images/articles/package-return.png",
-  "fragile": "/images/articles/fragile-package.png",
-  "holiday": "/images/articles/holiday-packages.png",
-  "delivered": "/images/statuses/delivered.png",
-  "out-for-delivery": "/images/statuses/out-for-delivery.png",
-  "in-transit": "/images/statuses/in-transit.png",
-  "sorting": "/images/statuses/sorting-facility.png",
-  "weather": "/images/statuses/weather-delay.png",
-  "scanning": "/images/statuses/scanning.png",
-  "package-network": "/images/features/package-network.png",
-  "postal-worker": "/images/features/postal-worker.png",
-  "ecommerce": "/images/features/ecommerce.png",
+  "priority-mail": "/images/articles/priority-mail-box.webp",
+  "certified-mail": "/images/articles/certified-mail.webp",
+  "first-class": "/images/articles/first-class-mail.webp",
+  "first-class-mail": "/images/articles/first-class-mail.webp",
+  "media-mail": "/images/articles/media-mail.webp",
+  "express-mail": "/images/articles/express-mail.webp",
+  "priority-mail-express": "/images/articles/express-mail.webp",
+  "ground-advantage": "/images/articles/ground-advantage.webp",
+  "international": "/images/features/international-shipping.webp",
+  "customs": "/images/articles/customs-forms.webp",
+  "customs-clearance": "/images/articles/customs-forms.webp",
+  "tracking-label": "/images/articles/tracking-label.webp",
+  "barcode": "/images/articles/tracking-label.webp",
+  "post-office": "/images/articles/post-office.webp",
+  "lost": "/images/articles/package-late.webp",
+  "delayed": "/images/articles/package-late.webp",
+  "not-updating": "/images/articles/package-late.webp",
+  "stuck": "/images/articles/package-late.webp",
+  "return-to-sender": "/images/articles/package-return.webp",
+  "return": "/images/articles/package-return.webp",
+  "fragile": "/images/articles/fragile-package.webp",
+  "holiday": "/images/articles/holiday-packages.webp",
+  "delivered": "/images/statuses/delivered.webp",
+  "out-for-delivery": "/images/statuses/out-for-delivery.webp",
+  "in-transit": "/images/statuses/in-transit.webp",
+  "sorting": "/images/statuses/sorting-facility.webp",
+  "weather": "/images/statuses/weather-delay.webp",
+  "scanning": "/images/statuses/scanning.webp",
+  "package-network": "/images/features/package-network.webp",
+  "postal-worker": "/images/features/postal-worker.webp",
+  "ecommerce": "/images/features/ecommerce.webp",
 };
 
 function getArticleImage(slug: string): string {
@@ -39,7 +39,7 @@ function getArticleImage(slug: string): string {
   for (const [key, img] of Object.entries(ARTICLE_IMAGE_MAP)) {
     if (lower.includes(key)) return img;
   }
-  return "/images/features/package-network.png";
+  return "/images/features/package-network.webp";
 }
 
 interface ArticleImageHeaderProps {

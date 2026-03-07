@@ -7,11 +7,11 @@ import InternalLinkingHub from "@/components/InternalLinkingHub";
 import { Search, Package, Truck, Clock, Shield, CheckCircle, AlertTriangle, Globe, FileText, DollarSign, MapPin, Phone, ArrowRight } from "lucide-react";
 
 const CARRIER_TRUCK_IMAGES: Record<string, string> = {
-  fedex: "/images/carriers/fedex-van.png",
-  ups: "/images/carriers/ups-truck.png",
-  dhl: "/images/carriers/dhl-truck.png",
-  amazon: "/images/carriers/amazon-van.png",
-  usps: "/images/carriers/usps-truck.png",
+  fedex: "/images/carriers/fedex-van.webp",
+  ups: "/images/carriers/ups-truck.webp",
+  dhl: "/images/carriers/dhl-truck.webp",
+  amazon: "/images/carriers/amazon-van.webp",
+  usps: "/images/carriers/usps-truck.webp",
 };
 
 interface CarrierData {

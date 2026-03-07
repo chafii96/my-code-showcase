@@ -1,0 +1,257 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+react-router-dom.js?v=990f2369:4393 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+warnOnce @ react-router-dom.js?v=990f2369:4393
+logDeprecation @ react-router-dom.js?v=990f2369:4396
+logV6DeprecationWarnings @ react-router-dom.js?v=990f2369:4399
+(anonymous) @ react-router-dom.js?v=990f2369:5271
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=e2af78de:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=e2af78de:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=e2af78de:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=e2af78de:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=e2af78de:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=e2af78de:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=e2af78de:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=e2af78de:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=e2af78de:19432
+commitRoot @ chunk-RPCDYKBN.js?v=e2af78de:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=e2af78de:18783
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18718
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+react-router-dom.js?v=990f2369:4393 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+warnOnce @ react-router-dom.js?v=990f2369:4393
+logDeprecation @ react-router-dom.js?v=990f2369:4396
+logV6DeprecationWarnings @ react-router-dom.js?v=990f2369:4402
+(anonymous) @ react-router-dom.js?v=990f2369:5271
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=e2af78de:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=e2af78de:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=e2af78de:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=e2af78de:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=e2af78de:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=e2af78de:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=e2af78de:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=e2af78de:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=e2af78de:19432
+commitRoot @ chunk-RPCDYKBN.js?v=e2af78de:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=e2af78de:18783
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18718
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+webpage_content_reporter.js:1 Uncaught SyntaxError: Unexpected token 'export' (at webpage_content_reporter.js:1:115539)
+chunk-RPCDYKBN.js?v=6d7133c2:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+chunk-QCHXOAYK.js?v=6d7133c2:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=6d7133c2:136
+error @ chunk-QCHXOAYK.js?v=6d7133c2:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=6d7133c2:1045
+useRef @ chunk-QCHXOAYK.js?v=6d7133c2:1073
+CollectionProvider @ chunk-ND4SKLAN.js?v=6d7133c2:68
+renderWithHooks @ chunk-RPCDYKBN.js?v=e2af78de:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=e2af78de:14926
+beginWork @ chunk-RPCDYKBN.js?v=e2af78de:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=e2af78de:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=e2af78de:19198
+workLoopConcurrent @ chunk-RPCDYKBN.js?v=e2af78de:19189
+renderRootConcurrent @ chunk-RPCDYKBN.js?v=e2af78de:19164
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18678
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+chunk-QCHXOAYK.js?v=6d7133c2:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=6d7133c2:136
+error @ chunk-QCHXOAYK.js?v=6d7133c2:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=6d7133c2:1045
+useRef @ chunk-QCHXOAYK.js?v=6d7133c2:1073
+CollectionProvider @ chunk-ND4SKLAN.js?v=6d7133c2:68
+renderWithHooks @ chunk-RPCDYKBN.js?v=e2af78de:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=e2af78de:14926
+beginWork @ chunk-RPCDYKBN.js?v=e2af78de:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=e2af78de:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=e2af78de:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=e2af78de:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=e2af78de:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=e2af78de:19198
+workLoopConcurrent @ chunk-RPCDYKBN.js?v=e2af78de:19189
+renderRootConcurrent @ chunk-RPCDYKBN.js?v=e2af78de:19164
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18678
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+chunk-QCHXOAYK.js?v=6d7133c2:1074 Uncaught TypeError: Cannot read properties of null (reading 'useRef')
+    at Object.useRef (chunk-QCHXOAYK.js?v=6d7133c2:1074:29)
+    at CollectionProvider (chunk-ND4SKLAN.js?v=6d7133c2:68:38)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=e2af78de:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=e2af78de:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=e2af78de:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=e2af78de:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=e2af78de:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=e2af78de:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=e2af78de:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=e2af78de:19198:20)
+useRef @ chunk-QCHXOAYK.js?v=6d7133c2:1074
+CollectionProvider @ chunk-ND4SKLAN.js?v=6d7133c2:68
+renderWithHooks @ chunk-RPCDYKBN.js?v=e2af78de:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=e2af78de:14926
+beginWork @ chunk-RPCDYKBN.js?v=e2af78de:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=e2af78de:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=e2af78de:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=e2af78de:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=e2af78de:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=e2af78de:19198
+workLoopConcurrent @ chunk-RPCDYKBN.js?v=e2af78de:19189
+renderRootConcurrent @ chunk-RPCDYKBN.js?v=e2af78de:19164
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18678
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+chunk-QCHXOAYK.js?v=6d7133c2:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=6d7133c2:136
+error @ chunk-QCHXOAYK.js?v=6d7133c2:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=6d7133c2:1045
+useRef @ chunk-QCHXOAYK.js?v=6d7133c2:1073
+CollectionProvider @ chunk-ND4SKLAN.js?v=6d7133c2:68
+renderWithHooks @ chunk-RPCDYKBN.js?v=e2af78de:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=e2af78de:14926
+beginWork @ chunk-RPCDYKBN.js?v=e2af78de:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=e2af78de:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=e2af78de:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=e2af78de:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=e2af78de:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=e2af78de:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18684
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+chunk-QCHXOAYK.js?v=6d7133c2:136 Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=6d7133c2:136
+error @ chunk-QCHXOAYK.js?v=6d7133c2:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=6d7133c2:1045
+useRef @ chunk-QCHXOAYK.js?v=6d7133c2:1073
+CollectionProvider @ chunk-ND4SKLAN.js?v=6d7133c2:68
+renderWithHooks @ chunk-RPCDYKBN.js?v=e2af78de:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=e2af78de:14926
+beginWork @ chunk-RPCDYKBN.js?v=e2af78de:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=e2af78de:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=e2af78de:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=e2af78de:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=e2af78de:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=e2af78de:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=e2af78de:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=e2af78de:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=e2af78de:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18684
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+chunk-QCHXOAYK.js?v=6d7133c2:1074 Uncaught TypeError: Cannot read properties of null (reading 'useRef')
+    at Object.useRef (chunk-QCHXOAYK.js?v=6d7133c2:1074:29)
+    at CollectionProvider (chunk-ND4SKLAN.js?v=6d7133c2:68:38)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=e2af78de:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=e2af78de:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=e2af78de:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=e2af78de:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=e2af78de:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=e2af78de:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=e2af78de:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=e2af78de:19198:20)
+useRef @ chunk-QCHXOAYK.js?v=6d7133c2:1074
+CollectionProvider @ chunk-ND4SKLAN.js?v=6d7133c2:68
+renderWithHooks @ chunk-RPCDYKBN.js?v=e2af78de:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=e2af78de:14926
+beginWork @ chunk-RPCDYKBN.js?v=e2af78de:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=e2af78de:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=e2af78de:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=e2af78de:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=e2af78de:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=e2af78de:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=e2af78de:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=e2af78de:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=e2af78de:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18684
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+chunk-RPCDYKBN.js?v=e2af78de:14032 The above error occurred in the <AccordionCollectionProvider> component:
+
+    at CollectionProvider (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/chunk-ND4SKLAN.js?v=6d7133c2:67:13)
+    at https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=d6d3e053:370:13
+    at div
+    at section
+    at FAQSection
+    at Suspense
+    at main
+    at div
+    at Layout (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/src/components/Layout.tsx:27:19)
+    at Index (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/src/pages/Index.tsx:47:5)
+    at RenderedRoute (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=990f2369:4088:5)
+    at Routes (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=990f2369:4558:5)
+    at Suspense
+    at Router (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=990f2369:4501:15)
+    at BrowserRouter (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/react-router-dom.js?v=990f2369:5247:5)
+    at Provider (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/chunk-QSA3BVTW.js?v=e2af78de:22:15)
+    at TooltipProvider (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=b2867140:2521:5)
+    at QueryClientProvider (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/@tanstack_react-query.js?v=990f2369:2934:3)
+    at _a (https://ed402bb2-4c68-4d5d-b090-227f40ac5386-00-ialbm0izf5et.spock.replit.dev/node_modules/.vite/deps/react-helmet-async.js?v=eeeb2937:624:5)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=e2af78de:14032
+update.callback @ chunk-RPCDYKBN.js?v=e2af78de:14052
+callCallback @ chunk-RPCDYKBN.js?v=e2af78de:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js?v=e2af78de:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js?v=e2af78de:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js?v=e2af78de:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js?v=e2af78de:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js?v=e2af78de:17920
+commitRootImpl @ chunk-RPCDYKBN.js?v=e2af78de:19353
+commitRoot @ chunk-RPCDYKBN.js?v=e2af78de:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=e2af78de:18760
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18718
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384
+chunk-RPCDYKBN.js?v=e2af78de:19413 Uncaught TypeError: Cannot read properties of null (reading 'useRef')
+    at Object.useRef (chunk-QCHXOAYK.js?v=6d7133c2:1074:29)
+    at CollectionProvider (chunk-ND4SKLAN.js?v=6d7133c2:68:38)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=e2af78de:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=e2af78de:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=e2af78de:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=e2af78de:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=e2af78de:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=e2af78de:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js?v=e2af78de:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js?v=e2af78de:18736:28)
+useRef @ chunk-QCHXOAYK.js?v=6d7133c2:1074
+CollectionProvider @ chunk-ND4SKLAN.js?v=6d7133c2:68
+renderWithHooks @ chunk-RPCDYKBN.js?v=e2af78de:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=e2af78de:14926
+beginWork @ chunk-RPCDYKBN.js?v=e2af78de:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=e2af78de:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=e2af78de:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=e2af78de:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=e2af78de:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=e2af78de:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=e2af78de:18684
+workLoop @ chunk-RPCDYKBN.js?v=e2af78de:197
+flushWork @ chunk-RPCDYKBN.js?v=e2af78de:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=e2af78de:384

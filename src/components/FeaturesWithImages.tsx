@@ -3,7 +3,7 @@ import { ArrowRight, Truck, Globe, Shield, Clock, Package, MapPin, CheckCircle, 
 
 const FEATURE_IMAGES = [
   {
-    img: "/images/features/delivery-hero.png",
+    img: "/images/features/delivery-hero.webp",
     alt: "USPS mail carrier delivering package to customer",
     badge: "USPS Delivery",
     title: "Real-Time USPS Package Tracking",
@@ -14,7 +14,7 @@ const FEATURE_IMAGES = [
     delay: 0,
   },
   {
-    img: "/images/features/tracking-map.png",
+    img: "/images/features/tracking-map.webp",
     alt: "Package tracking network map showing delivery routes",
     badge: "Multi-Carrier",
     title: "Track Any Carrier Worldwide",
@@ -25,7 +25,7 @@ const FEATURE_IMAGES = [
     delay: 100,
   },
   {
-    img: "/images/features/logistics-hub.png",
+    img: "/images/features/logistics-hub.webp",
     alt: "Major logistics distribution hub with aircraft and trucks",
     badge: "Coverage",
     title: "Domestic & International",
@@ -66,7 +66,7 @@ export function FeaturesWithImages() {
                 <img
                   src={f.img}
                   alt={f.alt}
-                  loading="lazy"
+                  loading="eager"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
@@ -109,10 +109,10 @@ export function FeaturesWithImages() {
 }
 
 const DELIVERY_IMAGES = [
-  { img: "/images/statuses/delivered.png", alt: "Package delivered to doorstep", title: "Delivered", color: "bg-emerald-500/10 border-emerald-500/20" },
-  { img: "/images/statuses/out-for-delivery.png", alt: "Package out for delivery", title: "Out for Delivery", color: "bg-blue-500/10 border-blue-500/20" },
-  { img: "/images/statuses/in-transit.png", alt: "Package sorting facility in transit", title: "In Transit", color: "bg-amber-500/10 border-amber-500/20" },
-  { img: "/images/statuses/sorting-facility.png", alt: "Packages at USPS sorting facility", title: "At Facility", color: "bg-purple-500/10 border-purple-500/20" },
+  { img: "/images/statuses/delivered.webp", alt: "Package delivered to doorstep", title: "Delivered", color: "bg-emerald-500/10 border-emerald-500/20" },
+  { img: "/images/statuses/out-for-delivery.webp", alt: "Package out for delivery", title: "Out for Delivery", color: "bg-blue-500/10 border-blue-500/20" },
+  { img: "/images/statuses/in-transit.webp", alt: "Package sorting facility in transit", title: "In Transit", color: "bg-amber-500/10 border-amber-500/20" },
+  { img: "/images/statuses/sorting-facility.webp", alt: "Packages at USPS sorting facility", title: "At Facility", color: "bg-purple-500/10 border-purple-500/20" },
 ];
 
 export function StatusImagesGrid() {
@@ -142,7 +142,7 @@ export function StatusImagesGrid() {
                 <img
                   src={item.img}
                   alt={item.alt}
-                  loading="lazy"
+                  loading="eager"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -158,12 +158,12 @@ export function StatusImagesGrid() {
 }
 
 const CITIES_DATA = [
-  { city: "New York", state: "NY", img: "/images/cities/new-york.png", slug: "/city/new-york-ny" },
-  { city: "Los Angeles", state: "CA", img: "/images/cities/los-angeles.png", slug: "/city/los-angeles-ca" },
-  { city: "Chicago", state: "IL", img: "/images/cities/chicago.png", slug: "/city/chicago-il" },
-  { city: "Houston", state: "TX", img: "/images/cities/houston.png", slug: "/city/houston-tx" },
-  { city: "Phoenix", state: "AZ", img: "/images/cities/phoenix.png", slug: "/city/phoenix-az" },
-  { city: "Dallas", state: "TX", img: "/images/cities/dallas.png", slug: "/city/dallas-tx" },
+  { city: "New York", state: "NY", img: "/images/cities/new-york.webp", slug: "/city/new-york-ny" },
+  { city: "Los Angeles", state: "CA", img: "/images/cities/los-angeles.webp", slug: "/city/los-angeles-ca" },
+  { city: "Chicago", state: "IL", img: "/images/cities/chicago.webp", slug: "/city/chicago-il" },
+  { city: "Houston", state: "TX", img: "/images/cities/houston.webp", slug: "/city/houston-tx" },
+  { city: "Phoenix", state: "AZ", img: "/images/cities/phoenix.webp", slug: "/city/phoenix-az" },
+  { city: "Dallas", state: "TX", img: "/images/cities/dallas.webp", slug: "/city/dallas-tx" },
 ];
 
 export function CitiesGallery() {
@@ -193,7 +193,7 @@ export function CitiesGallery() {
             <img
               src={c.img}
               alt={`USPS package delivery in ${c.city}, ${c.state}`}
-              loading="lazy"
+              loading="eager"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent group-hover:from-black/80 transition-colors" />
@@ -223,11 +223,11 @@ export function CitiesGallery() {
 }
 
 const CARRIER_TRUCKS = [
-  { name: "USPS", img: "/images/carriers/usps-truck.png", slug: "/", alt: "USPS mail truck on American street" },
-  { name: "FedEx", img: "/images/carriers/fedex-van.png", slug: "/fedex-tracking", alt: "FedEx delivery van parked in neighborhood" },
-  { name: "UPS", img: "/images/carriers/ups-truck.png", slug: "/ups-tracking", alt: "UPS brown delivery truck on road" },
-  { name: "DHL", img: "/images/carriers/dhl-truck.png", slug: "/dhl-tracking", alt: "DHL yellow delivery truck at warehouse" },
-  { name: "Amazon", img: "/images/carriers/amazon-van.png", slug: "/amazon-tracking", alt: "Amazon Prime delivery van in suburban neighborhood" },
+  { name: "USPS", img: "/images/carriers/usps-truck.webp", slug: "/", alt: "USPS mail truck on American street" },
+  { name: "FedEx", img: "/images/carriers/fedex-van.webp", slug: "/fedex-tracking", alt: "FedEx delivery van parked in neighborhood" },
+  { name: "UPS", img: "/images/carriers/ups-truck.webp", slug: "/ups-tracking", alt: "UPS brown delivery truck on road" },
+  { name: "DHL", img: "/images/carriers/dhl-truck.webp", slug: "/dhl-tracking", alt: "DHL yellow delivery truck at warehouse" },
+  { name: "Amazon", img: "/images/carriers/amazon-van.webp", slug: "/amazon-tracking", alt: "Amazon Prime delivery van in suburban neighborhood" },
 ];
 
 export function CarrierTrucksSection() {
@@ -258,7 +258,7 @@ export function CarrierTrucksSection() {
               <img
                 src={c.img}
                 alt={c.alt}
-                loading="lazy"
+                loading="eager"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent group-hover:from-black/75 transition-colors" />
