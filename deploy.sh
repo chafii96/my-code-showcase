@@ -938,12 +938,15 @@ for d in public/city public/article public/zip public/state public/status public
   [ -d "$d" ] && rm -rf "$d"
 done
 
-# Sitemaps
-[ -f scripts/generate-sitemaps.cjs ] && node scripts/generate-sitemaps.cjs 2>&1 || true
-[ -f scripts/programmatic-seo-generator.cjs ] && node scripts/programmatic-seo-generator.cjs 2>&1 || true
+# Master Generator (الصفحات البرمجية + السايتمابات)
+[ -f scripts/generate-all.cjs ] && node scripts/generate-all.cjs 2>&1 || true
 
 # Build
 npm run build:client-only 2>&1
+
+# نسخ السايتمابات إلى dist/
+cp -f public/sitemap*.xml dist/ 2>/dev/null || true
+cp -f public/robots.txt dist/ 2>/dev/null || true
 
 # Prerender (اختياري)
 [ -f scripts/prerender.cjs ] && timeout 1800 node scripts/prerender.cjs 2>&1 || true
