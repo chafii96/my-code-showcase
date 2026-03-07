@@ -124,6 +124,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
     ]},
     { title: 'الأدوات', items: [
       { id: "tools", label: `الأدوات (${scripts.length})`, icon: Cpu },
+      { id: "prerender", label: "Prerender", icon: Globe },
       { id: "terminal", label: "Terminal", icon: Terminal, badge: !!running },
     ]},
     { title: 'المحتوى', items: [
