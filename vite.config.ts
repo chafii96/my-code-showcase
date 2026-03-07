@@ -2425,7 +2425,10 @@ function prerenderShellPlugin() {
       ['/knowledge-center/shipping-restrictions', 'Shipping Restrictions — What You Cannot Ship via USPS', 'Complete list of USPS shipping restrictions. Prohibited items, hazardous materials, size limits, and country-specific restrictions.'],
       ['/knowledge-center/best-shipping-carriers', 'Best Shipping Carriers 2026 — USPS vs FedEx vs UPS vs DHL', 'Compare the best shipping carriers for 2026. USPS, FedEx, UPS, DHL ratings, prices, delivery times, and reliability.'],
       ['/knowledge-center/carrier-tracking-formats', 'Carrier Tracking Number Formats — Complete Reference Guide 2026', 'Identify tracking number formats for 20+ carriers: SpeedEx, OnTrac, DoorDash, Colissimo, SF Express, India Post, and more.'],
-      // Carrier landing pages
+      // Carrier landing pages — major carriers first (highest search volume)
+      ['/dhl-tracking', 'DHL Tracking — Track DHL Package by Tracking Number Free | Real-Time', 'Track DHL packages free with real-time updates. Enter your DHL tracking number for instant delivery status. Supports DHL Express, DHL eCommerce & DHL Parcel tracking.'],
+      ['/amazon-tracking', 'Amazon Tracking — Track Amazon Package by Tracking Number Free | Real-Time', 'Track Amazon packages free with real-time updates. Enter your Amazon tracking number or TBA number for instant delivery status and location.'],
+      ['/lasership-tracking', 'LaserShip Tracking — Track LaserShip Packages Free | Real-Time Updates', 'Track LaserShip packages free with real-time updates. Enter your LaserShip tracking number for instant delivery status, location, and ETA.'],
       ['/speedex-tracking', 'SpeedEx Tracking — Track SpeedEx & Speed X Packages Free', 'Free SpeedEx tracking tool. Track SpeedEx packages, Speed X shipments, and Speedex courier deliveries in real time.'],
       ['/ontrac-tracking', 'OnTrac Tracking — Track OnTrac Packages & Deliveries Free', 'Free OnTrac tracking tool. Track OnTrac packages and deliveries in real time across the Western US.'],
       ['/doordash-tracking', 'DoorDash Tracking — Track DoorDash Orders & Packages Free', 'Free DoorDash tracking tool. Track DoorDash deliveries, orders, and packages in real time.'],
@@ -2699,6 +2702,7 @@ function postBuildSeoPlugin() {
       '/usps-package-not-delivered', '/usps-shipping-calculator',
       '/seguimiento-usps', '/track-my-usps-package', '/us-post-tracking',
       '/check-usps-tracking', '/track-and-trace-usps', '/track-parcel-usa',
+      '/dhl-tracking', '/amazon-tracking', '/lasership-tracking',
       '/speedex-tracking', '/ontrac-tracking', '/doordash-tracking',
       '/easypost-tracking', '/colissimo-tracking', '/sf-express-tracking',
       '/india-post-tracking', '/ceva-tracking', '/singapore-mail-tracking',
