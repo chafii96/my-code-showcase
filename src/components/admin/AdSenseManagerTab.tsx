@@ -431,7 +431,7 @@ export default function AdSenseManagerTab() {
                         // Poll for connection
                         const poll = setInterval(async () => {
                           const s = await fetch('/api/adsense/oauth-status').then(r => r.json());
-                          if (s.connected) { setOauthStatus(s); clearInterval(poll); }
+                          if (s.connected) { setOauthStatus(s); clearInterval(poll); toast({ title: '✅ تم الربط', description: 'تم ربط حساب AdSense بنجاح' }); }
                         }, 3000);
                         setTimeout(() => clearInterval(poll), 120000);
                       } catch { toast({ title: '❌ خطأ', description: 'تعذر الاتصال بالسيرفر', variant: 'destructive' }); }
