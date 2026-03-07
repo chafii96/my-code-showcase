@@ -339,23 +339,24 @@ log "بناء ✓ — $(du -sh dist 2>/dev/null | cut -f1)"
 ###################################################################
 p "توليد Sitemaps + صفحات SEO"
 
-# Master Generator — يولّد كل الصفحات البرمجية + كل السايتمابات + السايتماب إندكس
+# تحديث sitemap-carriers.xml من مصدر carriers الفعلي
+if [ -f scripts/generate-carrier-sitemap.cjs ]; then
+  info "تحديث sitemap-carriers.xml..."
+  node scripts/generate-carrier-sitemap.cjs 2>&1 && log "sitemap-carriers ✓" || { warn "generate-carrier-sitemap.cjs فشل"; WARNINGS=$((WARNINGS+1)); }
+fi
+
+# Master Generator — يولّد الصفحات البرمجية + sitemap-programmatic + sitemap index
 if [ -f scripts/generate-all.cjs ]; then
-  info "تشغيل generate-all.cjs (الصفحات البرمجية + كل السايتمابات)..."
+  info "تشغيل generate-all.cjs (توليد شامل + sitemap index)..."
   node scripts/generate-all.cjs 2>&1 && log "generate-all.cjs ✓" || { warn "generate-all.cjs فشل"; WARNINGS=$((WARNINGS+1)); }
 else
-  # Fallback: سكريبتات منفصلة
-  for script in scripts/generate-sitemaps.cjs scripts/generate-sitemap-v2.cjs; do
-    if [ -f "$script" ]; then
-      info "تشغيل $(basename $script)..."
-      node "$script" 2>&1 && log "$(basename $script) ✓" || { warn "$(basename $script) فشل"; WARNINGS=$((WARNINGS+1)); }
-      break
-    fi
-  done
-  if [ -f scripts/programmatic-seo-generator.cjs ]; then
-    info "توليد الصفحات البرمجية..."
-    node scripts/programmatic-seo-generator.cjs 2>&1 && log "Programmatic pages ✓" || { warn "Programmatic فشل"; WARNINGS=$((WARNINGS+1)); }
-  fi
+  die "scripts/generate-all.cjs غير موجود — لا يمكن متابعة النشر"
+fi
+
+# فحص تغطية جميع static routes داخل السايتمابات
+if [ -f scripts/verify-sitemap-coverage.cjs ]; then
+  info "التحقق من تغطية Routes داخل السايتماب..."
+  node scripts/verify-sitemap-coverage.cjs 2>&1 && log "Route/Sitemap coverage ✓" || { warn "يوجد Routes غير موجودة داخل السايتمابات"; WARNINGS=$((WARNINGS+1)); }
 fi
 
 # إعادة البناء لتضمين الملفات المولّدة

@@ -176,11 +176,11 @@ function generateCityArticlePage(city, article) {
   <title>${title}</title>
   <meta name="description" content="${description}">
   <meta name="keywords" content="usps ${article.slug} ${city.city}, usps ${topicLower} ${city.state}, usps tracking ${city.city} ${article.slug}, ${city.city} usps help">
-  <link rel="canonical" href="${SITE_URL}/city/${city.slug}/${article.slug}">
+  <link rel="canonical" href="${SITE_URL}/city/${city.slug}/article/${article.slug}">
   <link rel="icon" href="/favicon.png" type="image/png">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:url" content="${SITE_URL}/city/${city.slug}/${article.slug}">
+  <meta property="og:url" content="${SITE_URL}/city/${city.slug}/article/${article.slug}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:type" content="article">
   <meta property="og:image" content="${SITE_URL}/og-image.png">
