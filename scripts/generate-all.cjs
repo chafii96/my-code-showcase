@@ -192,7 +192,7 @@ function generateCityArticlePage(city, article) {
   ${faqSchema}
   </script>
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"Article","headline":"${title}","description":"${description}","url":"${SITE_URL}/city/${city.slug}/${article.slug}","publisher":{"@type":"Organization","name":"${SITE_NAME}","url":"${SITE_URL}"},"datePublished":"2026-01-15","dateModified":"${TODAY}"}
+  {"@context":"https://schema.org","@type":"Article","headline":"${title}","description":"${description}","url":"${SITE_URL}/city/${city.slug}/article/${article.slug}","publisher":{"@type":"Organization","name":"${SITE_NAME}","url":"${SITE_URL}"},"datePublished":"2026-01-15","dateModified":"${TODAY}"}
   </script>
 </head>
 <body>
