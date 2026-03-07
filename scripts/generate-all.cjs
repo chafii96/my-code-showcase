@@ -362,38 +362,43 @@ function main() {
   fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap-locations.xml'), locSitemap);
   console.log(`  ✅ ${locationUrls.length} URLs in sitemap-locations.xml`);
 
-  // ═══ 5. UPDATE SITEMAP INDEX ═══
-  console.log('📋 Updating sitemap index...');
-  const sitemapFiles = [
-    'sitemap-core.xml', 'sitemap-carriers.xml', 'sitemap-landing.xml',
-    'sitemap-cities.xml', 'sitemap-locations.xml', 'sitemap-states.xml',
-    'sitemap-articles.xml', 'sitemap-status.xml', 'sitemap-routes.xml',
-    'sitemap-routes-2.xml', 'sitemap-programmatic.xml',
-  ];
-
-  const validSitemaps = sitemapFiles.filter(f => {
-    const exists = fs.existsSync(path.join(PUBLIC_DIR, f));
-    if (!exists) console.log(`  ⚠️  Missing: ${f}`);
-    return exists;
+  // ═══ 5. UPDATE SITEMAP INDEX (AUTO-DISCOVER ALL SITEMAPS) ═══
+  console.log('📋 Building sitemap index (auto-discovering all sitemap-*.xml files)...');
+  
+  const { writeUnifiedSitemapIndex } = require('./utils/sitemap-index.cjs');
+  const { sitemapFiles: discoveredSitemaps, totalUrlsFromSitemaps } = writeUnifiedSitemapIndex({
+    publicDir: PUBLIC_DIR,
+    siteUrl: SITE_URL,
+    preferredOrder: [
+      'sitemap-core.xml',
+      'sitemap-landing.xml',
+      'sitemap-carriers.xml',
+      'sitemap-articles.xml',
+      'sitemap-cities.xml',
+      'sitemap-states.xml',
+      'sitemap-status.xml',
+      'sitemap-locations.xml',
+      'sitemap-routes.xml',
+      'sitemap-routes-2.xml',
+      'sitemap-zipcodes.xml',
+      'sitemap-city-article.xml',
+      'sitemap-city-article-2.xml',
+      'sitemap-city-carrier.xml',
+      'sitemap-city-status.xml',
+      'sitemap-state-carrier.xml',
+      'sitemap-programmatic.xml',
+    ]
   });
 
-  const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${validSitemaps.map(f => `  <sitemap><loc>${SITE_URL}/${f}</loc><lastmod>${TODAY}</lastmod></sitemap>`).join('\n')}
-</sitemapindex>`;
-
-  fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), sitemapIndex);
-  console.log(`  ✅ Sitemap index with ${validSitemaps.length} sitemaps`);
-
-  // ═══ 6. COUNT ALL URLs ═══
-  console.log('\n📊 Counting all sitemap URLs...');
-  let totalUrls = 0;
-  for (const f of validSitemaps) {
+  console.log(`  ✅ Sitemap index: ${discoveredSitemaps.length} sitemaps, ${totalUrlsFromSitemaps} total URLs`);
+  for (const f of discoveredSitemaps) {
     const content = fs.readFileSync(path.join(PUBLIC_DIR, f), 'utf-8');
     const count = (content.match(/<loc>/g) || []).length;
-    console.log(`  ${f}: ${count} URLs`);
-    totalUrls += count;
+    console.log(`    📄 ${f}: ${count} URLs`);
   }
+
+  // ═══ 6. COUNT TOTAL ═══
+  const totalUrls = totalUrlsFromSitemaps;
 
   // ═══ 7. VERIFY ROBOTS.TXT ═══
   console.log('\n🤖 Verifying robots.txt...');
@@ -417,7 +422,7 @@ ${validSitemaps.map(f => `  <sitemap><loc>${SITE_URL}/${f}</loc><lastmod>${TODAY
   console.log(`║  Unique titles:        ${titleSet.size.toString().padStart(6)}`);
   console.log(`║  Duplicate titles:     ${duplicatesFound.toString().padStart(6)}`);
   console.log(`║  Total sitemap URLs:   ${totalUrls.toString().padStart(6)}`);
-  console.log(`║  Sitemaps in index:    ${validSitemaps.length.toString().padStart(6)}`);
+  console.log(`║  Sitemaps in index:    ${discoveredSitemaps.length.toString().padStart(6)}`);
   console.log('╠══════════════════════════════════════════════╣');
   console.log('║  NEXT STEPS:                                 ║');
   console.log('║  1. git add . && git commit && git push      ║');
