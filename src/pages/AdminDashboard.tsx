@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import {
-  LayoutDashboard, Zap, Users, Cpu, Terminal, BookOpen, Megaphone,
+  LayoutDashboard, Zap, Users, Cpu, Terminal, BookOpen, Megaphone, DollarSign,
   TrendingUp, Shield, Key, Database, GitBranch, Activity, Settings,
   ExternalLink, LogOut, Loader2, PanelLeftClose, PanelLeft, Menu,
   ChevronRight, Search, Bell, Server, HardDrive, Bug, Radar, ShieldAlert, FileText, Cog,
