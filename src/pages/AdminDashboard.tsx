@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import {
-  LayoutDashboard, Zap, Users, Cpu, Terminal, BookOpen, Megaphone,
+  LayoutDashboard, Zap, Users, Cpu, Terminal, BookOpen, Megaphone, DollarSign,
   TrendingUp, Shield, Key, Database, GitBranch, Activity, Settings,
   ExternalLink, LogOut, Loader2, PanelLeftClose, PanelLeft, Menu,
   ChevronRight, Search, Bell, Server, HardDrive, Bug, Radar, ShieldAlert, FileText, Cog,
@@ -14,6 +14,7 @@ import TerminalTab from "@/components/admin/TerminalTab";
 import VisitorAnalyticsTab from "@/components/admin/VisitorAnalyticsTab";
 import ApiKeysTab from "@/components/admin/ApiKeysTab";
 import AdsManagerTab from "@/components/admin/AdsManagerTab";
+import AdSenseManagerTab from "@/components/admin/AdSenseManagerTab";
 import SiteSettingsTab from "@/components/admin/SiteSettingsTab";
 import SeoAuditTab from "@/components/admin/SeoAuditTab";
 import RobotsTab from "@/components/admin/RobotsTab";
@@ -130,6 +131,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
     { title: 'المحتوى', items: [
       { id: "content", label: "إدارة المحتوى", icon: BookOpen },
       { id: "ads", label: "الإعلانات", icon: Megaphone },
+      { id: "adsense", label: "Google AdSense", icon: DollarSign },
     ]},
     { title: 'SEO', items: [
       { id: "seo", label: "SEO Audit", icon: TrendingUp },
@@ -290,6 +292,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
             {tab === "visitors" && <VisitorAnalyticsTab />}
             {tab === "apikeys" && <ApiKeysTab />}
             {tab === "ads" && <AdsManagerTab />}
+            {tab === "adsense" && <AdSenseManagerTab />}
             {tab === "settings" && <SiteSettingsTab />}
             {tab === "seo" && <SeoAuditTab />}
             {tab === "keywords" && <KeywordsTab />}
