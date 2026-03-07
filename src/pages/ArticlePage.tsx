@@ -6,6 +6,7 @@ import { trackingStatuses, majorLocations } from "@/data/seoStaticData";
 import { allUSCities, articleKeywords } from "@/data/usCities";
 import { getArticleContent } from "@/data/articleContent";
 import { ArrowRight, Clock, Package, FileText, MapPin, Star } from "lucide-react";
+import { getArticleImage } from "@/components/ArticleImageHeader";
 import { AdSlot } from "@/components/ads/AdSlot";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
 import AIOverviewContent from "@/components/AIOverviewContent";
@@ -290,6 +291,14 @@ const ArticlePage = () => {
       {/* Premium Article Header */}
       <div className="relative overflow-hidden border-b border-border/20">
         <div className="absolute inset-0 hero-gradient opacity-[0.97]" />
+        {/* Article-specific background image blended over gradient */}
+        <img
+          src={getArticleImage(slug || "")}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.18] mix-blend-luminosity"
+          loading="eager"
+        />
         <div className="absolute inset-0 opacity-[0.015]" style={{
           backgroundImage: `linear-gradient(hsl(160 84% 39%) 1px, transparent 1px), linear-gradient(90deg, hsl(160 84% 39%) 1px, transparent 1px)`,
           backgroundSize: '50px 50px'

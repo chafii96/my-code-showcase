@@ -6,6 +6,9 @@ import { useEffect, lazy, Suspense } from "react";
 import { trackingStatuses, majorLocations } from "@/data/seoStaticData";
 import { ArrowRight, MapPin, FileText, Truck, Shield, Clock, Globe, ChevronRight } from "lucide-react";
 import { AdSlot } from "@/components/ads/AdSlot";
+import CarriersStrip, { CarriersGrid } from "@/components/CarriersStrip";
+import StatsSection from "@/components/StatsSection";
+import { FeaturesWithImages, StatusImagesGrid, CitiesGallery, CarrierTrucksSection } from "@/components/FeaturesWithImages";
 
 // Lazy load heavy below-fold components for faster LCP
 const FAQSection = lazy(() => import("@/components/FAQSection"));
@@ -40,6 +43,9 @@ const Index = () => {
 
             <Hero />
 
+            {/* Carriers Marquee Strip */}
+            <CarriersStrip />
+
             {/* Features Strip */}
             <section className="bg-card border-b border-border/30">
                 <div className="container py-10 md:py-14">
@@ -63,6 +69,9 @@ const Index = () => {
                     </div>
                 </div>
             </section>
+
+            {/* Carrier Trucks with Photos */}
+            <CarrierTrucksSection />
 
             {/* Ad */}
             <div className="container py-3 flex justify-center">
@@ -97,6 +106,9 @@ const Index = () => {
                     ))}
                 </div>
             </section>
+
+            {/* Status Visual Guide with Photos */}
+            <StatusImagesGrid />
 
             {/* Locations Grid */}
             <section className="bg-muted/40 py-12 md:py-16 border-y border-border/20">
@@ -133,6 +145,18 @@ const Index = () => {
                     </div>
                 </div>
             </section>
+
+            {/* Cities Photo Gallery */}
+            <CitiesGallery />
+
+            {/* Stats */}
+            <StatsSection />
+
+            {/* Features with Images */}
+            <FeaturesWithImages />
+
+            {/* All Carriers Grid */}
+            <CarriersGrid />
 
             <USPSTrackingExplainer />
             <Suspense fallback={<div />}><AIOverviewContent type="tracking-guide" /></Suspense>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Clock, ArrowRight, Radar, Shield, Zap, Globe } from "lucide-react";
+import { Search, Clock, ArrowRight, Radar, Shield, Zap, Globe, Package, Truck, CheckCircle } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Hero = () => {
@@ -45,6 +45,35 @@ const Hero = () => {
       {/* Glow orbs */}
       <div className="absolute top-20 left-[10%] w-[400px] h-[400px] bg-accent/6 rounded-full blur-[150px]" />
       <div className="absolute bottom-10 right-[15%] w-[300px] h-[300px] bg-info/4 rounded-full blur-[120px]" />
+
+      {/* Floating package icons — decorative */}
+      <div className="absolute top-[15%] left-[5%] hidden xl:flex items-center gap-2 bg-white/[0.06] border border-white/[0.08] rounded-2xl px-3 py-2 float-slow">
+        <div className="w-8 h-8 rounded-xl bg-accent/20 flex items-center justify-center">
+          <Package className="h-4 w-4 text-accent" />
+        </div>
+        <div>
+          <div className="text-[10px] font-bold text-white/70">Priority Mail</div>
+          <div className="text-[9px] text-accent">Out for Delivery</div>
+        </div>
+      </div>
+      <div className="absolute top-[30%] right-[4%] hidden xl:flex items-center gap-2 bg-white/[0.06] border border-white/[0.08] rounded-2xl px-3 py-2 float-medium">
+        <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+          <CheckCircle className="h-4 w-4 text-emerald-400" />
+        </div>
+        <div>
+          <div className="text-[10px] font-bold text-white/70">Package Delivered</div>
+          <div className="text-[9px] text-emerald-400">Just now</div>
+        </div>
+      </div>
+      <div className="absolute bottom-[20%] left-[5%] hidden xl:flex items-center gap-2 bg-white/[0.06] border border-white/[0.08] rounded-2xl px-3 py-2 float-slow" style={{ animationDelay: '2s' }}>
+        <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center">
+          <Truck className="h-4 w-4 text-blue-400" />
+        </div>
+        <div>
+          <div className="text-[10px] font-bold text-white/70">In Transit</div>
+          <div className="text-[9px] text-blue-400">Arriving Tomorrow</div>
+        </div>
+      </div>
 
       <div className="relative container py-14 md:py-24 lg:py-28">
         <div className="max-w-2xl mx-auto text-center">

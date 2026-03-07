@@ -75,6 +75,22 @@ Key endpoints:
 - `/api/admin/login`, `/api/admin/change-password`
 - `/api/config` (GET/PUT) — rate limiting, VPN, CAPTCHA settings
 
+## AI-Generated Visual Assets (47 Images in `public/images/`)
+- `public/images/carriers/` — 5 carrier trucks: fedex-van, ups-truck, dhl-truck, amazon-van, usps-truck
+- `public/images/statuses/` — 9 status scenes: delivered, out-for-delivery, in-transit, sorting-facility, weather-delay, customs, scanning, delivery-success, delivered-icon
+- `public/images/articles/` — 13 article images: priority-mail-box, certified-mail, first-class-mail, express-mail, media-mail, ground-advantage, customs-forms, tracking-label, post-office, package-late, package-return, fragile-package, holiday-packages
+- `public/images/features/` — 7 features: tracking-map, logistics-hub, ecommerce, international-shipping, package-network, postal-worker, hero-bg-v2
+- `public/images/cities/` — 8 US city photos: new-york, los-angeles, chicago, houston, phoenix, dallas, seattle, miami
+- Used by: Article page headers (contextual background by slug), Carrier tracking pages (truck bg), FeaturesWithImages, CitiesGallery, CarrierTrucksSection, StatsSection
+
+## New Visual Components
+- `src/components/CarrierLogos.tsx` — 18 SVG inline brand logos (USPS, FedEx, UPS, DHL, Amazon, OnTrac, etc.)
+- `src/components/FeaturesWithImages.tsx` — FeaturesWithImages, StatusImagesGrid, CitiesGallery, CarrierTrucksSection
+- `src/components/CarriersStrip.tsx` — Marquee strip of carrier logos with scroll animation
+- `src/components/StatsSection.tsx` — Animated count-up statistics section
+- `src/components/ScrollReveal.tsx` — IntersectionObserver scroll-triggered reveal animations
+- `src/components/ArticleImageHeader.tsx` — Article-specific contextual image mapping (by slug keywords)
+
 ## Features
 - USPS package tracking pages (programmatic SEO — 4120 pages across 206 cities)
 - Admin dashboard at `/admin` (fully complete, URL hash tab persistence)

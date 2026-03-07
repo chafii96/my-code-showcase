@@ -6,6 +6,14 @@ import BreadcrumbSchema from "@/components/BreadcrumbSchema";
 import InternalLinkingHub from "@/components/InternalLinkingHub";
 import { Search, Package, Truck, Clock, Shield, CheckCircle, AlertTriangle, Globe, FileText, DollarSign, MapPin, Phone, ArrowRight } from "lucide-react";
 
+const CARRIER_TRUCK_IMAGES: Record<string, string> = {
+  fedex: "/images/carriers/fedex-van.png",
+  ups: "/images/carriers/ups-truck.png",
+  dhl: "/images/carriers/dhl-truck.png",
+  amazon: "/images/carriers/amazon-van.png",
+  usps: "/images/carriers/usps-truck.png",
+};
+
 interface CarrierData {
   id: string;
   name: string;
@@ -472,7 +480,18 @@ const CarrierTrackingPage = ({ carrierId }: { carrierId: string }) => {
         </nav>
 
         {/* Hero + Tracking Tool */}
-        <div className={`rounded-2xl border ${carrier.bgColor} p-6 sm:p-8 mb-8`}>
+        <div className={`rounded-2xl border ${carrier.bgColor} p-6 sm:p-8 mb-8 relative overflow-hidden`}>
+          {/* Carrier truck photo background */}
+          {CARRIER_TRUCK_IMAGES[carrierId || ""] && (
+            <img
+              src={CARRIER_TRUCK_IMAGES[carrierId || ""]}
+              alt={`${carrier.name} delivery vehicle`}
+              className="absolute inset-0 w-full h-full object-cover opacity-[0.15] mix-blend-multiply pointer-events-none"
+              loading="eager"
+              aria-hidden="true"
+            />
+          )}
+          <div className="relative">
           <div className="flex items-center gap-3 mb-3">
             <div className={`w-12 h-12 rounded-xl ${carrier.bgColor} border flex items-center justify-center`}>
               <Package className={`h-6 w-6 ${carrier.color}`} />
@@ -507,6 +526,7 @@ const CarrierTrackingPage = ({ carrierId }: { carrierId: string }) => {
             <a href={carrier.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary">
               <Globe className="h-3 w-3" /> {carrier.website.replace('https://www.', '')}
             </a>
+          </div>
           </div>
         </div>
 
