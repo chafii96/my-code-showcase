@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import HeaderAd from "@/components/ads/HeaderAd";
 import FooterAd from "@/components/ads/FooterAd";
 import ResultsAd from "@/components/ads/ResultsAd";
