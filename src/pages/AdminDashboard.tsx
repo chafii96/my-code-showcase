@@ -131,6 +131,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
     { title: 'المحتوى', items: [
       { id: "content", label: "إدارة المحتوى", icon: BookOpen },
       { id: "ads", label: "الإعلانات", icon: Megaphone },
+      { id: "adsense", label: "Google AdSense", icon: DollarSign },
     ]},
     { title: 'SEO', items: [
       { id: "seo", label: "SEO Audit", icon: TrendingUp },
