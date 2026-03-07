@@ -433,7 +433,7 @@ export default function AdSenseManagerTab() {
                           if (s.connected) { setOauthStatus(s); clearInterval(poll); }
                         }, 3000);
                         setTimeout(() => clearInterval(poll), 120000);
-                      } catch { alert('تعذر الاتصال بالسيرفر'); }
+                      } catch { toast({ title: '❌ خطأ', description: 'تعذر الاتصال بالسيرفر', variant: 'destructive' }); }
                       setOauthSaving(false);
                     }}
                     disabled={oauthSaving}
