@@ -320,6 +320,7 @@ async function main() {
 
   const routes = getAllRoutes();
   console.log(`📄 عدد الصفحات: ${routes.length}`);
+  sse({ type: 'progress', total: routes.length, done: 0, success: 0, failed: 0, phase: 'تحضير الصفحات...' });
 
   // تشغيل سيرفر مؤقت
   const server = await startTempServer();
