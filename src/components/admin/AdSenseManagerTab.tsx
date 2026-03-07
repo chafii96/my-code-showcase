@@ -416,7 +416,7 @@ export default function AdSenseManagerTab() {
                 <div className="flex gap-2">
                   <button
                     onClick={async () => {
-                      if (!oauthClientId || !oauthClientSecret) return alert('أدخل Client ID و Secret أولاً');
+                      if (!oauthClientId || !oauthClientSecret) return toast({ title: '⚠️ تنبيه', description: 'أدخل Client ID و Secret أولاً', variant: 'destructive' });
                       setOauthSaving(true);
                       try {
                         await fetch('/api/adsense/oauth-config', {
