@@ -520,16 +520,23 @@ server {
     }
 
     # SEO
-    location ~ /sitemap.*\.xml$ { expires 1d; add_header Cache-Control "public"; access_log off; }
-    location = /robots.txt { expires 1d; access_log off; }
+    location ~ /sitemap.*\.xml$ { expires 1d; add_header Cache-Control "public"; access_log off; try_files \$uri =404; }
+    location = /robots.txt { expires 1d; access_log off; try_files \$uri =404; }
 
-    # Force React SPA for dynamic routes
-    location ~* ^/(city|article|zip|state|status|locations|tracking|admin|guides|knowledge-center|track|t)(/|$) {
-        try_files /index.html =404;
+    # Admin — no cache, SPA only
+    location ^~ /admin {
+        expires -1;
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+        try_files \$uri \$uri/ /index.html;
     }
 
-    # SPA fallback
-    location / { try_files \$uri \$uri/ /index.html; }
+    # Prerendered SEO shells — serve shell first, then SPA fallback
+    # try_files: 1) exact file, 2) directory/index.html (prerender shell), 3) SPA root
+    location / {
+        expires 1h;
+        add_header Cache-Control "public, max-age=3600, must-revalidate";
+        try_files \$uri \$uri/index.html \$uri/ /index.html;
+    }
 
     # Block sensitive files
     location ~ /\. { deny all; access_log off; log_not_found off; }
@@ -599,14 +606,22 @@ server {
         try_files \$uri \$uri/ \$uri.html =404;
     }
 
-    location ~ /sitemap.*\.xml$ { expires 1d; add_header Cache-Control "public"; access_log off; }
-    location = /robots.txt { expires 1d; access_log off; }
+    location ~ /sitemap.*\.xml$ { expires 1d; add_header Cache-Control "public"; access_log off; try_files \$uri =404; }
+    location = /robots.txt { expires 1d; access_log off; try_files \$uri =404; }
 
-    location ~* ^/(city|article|zip|state|status|locations|tracking|admin|guides|knowledge-center|track|t)(/|$) {
-        try_files /index.html =404;
+    # Admin — no cache, SPA only
+    location ^~ /admin {
+        expires -1;
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+        try_files \$uri \$uri/ /index.html;
     }
 
-    location / { try_files \$uri \$uri/ /index.html; }
+    # Prerendered SEO shells — serve shell first, then SPA fallback
+    location / {
+        expires 1h;
+        add_header Cache-Control "public, max-age=3600, must-revalidate";
+        try_files \$uri \$uri/index.html \$uri/ /index.html;
+    }
 
     location ~ /\. { deny all; access_log off; log_not_found off; }
     location ~ \.(env|git|bak|sql|log)$ { deny all; }
