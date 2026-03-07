@@ -728,6 +728,51 @@ function adminApiPlugin() {
           return;
         }
 
+        // ══════════════════════════════════════════════════════════════════
+        // ── API MANAGER: Failover Providers System ─────────────────────────
+        // ══════════════════════════════════════════════════════════════════
+        const FAILOVER_PROVIDERS_FILE = path.join(ROOT, 'seo-data', 'failover-providers.json');
+        const CACHE_SETTINGS_FILE = path.join(ROOT, 'seo-data', 'cache-settings.json');
+        const SCRAPERS_FILE = path.join(ROOT, 'seo-data', 'scrapers.json');
+        const CARRIERS_FILE = path.join(ROOT, 'seo-data', 'carrier-patterns.json');
+        const RATELIMIT_FILE = path.join(ROOT, 'seo-data', 'rate-limit-settings.json');
+        const API_SETTINGS_FILE = path.join(ROOT, 'seo-data', 'api-settings.json');
+
+        const ensureDir = (f: string) => { const d = path.dirname(f); if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); };
+
+        const DEFAULT_FAILOVER_PROVIDERS = [
+          { id: 'ship24', name: 'Ship24', enabled: true, priority: 1, icon: '🚀', color: '#3b82f6',
+            accounts: [
+              { id: 's24-1', providerId: 'ship24', name: 'Ship24 - Account 1', apiKey: '', dailyQuota: 1000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
+            ]
+          },
+          { id: 'trackingmore', name: 'TrackingMore', enabled: true, priority: 2, icon: '📦', color: '#10b981',
+            accounts: [
+              { id: 'tm-1', providerId: 'trackingmore', name: 'TrackingMore - Account 1', apiKey: '', dailyQuota: 2000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
+            ]
+          },
+          { id: '17track', name: '17Track', enabled: false, priority: 3, icon: '🌐', color: '#f59e0b',
+            accounts: [
+              { id: '17t-1', providerId: '17track', name: '17Track - Account 1', apiKey: '', dailyQuota: 500, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
+            ]
+          },
+          { id: 'scraper', name: 'Custom Scraper', enabled: true, priority: 4, icon: '🕷️', color: '#8b5cf6',
+            accounts: [
+              { id: 'sc-1', providerId: 'scraper', name: 'Custom Scraper - Default', apiKey: 'N/A', dailyQuota: 10000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
+            ]
+          },
+        ];
+
+        const loadProviders = () => {
+          if (fs.existsSync(FAILOVER_PROVIDERS_FILE)) {
+            try { return JSON.parse(fs.readFileSync(FAILOVER_PROVIDERS_FILE, 'utf8')); } catch {}
+          }
+          ensureDir(FAILOVER_PROVIDERS_FILE);
+          fs.writeFileSync(FAILOVER_PROVIDERS_FILE, JSON.stringify(DEFAULT_FAILOVER_PROVIDERS, null, 2));
+          return DEFAULT_FAILOVER_PROVIDERS;
+        };
+        const saveProviders = (data: any) => { ensureDir(FAILOVER_PROVIDERS_FILE); fs.writeFileSync(FAILOVER_PROVIDERS_FILE, JSON.stringify(data, null, 2)); };
+
         // ── GET /api/usps-track/:trackingNumber — Failover: Ship24 → TrackingMore → 17Track → USPS XML ──
         const uspsMatch = url.match(/^\/api\/usps-track\/([A-Za-z0-9]+)$/);
         if (uspsMatch && req.method === "GET") {
@@ -1135,51 +1180,6 @@ function adminApiPlugin() {
           });
           return;
         }
-
-        // ══════════════════════════════════════════════════════════════════
-        // ── API MANAGER: Failover Providers System ─────────────────────────
-        // ══════════════════════════════════════════════════════════════════
-        const FAILOVER_PROVIDERS_FILE = path.join(ROOT, 'seo-data', 'failover-providers.json');
-        const CACHE_SETTINGS_FILE = path.join(ROOT, 'seo-data', 'cache-settings.json');
-        const SCRAPERS_FILE = path.join(ROOT, 'seo-data', 'scrapers.json');
-        const CARRIERS_FILE = path.join(ROOT, 'seo-data', 'carrier-patterns.json');
-        const RATELIMIT_FILE = path.join(ROOT, 'seo-data', 'rate-limit-settings.json');
-        const API_SETTINGS_FILE = path.join(ROOT, 'seo-data', 'api-settings.json');
-
-        const ensureDir = (f: string) => { const d = path.dirname(f); if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); };
-
-        const DEFAULT_FAILOVER_PROVIDERS = [
-          { id: 'ship24', name: 'Ship24', enabled: true, priority: 1, icon: '🚀', color: '#3b82f6',
-            accounts: [
-              { id: 's24-1', providerId: 'ship24', name: 'Ship24 - Account 1', apiKey: '', dailyQuota: 1000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
-            ]
-          },
-          { id: 'trackingmore', name: 'TrackingMore', enabled: true, priority: 2, icon: '📦', color: '#10b981',
-            accounts: [
-              { id: 'tm-1', providerId: 'trackingmore', name: 'TrackingMore - Account 1', apiKey: '', dailyQuota: 2000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
-            ]
-          },
-          { id: '17track', name: '17Track', enabled: false, priority: 3, icon: '🌐', color: '#f59e0b',
-            accounts: [
-              { id: '17t-1', providerId: '17track', name: '17Track - Account 1', apiKey: '', dailyQuota: 500, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
-            ]
-          },
-          { id: 'scraper', name: 'Custom Scraper', enabled: true, priority: 4, icon: '🕷️', color: '#8b5cf6',
-            accounts: [
-              { id: 'sc-1', providerId: 'scraper', name: 'Custom Scraper - Default', apiKey: 'N/A', dailyQuota: 10000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active' },
-            ]
-          },
-        ];
-
-        const loadProviders = () => {
-          if (fs.existsSync(FAILOVER_PROVIDERS_FILE)) {
-            try { return JSON.parse(fs.readFileSync(FAILOVER_PROVIDERS_FILE, 'utf8')); } catch {}
-          }
-          ensureDir(FAILOVER_PROVIDERS_FILE);
-          fs.writeFileSync(FAILOVER_PROVIDERS_FILE, JSON.stringify(DEFAULT_FAILOVER_PROVIDERS, null, 2));
-          return DEFAULT_FAILOVER_PROVIDERS;
-        };
-        const saveProviders = (data: any) => { ensureDir(FAILOVER_PROVIDERS_FILE); fs.writeFileSync(FAILOVER_PROVIDERS_FILE, JSON.stringify(data, null, 2)); };
 
         // ── GET /api/providers ─────────────────────────────────────────────
         if (url === "/api/providers" && req.method === "GET") {
