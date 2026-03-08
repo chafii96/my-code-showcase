@@ -279,27 +279,40 @@ rm -rf node_modules/.vite 2>/dev/null
 npm install --legacy-peer-deps 2>&1 || die "فشل تثبيت الحزم نهائياً"
 log "حزم الفرونت ✓"
 
-# ── Puppeteer ──
-info "تثبيت Puppeteer + تحميل Chrome..."
-PUPPETEER_OK=false
-npm install puppeteer --no-save --legacy-peer-deps 2>&1 && PUPPETEER_OK=true
-if $PUPPETEER_OK; then
-  npx puppeteer browsers install chrome 2>&1 && log "Puppeteer + Chrome ✓" || { warn "تحميل Chrome فشل"; PUPPETEER_OK=false; }
+# ── حزم الباكند (server/) + Puppeteer + sharp بالتوازي ──
+info "تثبيت حزم الباكند + Puppeteer + sharp بالتوازي..."
+
+(
+  if [ -f server/package.json ]; then
+    cd server
+    npm install --legacy-peer-deps 2>&1 || exit 1
+    cd "$DIR"
+  fi
+) &
+PID_SERVER=$!
+
+(
+  npm install puppeteer --no-save --legacy-peer-deps 2>&1 || exit 1
+  npx puppeteer browsers install chrome 2>&1 || exit 1
+) &
+PID_PUPPET=$!
+
+npm rebuild sharp 2>&1 && log "sharp ✓" || warn "sharp rebuild فشل — تحسين الصور لن يعمل"
+
+if wait $PID_SERVER 2>/dev/null; then
+  [ -f server/package.json ] && log "حزم الباكند ✓"
 else
-  warn "Puppeteer فشل — Prerendering سيتم تخطيه"
+  warn "فشل تثبيت حزم الباكند"
   WARNINGS=$((WARNINGS+1))
 fi
 
-# ── إعادة بناء sharp ──
-npm rebuild sharp 2>&1 && log "sharp ✓" || warn "sharp rebuild فشل — تحسين الصور لن يعمل"
-
-# ── حزم الباكند (server/) ──
-if [ -f server/package.json ]; then
-  info "تثبيت حزم الباكند..."
-  cd server
-  npm install --legacy-peer-deps 2>&1 || warn "فشل تثبيت حزم الباكند"
-  cd "$DIR"
-  log "حزم الباكند ✓"
+PUPPETEER_OK=false
+if wait $PID_PUPPET 2>/dev/null; then
+  PUPPETEER_OK=true
+  log "Puppeteer + Chrome ✓"
+else
+  warn "Puppeteer فشل — Prerendering سيتم تخطيه"
+  WARNINGS=$((WARNINGS+1))
 fi
 
 # ── مزامنة Config ──
@@ -429,8 +442,21 @@ rm -f /etc/nginx/sites-available/${APP} /etc/nginx/sites-available/${APP}.conf 2
 
 if $SSL_EXISTS; then
   info "شهادات SSL موجودة — إعداد HTTPS"
+
+  # كشف DH params
+  DH_PARAM=""
+  if [ -f /etc/letsencrypt/ssl-dhparams.pem ]; then
+    DH_PARAM="    ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;"
+  elif [ -f /etc/ssl/dhparams.pem ]; then
+    DH_PARAM="    ssl_dhparam         /etc/ssl/dhparams.pem;"
+  fi
+
+  # كشف options-ssl-nginx.conf
+  SSL_INCLUDE=""
+  [ -f /etc/letsencrypt/options-ssl-nginx.conf ] && SSL_INCLUDE="    include             /etc/letsencrypt/options-ssl-nginx.conf;"
+
   cat > /etc/nginx/sites-available/${APP} << NGEOF
-# www → root 301 redirect
+# ── HTTP: redirect everything to HTTPS ────────────────────────────────────
 server {
     listen 80;
     listen [::]:80;
@@ -438,15 +464,22 @@ server {
     return 301 https://${ROOT_DOMAIN}\$request_uri;
 }
 
+# ── www → root redirect ──────────────────────────────────────────────────
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
+    http2 on;
     server_name www.${ROOT_DOMAIN};
+
     ssl_certificate ${SSL_CERT};
     ssl_certificate_key ${SSL_KEY};
+${SSL_INCLUDE}
+${DH_PARAM}
+
     return 301 https://${ROOT_DOMAIN}\$request_uri;
 }
 
+# ── Main HTTPS Server ────────────────────────────────────────────────────
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -455,96 +488,180 @@ server {
     root ${DIR}/dist;
     index index.html;
 
+    # ── SSL ───────────────────────────────────────────────────────────────
     ssl_certificate ${SSL_CERT};
     ssl_certificate_key ${SSL_KEY};
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
+${SSL_INCLUDE}
+${DH_PARAM}
 
-    # Gzip
-    gzip on;
-    gzip_vary on;
-    gzip_proxied any;
-    gzip_comp_level 6;
-    gzip_min_length 256;
-    gzip_types text/plain text/css text/javascript application/json application/javascript application/xml application/xml+rss text/xml image/svg+xml font/woff2;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+    ssl_stapling        on;
+    ssl_stapling_verify on;
+    resolver            8.8.8.8 8.8.4.4 valid=300s;
+    resolver_timeout    5s;
 
-    # Security Headers
+    # ── Security Headers ──────────────────────────────────────────────────
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 
-    # Static assets — long cache
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif|mp4|webm)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
+    # ── Gzip Compression ─────────────────────────────────────────────────
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_min_length 256;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml
+        font/woff2;
+
+    # ── Upload Size ───────────────────────────────────────────────────────
+    client_max_body_size 20M;
+
+    # ── Logging ───────────────────────────────────────────────────────────
+    access_log /var/log/nginx/${APP}_access.log;
+    error_log  /var/log/nginx/${APP}_error.log warn;
+
+    # ── Block Bad Bots & Crawlers ─────────────────────────────────────────
+    if (\$http_user_agent ~* (semalt|majestic|rogerbot|dotbot|ahrefsbot|mj12bot|blexbot|scrapy)) {
+        return 403;
+    }
+
+    # ── Block sensitive files ─────────────────────────────────────────────
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+    location ~ \.(env|git|bak|sql|sh|config|log)$ {
+        deny all;
+        return 404;
+    }
+
+    # ── Sitemap + Robots — SEO critical ───────────────────────────────────
+    location = /robots.txt {
+        expires -1;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        access_log off;
+        try_files \$uri =404;
+    }
+    location ~ ^/sitemap.*\.xml$ {
+        expires 1d;
+        add_header Cache-Control "public, max-age=86400";
         access_log off;
         try_files \$uri =404;
     }
 
-    # API Proxy → server/index.js (port ${PORT_MAIN})
+    # ── API Proxy → server/index.js (port ${PORT_MAIN}, PM2 cluster) ─────
     location /api/ {
-        proxy_pass http://127.0.0.1:${PORT_MAIN};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_read_timeout 300s;
-        proxy_buffering off;
+        proxy_pass          http://127.0.0.1:${PORT_MAIN};
+        proxy_http_version  1.1;
+        proxy_set_header    Upgrade \$http_upgrade;
+        proxy_set_header    Connection 'upgrade';
+        proxy_set_header    Host \$host;
+        proxy_set_header    X-Real-IP \$remote_addr;
+        proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass  \$http_upgrade;
+        proxy_read_timeout  60s;
+        proxy_connect_timeout 10s;
+        proxy_send_timeout  60s;
+        proxy_buffering     off;
+
+        # CORS preflight
+        if (\$request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin  "*";
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
+            add_header Content-Length 0;
+            return 204;
+        }
     }
 
-    # Admin API Proxy → server/api-server.cjs (port ${PORT_ADMIN})
+    # ── Admin API Proxy → server/api-server.cjs (port ${PORT_ADMIN}) ─────
     location /admin-api/ {
         rewrite ^/admin-api/(.*) /api/\$1 break;
-        proxy_pass http://127.0.0.1:${PORT_ADMIN};
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_read_timeout 300s;
-        proxy_buffering off;
+        proxy_pass          http://127.0.0.1:${PORT_ADMIN};
+        proxy_http_version  1.1;
+        proxy_set_header    Host \$host;
+        proxy_set_header    X-Real-IP \$remote_addr;
+        proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass  \$http_upgrade;
+        proxy_read_timeout  60s;
+        proxy_connect_timeout 10s;
+        proxy_send_timeout  60s;
+        proxy_buffering     off;
     }
 
-    # Programmatic SEO pages
-    location /programmatic/ {
-        try_files \$uri \$uri/ \$uri.html =404;
+    # ── Hashed Static Assets — immutable cache 1 year ─────────────────────
+    location ~* /assets/.*\.(js|css|woff2?|ttf|eot|png|jpg|jpeg|gif|ico|svg|webp|avif)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable, max-age=31536000";
+        access_log off;
+        try_files \$uri =404;
     }
 
-    # SEO
-    location ~ /sitemap.*\.xml$ { expires 1d; add_header Cache-Control "public"; access_log off; try_files \$uri =404; }
-    location = /robots.txt { expires 1d; access_log off; try_files \$uri =404; }
+    # ── Non-hashed fonts — immutable + CORS ───────────────────────────────
+    location ~* \.(woff2?|ttf|eot|otf)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Access-Control-Allow-Origin "*";
+        access_log off;
+        try_files \$uri =404;
+    }
 
-    # Admin — no cache, SPA only
+    # ── Tracking page — short cache ───────────────────────────────────────
+    location ~* ^/track/[A-Za-z0-9]+$ {
+        expires 5m;
+        add_header Cache-Control "public, max-age=300";
+        try_files \$uri \$uri/index.html /index.html;
+    }
+
+    # ── Admin panel — no cache ────────────────────────────────────────────
     location ^~ /admin {
         expires -1;
         add_header Cache-Control "no-store, no-cache, must-revalidate";
         try_files \$uri \$uri/ /index.html;
     }
 
-    # Prerendered SEO shells — serve shell first, then SPA fallback
-    # try_files: 1) exact file, 2) directory/index.html (prerender shell), 3) SPA root
+    # ── Programmatic SEO pages ────────────────────────────────────────────
+    location /programmatic/ {
+        try_files \$uri \$uri/ \$uri.html =404;
+    }
+
+    # ── Prerendered SEO Shells: serve shell first, then SPA fallback ──────
     location / {
         expires 1h;
         add_header Cache-Control "public, max-age=3600, must-revalidate";
         try_files \$uri \$uri/index.html \$uri/ /index.html;
     }
 
-    # Block sensitive files
-    location ~ /\. { deny all; access_log off; log_not_found off; }
-    location ~ \.(env|git|bak|sql|log)$ { deny all; }
-
-    client_max_body_size 20M;
-    access_log /var/log/nginx/${APP}_access.log;
-    error_log  /var/log/nginx/${APP}_error.log;
+    # ── Legacy redirects (GSC coverage fixes) ─────────────────────────────
+    location = /track-without-number          { return 301 /guides/track-without-tracking-number; }
+    location = /mobile-tracking               { return 301 /guides/usps-mobile-tracking; }
+    location = /tracking-number-format        { return 301 /guides/tracking-number-format; }
+    location = /usps-informed-delivery-guide  { return 301 /guides/usps-informed-delivery; }
+    location = /de                            { return 301 /; }
+    location = /de/                           { return 301 /; }
+    location ~* ^/de/(.*)$                    { return 301 /\$1; }
 }
 NGEOF
 else
@@ -557,78 +674,162 @@ server {
     root ${DIR}/dist;
     index index.html;
 
+    # ── Gzip Compression ─────────────────────────────────────────────────
     gzip on;
     gzip_vary on;
     gzip_proxied any;
     gzip_comp_level 6;
     gzip_min_length 256;
-    gzip_types text/plain text/css text/javascript application/json application/javascript application/xml application/xml+rss text/xml image/svg+xml font/woff2;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml
+        font/woff2;
 
+    # ── Security Headers ──────────────────────────────────────────────────
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
 
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif|mp4|webm)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
+    # ── Upload Size ───────────────────────────────────────────────────────
+    client_max_body_size 20M;
+
+    # ── Logging ───────────────────────────────────────────────────────────
+    access_log /var/log/nginx/${APP}_access.log;
+    error_log  /var/log/nginx/${APP}_error.log warn;
+
+    # ── Block Bad Bots & Crawlers ─────────────────────────────────────────
+    if (\$http_user_agent ~* (semalt|majestic|rogerbot|dotbot|ahrefsbot|mj12bot|blexbot|scrapy)) {
+        return 403;
+    }
+
+    # ── Block sensitive files ─────────────────────────────────────────────
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+    location ~ \.(env|git|bak|sql|sh|config|log)$ {
+        deny all;
+        return 404;
+    }
+
+    # ── Sitemap + Robots — SEO critical ───────────────────────────────────
+    location = /robots.txt {
+        expires -1;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        access_log off;
+        try_files \$uri =404;
+    }
+    location ~ ^/sitemap.*\.xml$ {
+        expires 1d;
+        add_header Cache-Control "public, max-age=86400";
         access_log off;
         try_files \$uri =404;
     }
 
+    # ── API Proxy → server/index.js (port ${PORT_MAIN}) ──────────────────
     location /api/ {
-        proxy_pass http://127.0.0.1:${PORT_MAIN};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_read_timeout 300s;
-        proxy_buffering off;
+        proxy_pass          http://127.0.0.1:${PORT_MAIN};
+        proxy_http_version  1.1;
+        proxy_set_header    Upgrade \$http_upgrade;
+        proxy_set_header    Connection 'upgrade';
+        proxy_set_header    Host \$host;
+        proxy_set_header    X-Real-IP \$remote_addr;
+        proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass  \$http_upgrade;
+        proxy_read_timeout  60s;
+        proxy_connect_timeout 10s;
+        proxy_send_timeout  60s;
+        proxy_buffering     off;
+
+        # CORS preflight
+        if (\$request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin  "*";
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
+            add_header Content-Length 0;
+            return 204;
+        }
     }
 
+    # ── Admin API Proxy → server/api-server.cjs (port ${PORT_ADMIN}) ─────
     location /admin-api/ {
         rewrite ^/admin-api/(.*) /api/\$1 break;
-        proxy_pass http://127.0.0.1:${PORT_ADMIN};
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_read_timeout 300s;
-        proxy_buffering off;
+        proxy_pass          http://127.0.0.1:${PORT_ADMIN};
+        proxy_http_version  1.1;
+        proxy_set_header    Host \$host;
+        proxy_set_header    X-Real-IP \$remote_addr;
+        proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass  \$http_upgrade;
+        proxy_read_timeout  60s;
+        proxy_connect_timeout 10s;
+        proxy_send_timeout  60s;
+        proxy_buffering     off;
     }
 
-    location /programmatic/ {
-        try_files \$uri \$uri/ \$uri.html =404;
+    # ── Hashed Static Assets — immutable cache 1 year ─────────────────────
+    location ~* /assets/.*\.(js|css|woff2?|ttf|eot|png|jpg|jpeg|gif|ico|svg|webp|avif)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable, max-age=31536000";
+        access_log off;
+        try_files \$uri =404;
     }
 
-    location ~ /sitemap.*\.xml$ { expires 1d; add_header Cache-Control "public"; access_log off; try_files \$uri =404; }
-    location = /robots.txt { expires 1d; access_log off; try_files \$uri =404; }
+    # ── Non-hashed fonts — immutable + CORS ───────────────────────────────
+    location ~* \.(woff2?|ttf|eot|otf)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Access-Control-Allow-Origin "*";
+        access_log off;
+        try_files \$uri =404;
+    }
 
-    # Admin — no cache, SPA only
+    # ── Tracking page — short cache ───────────────────────────────────────
+    location ~* ^/track/[A-Za-z0-9]+$ {
+        expires 5m;
+        add_header Cache-Control "public, max-age=300";
+        try_files \$uri \$uri/index.html /index.html;
+    }
+
+    # ── Admin panel — no cache ────────────────────────────────────────────
     location ^~ /admin {
         expires -1;
         add_header Cache-Control "no-store, no-cache, must-revalidate";
         try_files \$uri \$uri/ /index.html;
     }
 
-    # Prerendered SEO shells — serve shell first, then SPA fallback
+    # ── Programmatic SEO pages ────────────────────────────────────────────
+    location /programmatic/ {
+        try_files \$uri \$uri/ \$uri.html =404;
+    }
+
+    # ── Prerendered SEO Shells: serve shell first, then SPA fallback ──────
     location / {
         expires 1h;
         add_header Cache-Control "public, max-age=3600, must-revalidate";
         try_files \$uri \$uri/index.html \$uri/ /index.html;
     }
 
-    location ~ /\. { deny all; access_log off; log_not_found off; }
-    location ~ \.(env|git|bak|sql|log)$ { deny all; }
-
-    client_max_body_size 20M;
-    access_log /var/log/nginx/${APP}_access.log;
-    error_log  /var/log/nginx/${APP}_error.log;
+    # ── Legacy redirects (GSC coverage fixes) ─────────────────────────────
+    location = /track-without-number          { return 301 /guides/track-without-tracking-number; }
+    location = /mobile-tracking               { return 301 /guides/usps-mobile-tracking; }
+    location = /tracking-number-format        { return 301 /guides/tracking-number-format; }
+    location = /usps-informed-delivery-guide  { return 301 /guides/usps-informed-delivery; }
+    location = /de                            { return 301 /; }
+    location = /de/                           { return 301 /; }
+    location ~* ^/de/(.*)$                    { return 301 /\$1; }
 }
 NGEOF
 fi

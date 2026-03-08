@@ -10,7 +10,7 @@ A React + Vite SPA for USPS package tracking with a fully-functional admin dashb
 - **Advanced Scraper Engine**: 5-layer USPS scraper (L1: tools.usps.com HTML/JSON, L2: USPS AJAX endpoint, L3: USPS Mobile, L4: PackageRadar API, L5: Parcelsapp), 20 UA pool, per-layer runtime stats, auto failover to USPS XML API
 - **Admin Dashboard**: `/admin` — password protected (default: `uspostal2024`), RTL layout, URL hash tab persistence
 - **Server (production)**: `server/index.js` — standalone Express server (port 8080) for VPS/production — 81 API routes (100% coverage vs vite.config.ts)
-- **Deployment**: `deploy.sh` (1093 lines, full Hostinger VPS deploy), `nginx.conf` (optimized config with SSL, gzip, prerender shell serving), `ecosystem.config.cjs` (PM2 cluster mode)
+- **Deployment**: `deploy.sh` (~1300 lines, full Hostinger VPS deploy — SSL stapling, HSTS, bot blocking, CORS preflight, legacy redirects, parallelized build), `nginx.conf` (reference config with SSL, gzip, prerender shell serving), `ecosystem.config.cjs` (PM2 cluster mode)
 
 ## Running the App
 - **Dev**: `npm run dev` (starts Vite on port 5000 with embedded API)
