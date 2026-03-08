@@ -34,11 +34,11 @@ interface TestResult {
 }
 
 const STATUS_META = {
-  working:  { icon: CheckCircle,  cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",  label: "يعمل" },
-  broken:   { icon: XCircle,      cls: "bg-red-500/20 text-red-400 border-red-500/30",              label: "معطل" },
-  degraded: { icon: AlertTriangle, cls: "bg-amber-500/20 text-amber-400 border-amber-500/30",       label: "ضعيف" },
-  disabled: { icon: Power,        cls: "bg-slate-600/30 text-slate-500 border-slate-600/40",        label: "متوقف" },
-  idle:     { icon: Clock,        cls: "bg-blue-500/10 text-blue-400 border-blue-500/20",            label: "جاهز" },
+  working:  { icon: CheckCircle,  cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25", borderAccent: "border-emerald-500/30", label: "يعمل", dot: "bg-emerald-400" },
+  broken:   { icon: XCircle,      cls: "bg-red-500/15 text-red-400 border-red-500/25",             borderAccent: "border-red-500/30",     label: "معطل", dot: "bg-red-400" },
+  degraded: { icon: AlertTriangle, cls: "bg-amber-500/15 text-amber-400 border-amber-500/25",      borderAccent: "border-amber-500/30",   label: "ضعيف", dot: "bg-amber-400" },
+  disabled: { icon: Power,        cls: "bg-slate-600/20 text-slate-500 border-slate-600/30",        borderAccent: "border-slate-600/30",   label: "متوقف", dot: "bg-slate-500" },
+  idle:     { icon: Clock,        cls: "bg-blue-500/10 text-blue-400 border-blue-500/20",           borderAccent: "border-blue-500/30",    label: "جاهز", dot: "bg-blue-400" },
 };
 
 const LAYER_ICONS: Record<string, string> = {
@@ -46,38 +46,49 @@ const LAYER_ICONS: Record<string, string> = {
 };
 
 const UA_CATEGORIES = [
-  { name: "Chrome Win", count: 4 },
-  { name: "Chrome Mac", count: 2 },
-  { name: "Firefox Win", count: 3 },
-  { name: "Firefox Mac", count: 1 },
-  { name: "Safari Mac", count: 2 },
-  { name: "Edge Win", count: 2 },
-  { name: "iPhone Safari", count: 2 },
-  { name: "Android Chrome", count: 2 },
-  { name: "Android Firefox", count: 1 },
-  { name: "Opera", count: 1 },
+  { name: "Chrome Win", count: 4, icon: "🖥️" },
+  { name: "Chrome Mac", count: 2, icon: "💻" },
+  { name: "Firefox Win", count: 3, icon: "🦊" },
+  { name: "Firefox Mac", count: 1, icon: "🍎" },
+  { name: "Safari Mac", count: 2, icon: "🧭" },
+  { name: "Edge Win", count: 2, icon: "🌊" },
+  { name: "iPhone Safari", count: 2, icon: "📱" },
+  { name: "Android Chrome", count: 2, icon: "🤖" },
+  { name: "Android Firefox", count: 1, icon: "📲" },
+  { name: "Opera", count: 1, icon: "🎭" },
 ];
 
 function StatusBadge({ status }: { status: UspsLayer["status"] }) {
   const m = STATUS_META[status] || STATUS_META.idle;
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${m.cls}`}>
-      <m.icon size={10} /> {m.label}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold border ${m.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${m.dot} animate-pulse`} />
+      {m.label}
     </span>
   );
 }
 
-function RateBar({ rate }: { rate: number | null }) {
+function RateBar({ rate, showLabel = true }: { rate: number | null; showLabel?: boolean }) {
   if (rate === null) return <span className="text-slate-500 text-[11px]">—</span>;
-  const color = rate >= 80 ? "bg-emerald-500" : rate >= 50 ? "bg-amber-500" : "bg-red-500";
+  const color = rate >= 80 ? "from-emerald-500 to-emerald-400" : rate >= 50 ? "from-amber-500 to-amber-400" : "from-red-500 to-red-400";
   const textColor = rate >= 80 ? "text-emerald-400" : rate >= 50 ? "text-amber-400" : "text-red-400";
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 bg-white/[0.05] rounded-full h-1 overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(rate, 100)}%` }} />
+      <div className="flex-1 bg-white/[0.05] rounded-full h-2 overflow-hidden">
+        <div className={`h-full rounded-full bg-gradient-to-r ${color} transition-all duration-700`} style={{ width: `${Math.min(rate, 100)}%` }} />
       </div>
-      <span className={`text-[11px] font-semibold w-10 text-right ${textColor}`}>{rate}%</span>
+      {showLabel && <span className={`text-[11px] font-bold w-10 text-right ${textColor}`}>{rate}%</span>}
     </div>
+  );
+}
+
+function ResponseTimeBadge({ ms }: { ms: number | null }) {
+  if (ms === null) return <span className="text-slate-600 text-[10px]">—</span>;
+  const color = ms < 1000 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" : ms < 3000 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : "text-red-400 bg-red-500/10 border-red-500/20";
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-mono font-semibold border ${color}`}>
+      <Clock size={9} /> {ms}ms
+    </span>
   );
 }
 
@@ -89,6 +100,7 @@ export default function ScraperManagementTab() {
   const [healthRunning, setHealthRunning] = useState(false);
   const [testTrackingNumbers, setTestTrackingNumbers] = useState<Record<string, string>>({});
   const [showUAPool, setShowUAPool] = useState(false);
+  const [expandedErrors, setExpandedErrors] = useState<Record<string, boolean>>({});
 
   const toggleLayer = async (layer: UspsLayer) => {
     const next = !layer.enabled;
@@ -148,22 +160,22 @@ export default function ScraperManagementTab() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/20 flex items-center justify-center">
-            <Layers size={15} className="text-purple-400" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/25 flex items-center justify-center shadow-lg shadow-purple-500/10">
+            <Layers size={18} className="text-purple-400" />
           </div>
           <div>
             <h2 className="text-base font-bold text-white">محرك الاستخراج المتعدد الطبقات</h2>
             <p className="text-[11px] text-slate-500">5 طبقات USPS متخصصة — تدهور تلقائي عند الفشل</p>
           </div>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${isLive ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-slate-500/10 text-slate-500 border-slate-600/20"}`}>
+          <span className={`text-[10px] px-3 py-1 rounded-full border backdrop-blur-sm ${isLive ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-slate-500/10 text-slate-500 border-slate-600/20"}`}>
             {isLive ? "● متصل" : "○ غير متصل"}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => refresh()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700/50 text-slate-300 border border-white/[0.06] hover:bg-slate-700 transition-colors">
+          <button onClick={() => refresh()} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-slate-800/60 text-slate-300 border border-slate-700/50 hover:bg-slate-700 transition-all backdrop-blur-sm">
             <RefreshCw size={11} /> تحديث
           </button>
-          <button onClick={runHealthCheck} disabled={healthRunning} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-500/15 text-blue-400 border border-blue-500/20 hover:bg-blue-500/25 transition-colors disabled:opacity-50">
+          <button onClick={runHealthCheck} disabled={healthRunning} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-gradient-to-r from-blue-500/15 to-cyan-500/15 text-blue-400 border border-blue-500/25 hover:from-blue-500/25 hover:to-cyan-500/25 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/5">
             {healthRunning ? <RefreshCw size={11} className="animate-spin" /> : <Activity size={11} />}
             فحص شامل
           </button>
@@ -172,56 +184,57 @@ export default function ScraperManagementTab() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "الطبقات العاملة", value: `${workingCount}/${enabledCount}`, icon: CheckCircle, color: "text-emerald-400" },
-          { label: "إجمالي المحاولات", value: totalAttempts > 0 ? totalAttempts.toLocaleString() : "—", icon: Zap, color: "text-blue-400" },
-          { label: "معدل النجاح الكلي", value: totalAttempts > 0 ? `${overallRate}%` : "—", icon: BarChart3, color: "text-amber-400" },
-          { label: "User-Agents", value: "20 UA", icon: Shield, color: "text-purple-400" },
+          { label: "الطبقات العاملة", value: `${workingCount}/${enabledCount}`, icon: CheckCircle, gradient: "from-emerald-500/20 to-green-500/10", iconColor: "text-emerald-400", borderColor: "border-emerald-500/20" },
+          { label: "إجمالي المحاولات", value: totalAttempts > 0 ? totalAttempts.toLocaleString() : "—", icon: Zap, gradient: "from-blue-500/20 to-cyan-500/10", iconColor: "text-blue-400", borderColor: "border-blue-500/20" },
+          { label: "معدل النجاح الكلي", value: totalAttempts > 0 ? `${overallRate}%` : "—", icon: BarChart3, gradient: "from-amber-500/20 to-orange-500/10", iconColor: "text-amber-400", borderColor: "border-amber-500/20" },
+          { label: "User-Agents", value: "20 UA", icon: Shield, gradient: "from-purple-500/20 to-pink-500/10", iconColor: "text-purple-400", borderColor: "border-purple-500/20" },
         ].map(stat => (
-          <div key={stat.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 flex items-center gap-3">
-            <stat.icon size={16} className={stat.color} />
-            <div>
-              <p className="text-xs font-bold text-white">{stat.value}</p>
-              <p className="text-[10px] text-slate-500">{stat.label}</p>
+          <div key={stat.label} className={`bg-slate-800/60 border ${stat.borderColor} rounded-2xl backdrop-blur-sm p-4 bg-gradient-to-br ${stat.gradient} transition-all hover:scale-[1.02]`}>
+            <div className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center mb-3">
+              <stat.icon size={16} className={stat.iconColor} />
             </div>
+            <p className="text-[10px] text-slate-500 mb-0.5">{stat.label}</p>
+            <p className={`text-xl font-bold ${stat.iconColor}`}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       {mostUsedLayer && totalAttempts > 0 && (
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-          <h3 className="text-xs font-semibold text-white mb-2 flex items-center gap-2">
-            <BarChart3 size={12} className="text-amber-400" />
+        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl backdrop-blur-sm p-5">
+          <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center">
+              <BarChart3 size={12} className="text-amber-400" />
+            </div>
             إحصائيات التشغيل
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
-            <div>
-              <p className="text-slate-500">الطبقة الأكثر استخداماً</p>
-              <p className="text-white font-semibold mt-0.5">{LAYER_ICONS[mostUsedLayer.id] || "🔧"} {mostUsedLayer.name}</p>
-              <p className="text-slate-600 text-[10px]">{mostUsedLayer.totalAttempts} محاولة</p>
-            </div>
-            <div>
-              <p className="text-slate-500">متوسط زمن الاستجابة</p>
-              <p className="text-blue-400 font-semibold mt-0.5">{avgResponseAll > 0 ? `${avgResponseAll}ms` : "—"}</p>
-            </div>
-            <div>
-              <p className="text-slate-500">نسبة النجاح الكلية</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "الطبقة الأكثر استخداماً", value: `${LAYER_ICONS[mostUsedLayer.id] || "🔧"} ${mostUsedLayer.name}`, sub: `${mostUsedLayer.totalAttempts} محاولة`, color: "text-white" },
+              { label: "متوسط زمن الاستجابة", value: avgResponseAll > 0 ? `${avgResponseAll}ms` : "—", sub: null, color: "text-blue-400" },
+              { label: "إجمالي النجاحات", value: totalSuccesses.toLocaleString(), sub: null, color: "text-emerald-400" },
+            ].map(item => (
+              <div key={item.label} className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-3">
+                <p className="text-[10px] text-slate-500 mb-1">{item.label}</p>
+                <p className={`text-sm font-bold ${item.color}`}>{item.value}</p>
+                {item.sub && <p className="text-[9px] text-slate-600 mt-0.5">{item.sub}</p>}
+              </div>
+            ))}
+            <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-3">
+              <p className="text-[10px] text-slate-500 mb-1">نسبة النجاح الكلية</p>
               <RateBar rate={overallRate} />
             </div>
-            <div>
-              <p className="text-slate-500">إجمالي النجاحات</p>
-              <p className="text-emerald-400 font-semibold mt-0.5">{totalSuccesses.toLocaleString()}</p>
-            </div>
           </div>
-          <div className="mt-3 grid grid-cols-5 gap-1">
+          <div className="mt-4 grid grid-cols-5 gap-2">
             {layerList.map(layer => {
               const pct = totalAttempts > 0 ? Math.round(((layer.totalAttempts || 0) / totalAttempts) * 100) : 0;
+              const m = STATUS_META[layer.status] || STATUS_META.idle;
               return (
-                <div key={layer.id} className="text-center">
-                  <div className="h-12 bg-white/[0.03] rounded relative overflow-hidden flex items-end">
-                    <div className={`w-full rounded ${layer.status === 'working' ? 'bg-emerald-500/40' : layer.status === 'broken' ? 'bg-red-500/40' : 'bg-slate-600/40'}`} style={{ height: `${Math.max(pct, 5)}%` }} />
+                <div key={layer.id} className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-2 text-center">
+                  <div className="h-16 bg-white/[0.03] rounded-lg relative overflow-hidden flex items-end mb-1.5">
+                    <div className={`w-full rounded-lg transition-all duration-500 ${layer.status === 'working' ? 'bg-gradient-to-t from-emerald-500/50 to-emerald-500/20' : layer.status === 'broken' ? 'bg-gradient-to-t from-red-500/50 to-red-500/20' : 'bg-gradient-to-t from-slate-600/50 to-slate-600/20'}`} style={{ height: `${Math.max(pct, 8)}%` }} />
                   </div>
-                  <p className="text-[9px] text-slate-500 mt-1">{LAYER_ICONS[layer.id]} L{layer.priority}</p>
-                  <p className="text-[9px] text-slate-400 font-semibold">{pct}%</p>
+                  <p className="text-[10px] text-slate-400">{LAYER_ICONS[layer.id]} L{layer.priority}</p>
+                  <p className="text-[10px] text-white font-bold">{pct}%</p>
                 </div>
               );
             })}
@@ -229,44 +242,45 @@ export default function ScraperManagementTab() {
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {layerList.map(layer => {
           const tr = testResults[layer.id];
           const isOpen = expanded === layer.id;
           const isTesting = testing[layer.id];
+          const m = STATUS_META[layer.status] || STATUS_META.idle;
           return (
-            <div key={layer.id} className={`rounded-xl border transition-colors ${layer.enabled ? "border-white/[0.07] bg-white/[0.025]" : "border-white/[0.04] bg-white/[0.01] opacity-60"}`}>
-              <div className="flex items-center gap-3 p-3">
-                <div className="w-7 h-7 rounded-lg bg-slate-800 border border-white/[0.06] flex items-center justify-center text-[13px] shrink-0">
+            <div key={layer.id} className={`bg-slate-800/60 rounded-2xl backdrop-blur-sm border-2 transition-all ${layer.enabled ? m.borderAccent : "border-slate-800/50 opacity-60"}`}>
+              <div className="flex items-center gap-3 p-4">
+                <div className="w-10 h-10 rounded-xl bg-slate-900/80 border border-white/[0.08] flex items-center justify-center text-lg shrink-0 shadow-inner">
                   {LAYER_ICONS[layer.id] || "🔧"}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-semibold text-white">{layer.name}</span>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-[12px] font-bold text-white">{layer.name}</span>
                     <StatusBadge status={layer.status} />
-                    <span className="text-[9px] text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded">P{layer.priority}</span>
+                    <span className="text-[9px] text-slate-500 bg-slate-900 px-2 py-0.5 rounded-lg border border-white/[0.05]">P{layer.priority}</span>
                     {layer.uaRotation && (
-                      <span className="text-[9px] text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/15 inline-flex items-center gap-0.5">
+                      <span className="text-[9px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/15 inline-flex items-center gap-1">
                         <Shield size={8} /> UA دوار
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-600 font-mono truncate mt-0.5" dir="ltr">{layer.targetUrl}</p>
+                  <p className="text-[10px] text-slate-600 font-mono truncate" dir="ltr">{layer.targetUrl}</p>
                 </div>
 
-                <div className="hidden lg:flex items-center gap-4 text-[11px] shrink-0">
-                  <div className="w-28">
-                    <p className="text-slate-500 mb-0.5">معدل النجاح</p>
+                <div className="hidden lg:flex items-center gap-5 shrink-0">
+                  <div className="w-32">
+                    <p className="text-[9px] text-slate-500 mb-1">معدل النجاح</p>
                     <RateBar rate={layer.successRate} />
                   </div>
                   <div className="text-center">
-                    <p className="text-slate-500">متوسط الوقت</p>
-                    <p className="text-blue-400 font-semibold">{layer.avgResponseTime != null ? `${layer.avgResponseTime}ms` : "—"}</p>
+                    <p className="text-[9px] text-slate-500 mb-1">زمن الاستجابة</p>
+                    <ResponseTimeBadge ms={layer.avgResponseTime} />
                   </div>
                   <div className="text-center">
-                    <p className="text-slate-500">المحاولات</p>
-                    <p className="text-slate-300 font-semibold">{layer.totalAttempts > 0 ? layer.totalAttempts : "—"}</p>
+                    <p className="text-[9px] text-slate-500 mb-1">المحاولات</p>
+                    <p className="text-sm text-slate-300 font-bold">{layer.totalAttempts > 0 ? layer.totalAttempts.toLocaleString() : "—"}</p>
                   </div>
                 </div>
 
@@ -274,30 +288,30 @@ export default function ScraperManagementTab() {
                   <button
                     onClick={() => testLayer(layer)}
                     disabled={isTesting || !layer.enabled}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors disabled:opacity-40"
+                    className="flex items-center gap-1 px-3 py-2 text-[10px] font-medium rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-400 border border-blue-500/20 hover:from-blue-500/20 hover:to-cyan-500/20 transition-all disabled:opacity-40"
                   >
                     {isTesting ? <RefreshCw size={9} className="animate-spin" /> : <Play size={9} />}
                     اختبار
                   </button>
                   <button
                     onClick={() => toggleLayer(layer)}
-                    className={`p-1.5 rounded-lg transition-colors ${layer.enabled ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" : "bg-slate-700/60 text-slate-500 hover:bg-slate-700"}`}
+                    className={`p-2 rounded-xl transition-all ${layer.enabled ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20" : "bg-slate-700/60 text-slate-500 border border-slate-600/20 hover:bg-slate-700"}`}
                     title={layer.enabled ? "إيقاف الطبقة" : "تفعيل الطبقة"}
                   >
-                    <Power size={13} />
+                    <Power size={14} />
                   </button>
                   <button
                     onClick={() => setExpanded(isOpen ? null : layer.id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
+                    className="p-2 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-all"
                   >
-                    {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
                 </div>
               </div>
 
               {isOpen && (
-                <div className="border-t border-white/[0.05] p-3 space-y-4">
-                  <p className="text-xs text-slate-400">{layer.description}</p>
+                <div className="border-t border-white/[0.05] p-4 space-y-4">
+                  <p className="text-xs text-slate-400 leading-relaxed">{layer.description}</p>
 
                   <div className="grid grid-cols-3 gap-2 lg:hidden">
                     <div>
@@ -305,8 +319,8 @@ export default function ScraperManagementTab() {
                       <RateBar rate={layer.successRate} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-500">متوسط الوقت</p>
-                      <p className="text-[11px] text-blue-400 font-semibold">{layer.avgResponseTime != null ? `${layer.avgResponseTime}ms` : "—"}</p>
+                      <p className="text-[10px] text-slate-500 mb-1">زمن الاستجابة</p>
+                      <ResponseTimeBadge ms={layer.avgResponseTime} />
                     </div>
                     <div>
                       <p className="text-[10px] text-slate-500">المحاولات</p>
@@ -314,33 +328,47 @@ export default function ScraperManagementTab() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {[
-                      { label: "آخر نجاح", value: layer.lastSuccess ? new Date(layer.lastSuccess).toLocaleString("ar") : "لم يتم بعد" },
-                      { label: "آخر محاولة", value: layer.lastAttempt ? new Date(layer.lastAttempt).toLocaleString("ar") : "—" },
-                      { label: "المهلة الزمنية", value: `${layer.timeout / 1000}s` },
-                      { label: "نجاح / محاولات", value: `${layer.totalSuccesses || 0} / ${layer.totalAttempts || 0}` },
+                      { label: "آخر نجاح", value: layer.lastSuccess ? new Date(layer.lastSuccess).toLocaleString("ar") : "لم يتم بعد", icon: CheckCircle, iconColor: "text-emerald-400" },
+                      { label: "آخر محاولة", value: layer.lastAttempt ? new Date(layer.lastAttempt).toLocaleString("ar") : "—", icon: Clock, iconColor: "text-blue-400" },
+                      { label: "المهلة الزمنية", value: `${layer.timeout / 1000}s`, icon: Cpu, iconColor: "text-purple-400" },
+                      { label: "نجاح / محاولات", value: `${layer.totalSuccesses || 0} / ${layer.totalAttempts || 0}`, icon: BarChart3, iconColor: "text-amber-400" },
                     ].map(item => (
-                      <div key={item.label} className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-2">
-                        <p className="text-slate-500 text-[10px]">{item.label}</p>
-                        <p className="text-slate-300 font-medium mt-0.5">{item.value}</p>
+                      <div key={item.label} className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-3">
+                        <p className="text-slate-500 text-[10px] flex items-center gap-1 mb-1">
+                          <item.icon size={9} className={item.iconColor} /> {item.label}
+                        </p>
+                        <p className="text-slate-300 font-medium text-[11px]">{item.value}</p>
                       </div>
                     ))}
                   </div>
 
                   {layer.lastError && (
-                    <div className="bg-red-500/5 border border-red-500/15 rounded-lg p-2.5 flex items-start gap-2">
-                      <AlertTriangle size={12} className="text-red-400 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-[10px] text-red-400 font-medium">آخر خطأ</p>
-                        <p className="text-[11px] text-red-300/70 font-mono mt-0.5" dir="ltr">{layer.lastError}</p>
-                      </div>
+                    <div className="bg-red-500/5 border border-red-500/15 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setExpandedErrors(prev => ({ ...prev, [layer.id]: !prev[layer.id] }))}
+                        className="w-full flex items-center gap-2 p-3 hover:bg-red-500/5 transition-colors"
+                      >
+                        <AlertTriangle size={12} className="text-red-400 shrink-0" />
+                        <span className="text-[10px] text-red-400 font-medium">آخر خطأ</span>
+                        <span className="text-[9px] text-red-500/50 mr-auto">اضغط للتوسيع</span>
+                        {expandedErrors[layer.id] ? <ChevronUp size={12} className="text-red-400" /> : <ChevronDown size={12} className="text-red-400" />}
+                      </button>
+                      {expandedErrors[layer.id] && (
+                        <div className="px-3 pb-3 border-t border-red-500/10">
+                          <p className="text-[11px] text-red-300/70 font-mono mt-2 leading-relaxed break-all" dir="ltr">{layer.lastError}</p>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-2.5">
-                    <p className="text-[10px] text-slate-500 mb-2 flex items-center gap-1">
-                      <Search size={10} /> اختبار برقم تتبع مخصص
+                  <div className="bg-gradient-to-r from-blue-500/5 to-cyan-500/5 border border-blue-500/15 rounded-xl p-4">
+                    <p className="text-xs font-medium text-blue-300 mb-3 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                        <Search size={11} className="text-blue-400" />
+                      </div>
+                      اختبار برقم تتبع مخصص
                     </p>
                     <div className="flex items-center gap-2" dir="ltr">
                       <input
@@ -348,35 +376,37 @@ export default function ScraperManagementTab() {
                         value={testTrackingNumbers[layer.id] || ''}
                         onChange={e => setTestTrackingNumbers(prev => ({ ...prev, [layer.id]: e.target.value }))}
                         placeholder="9400111899223033005289"
-                        className="flex-1 bg-slate-800 border border-white/[0.08] rounded-lg px-3 py-1.5 text-[11px] text-white placeholder-slate-600 font-mono focus:outline-none focus:border-blue-500/40"
+                        className="flex-1 bg-slate-900/80 border border-white/[0.08] rounded-xl px-4 py-2.5 text-[11px] text-white placeholder-slate-600 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500/40 transition-all"
                       />
                       <button
                         onClick={() => testLayer(layer, testTrackingNumbers[layer.id])}
                         disabled={isTesting || !layer.enabled || !testTrackingNumbers[layer.id]?.trim()}
-                        className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-medium rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/20 hover:bg-blue-500/25 transition-colors disabled:opacity-40"
+                        className="flex items-center gap-1.5 px-4 py-2.5 text-[11px] font-medium rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/25 hover:bg-blue-500/25 transition-all disabled:opacity-40 shadow-lg shadow-blue-500/5"
                       >
-                        {isTesting ? <RefreshCw size={9} className="animate-spin" /> : <Play size={9} />}
+                        {isTesting ? <RefreshCw size={10} className="animate-spin" /> : <Play size={10} />}
                         اختبار
                       </button>
                     </div>
                   </div>
 
                   {tr && (
-                    <div className={`rounded-lg border p-3 ${tr.ok ? "bg-emerald-500/5 border-emerald-500/20" : "bg-red-500/5 border-red-500/15"}`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        {tr.ok ? <CheckCircle size={12} className="text-emerald-400" /> : <XCircle size={12} className="text-red-400" />}
-                        <span className={`text-[11px] font-semibold ${tr.ok ? "text-emerald-400" : "text-red-400"}`}>
+                    <div className={`rounded-xl border-2 p-4 ${tr.ok ? "bg-emerald-500/5 border-emerald-500/20" : "bg-red-500/5 border-red-500/15"}`}>
+                      <div className="flex items-center gap-2 mb-3">
+                        {tr.ok ? <CheckCircle size={14} className="text-emerald-400" /> : <XCircle size={14} className="text-red-400" />}
+                        <span className={`text-[12px] font-bold ${tr.ok ? "text-emerald-400" : "text-red-400"}`}>
                           {tr.ok ? "اختبار ناجح" : "فشل الاختبار"}
                         </span>
-                        <span className="text-[10px] text-slate-500 mr-auto" dir="ltr">{tr.latency}ms</span>
+                        <ResponseTimeBadge ms={tr.latency} />
                       </div>
-                      <p className="text-[11px] text-slate-400">{tr.message}</p>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">{tr.message}</p>
                       {tr.ok && tr.eventsFound > 0 && (
-                        <p className="text-[10px] text-emerald-500/70 mt-1">{tr.eventsFound} أحداث مُستخرجة</p>
+                        <p className="text-[10px] text-emerald-500/70 mt-2 flex items-center gap-1">
+                          <CheckCircle size={9} /> {tr.eventsFound} أحداث مُستخرجة
+                        </p>
                       )}
                       {tr.ok && tr.firstEvent && (
-                        <div className="mt-2 p-2 bg-white/[0.03] rounded text-[10px] font-mono" dir="ltr">
-                          <span className="text-blue-400">{tr.firstEvent.status}</span>
+                        <div className="mt-3 p-3 bg-white/[0.03] rounded-lg border border-white/[0.05] text-[10px] font-mono" dir="ltr">
+                          <span className="text-blue-400 font-semibold">{tr.firstEvent.status}</span>
                           {tr.firstEvent.location && <span className="text-slate-500"> — {tr.firstEvent.location}</span>}
                           {tr.firstEvent.date && <span className="text-slate-600"> [{tr.firstEvent.date}]</span>}
                         </div>
@@ -384,9 +414,9 @@ export default function ScraperManagementTab() {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap pt-1">
                     <a href={layer.targetUrl} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-[10px] text-slate-500 hover:text-slate-300 transition-colors">
+                      className="flex items-center gap-1.5 text-[10px] text-slate-500 hover:text-blue-400 transition-colors px-2 py-1 rounded-lg hover:bg-blue-500/5">
                       <Globe size={10} /> فتح URL
                     </a>
                     <span className="text-slate-700">·</span>
@@ -401,52 +431,44 @@ export default function ScraperManagementTab() {
         })}
 
         {layerList.length === 0 && (
-          <div className="text-center py-12 text-slate-600">
-            <Layers size={32} className="mx-auto mb-3 opacity-30" />
+          <div className="text-center py-16 text-slate-600 bg-slate-800/30 rounded-2xl border border-slate-700/30">
+            <Layers size={36} className="mx-auto mb-3 opacity-20" />
             <p className="text-sm">لم يتم تحميل الطبقات بعد</p>
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+      <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl backdrop-blur-sm p-5">
         <button
           onClick={() => setShowUAPool(!showUAPool)}
           className="w-full flex items-center justify-between"
         >
           <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Shield size={14} className="text-blue-400" />
+            <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
+              <Shield size={12} className="text-blue-400" />
+            </div>
             تدوير User-Agent التلقائي (20 UA)
           </h3>
           {showUAPool ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
         </button>
 
-        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+        <p className="text-xs text-slate-500 mt-3 leading-relaxed">
           يستخدم المحرك مجموعة من 20 User-Agent مختلفة (Chrome, Firefox, Safari, Edge, Mobile) تُختار عشوائياً لكل طلب لتجنب الحظر.
           الطبقات تعمل بالتسلسل — عند نجاح طبقة يتوقف البحث فوراً. عند فشل جميع الطبقات يُستخدم USPS XML API احتياطياً.
         </p>
 
         {showUAPool && (
-          <div className="mt-3 space-y-2">
-            <div className="flex flex-wrap gap-1.5">
-              {UA_CATEGORIES.map(ua => (
-                <span key={ua.name} className="text-[9px] px-2 py-1 bg-slate-800 border border-white/[0.05] rounded text-slate-400 flex items-center gap-1">
-                  {ua.name}
-                  <span className="text-[8px] bg-blue-500/15 text-blue-400 px-1 rounded">{ua.count}</span>
-                </span>
-              ))}
-            </div>
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-2 mt-2">
-              <p className="text-[10px] text-slate-500 mb-1">أمثلة من المجموعة:</p>
-              <div className="space-y-1 text-[9px] font-mono text-slate-600" dir="ltr">
-                <p className="truncate">Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0</p>
-                <p className="truncate">Mozilla/5.0 (iPhone; CPU iPhone OS 17_3) Safari/604.1</p>
-                <p className="truncate">Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) Chrome/122.0.0.0</p>
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+            {UA_CATEGORIES.map(ua => (
+              <div key={ua.name} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center hover:bg-white/[0.05] transition-all">
+                <div className="text-lg mb-1">{ua.icon}</div>
+                <p className="text-[10px] text-slate-300 font-medium">{ua.name}</p>
+                <span className="inline-block mt-1 text-[9px] bg-blue-500/15 text-blue-400 px-2 py-0.5 rounded-lg font-bold">{ua.count} UA</span>
               </div>
-            </div>
+            ))}
           </div>
         )}
       </div>
-
     </div>
   );
 }

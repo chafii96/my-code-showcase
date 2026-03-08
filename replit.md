@@ -36,20 +36,20 @@ A React + Vite SPA for USPS package tracking with a fully-functional admin dashb
 ## Admin Dashboard — All 25 Tabs Fully Functional (100%)
 All admin tabs use real backend data persisted to JSON files. Zero mock/demo/localStorage data:
 
-### Main Section (الرئيسية)
-- **OverviewTab**: Real weekly/hourly analytics, traffic sources, top pages from visitors.json
-- **PerformanceTab**: Real build size breakdown (JS/CSS/images/fonts), response time stats from tracking-logs.json
-- **VisitorAnalyticsTab**: Full analytics — line/pie/bar charts, browsers/devices/OS/countries/referrers, time range selector
+### Main Section (الرئيسية) — Premium Design
+- **OverviewTab**: Glassmorphism hero stats (6 cards with sparklines), real-time activity feed, area/donut charts, API health badges, cache gauge, top pages ranked table, hourly traffic with peak highlighting, quick actions, SEO health gauge
+- **PerformanceTab**: Animated score circle (0-100), detailed build analysis with pie chart, response time area chart (P50/P95/P99), Core Web Vitals gauges (LCP/TBT/CLS), page speed insights, asset optimization status
+- **VisitorAnalyticsTab**: Real Leaflet interactive map (dark CartoDB tiles, CircleMarkers, popups), animated counters, chart type toggle (Area/Line/Bar), pagination with bulk selection, engagement scoring, city breakdown, search engine breakdown, screen resolution heatmap, loading skeletons
 
-### API Manager Section (مدير API)
-- **ApiOverviewTab**: Real system stats, cache hit rate gauge, provider health badges, no localStorage fallback
-- **ApiProvidersTab**: Full CRUD, numbered priority ordering, per-provider stats, test with real response
-- **CacheManagementTab**: Real cache entries with search/filter/pagination, TTL settings, bulk flush modes, CSV export
-- **ScraperManagementTab**: 5-layer scraper display, per-layer test with tracking number, UA pool, runtime stats, error logs
-- **CarrierDetectionTab**: All regex patterns displayed, test interface, add/edit/delete patterns, detection stats
-- **RateLimitingTab**: Real IP tracking from tracking-logs.json, block/unblock IPs, settings with CAPTCHA threshold
-- **ApiLogsTab**: Advanced filters (date/provider/status/carrier), search, pagination, CSV export, auto-refresh
-- **ApiSystemSettingsTab**: 5 settings sections (General/Security/CAPTCHA/Cache/Maintenance), confirmation dialogs
+### API Manager Section (مدير API) — Premium Design
+- **ApiOverviewTab**: 8 hero metric cards, dual-axis request trend chart, provider health grid (4 cards), cache donut chart, recent activity log, error summary, provider usage pie
+- **ApiProvidersTab**: Brand-colored provider cards, priority up/down buttons, masked API keys, daily/monthly quota bars, account test with detailed results, add modal with key validation, auto-rotation controls
+- **CacheManagementTab**: Glassmorphism stat cards, SVG donut chart, circular memory gauge, TTL sliders, alternating table rows, prominent flush modal
+- **ScraperManagementTab**: Color-coded layer borders, animated status dots, response time badges, expandable error logs, UA pool grid, prominent test interface
+- **CarrierDetectionTab**: Large test input, carrier icon mapping, highlighted pattern results, detection bar chart, pattern modal, carriers grid
+- **RateLimitingTab**: Glassmorphism stats, block/unblock confirmation modals, rate limit window visualization, styled blacklist/whitelist
+- **ApiLogsTab**: Glassmorphism filter bar, status icons (CheckCircle/XCircle/AlertTriangle), color-coded response times, gradient pagination
+- **ApiSystemSettingsTab**: Gradient section headers, large toggle switches with glow, danger red borders, fixed save button, redesigned confirmation
 
 ### Tools Section (الأدوات)
 - **ToolsTab**: 30+ tools in 6 categories (SEO/Build/Server/Data/Content/Analytics), dangerous tool confirmation, search
