@@ -784,6 +784,28 @@ app.get('/api/analytics/sources', (req, res) => {
   res.json(result);
 });
 
+// Recent visitors
+app.get('/api/analytics/recent-visitors', (req, res) => {
+  const data = readJSON('visitors.json', { visits: [] });
+  const visits = data.visits || [];
+  const recent = visits.slice(-20).reverse().map(v => ({
+    ip: v.ip ? String(v.ip).replace(/\.\d+$/, '.xxx') : 'xxx.xxx.xxx.xxx',
+    country: v.country || 'United States',
+    countryCode: v.countryCode || v.country_code || 'US',
+    city: v.city || 'Unknown',
+    device: v.device || 'desktop',
+    deviceType: v.device || 'desktop',
+    browser: v.browser || 'Unknown',
+    os: v.os || 'Unknown',
+    entryPage: v.path || '/',
+    page: v.path || '/',
+    referrer: v.referrer || '',
+    timestamp: v.timestamp || new Date().toISOString(),
+    sessionDuration: v.duration || 0,
+  }));
+  res.json(recent);
+});
+
 // Top pages
 app.get('/api/analytics/top-pages', (req, res) => {
   const data = readJSON('visitors.json', { visits: [] });

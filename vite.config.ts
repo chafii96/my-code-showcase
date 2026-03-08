@@ -1226,6 +1226,35 @@ function adminApiPlugin() {
           }
           return;
         }
+        // ── GET /api/analytics/recent-visitors ───────────────────────────────────
+        if (url === "/api/analytics/recent-visitors" && req.method === "GET") {
+          try {
+            let data: any = { visits: [] };
+            if (fs.existsSync(VISITORS_FILE)) data = JSON.parse(fs.readFileSync(VISITORS_FILE, "utf8"));
+            const visits: any[] = data.visits || [];
+            const recent = visits.slice(-20).reverse().map((v: any) => ({
+              ip: v.ip ? String(v.ip).replace(/\.\d+$/, '.xxx') : 'xxx.xxx.xxx.xxx',
+              country: v.country || 'United States',
+              countryCode: v.countryCode || v.country_code || 'US',
+              city: v.city || 'Unknown',
+              device: v.device || 'desktop',
+              deviceType: v.device || 'desktop',
+              browser: v.browser || 'Unknown',
+              os: v.os || 'Unknown',
+              entryPage: v.path || '/',
+              page: v.path || '/',
+              referrer: v.referrer || '',
+              timestamp: v.timestamp || new Date().toISOString(),
+              sessionDuration: v.duration || 0,
+            }));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(recent));
+          } catch {
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify([]));
+          }
+          return;
+        }
         // ── GET /api/analytics/top-pages ─────────────────────────────────────────
         if (url === "/api/analytics/top-pages" && req.method === "GET") {
           try {

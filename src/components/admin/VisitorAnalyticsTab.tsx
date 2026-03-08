@@ -413,18 +413,18 @@ export default function VisitorAnalyticsTab() {
   const newVsReturning = analytics?.newVsReturning || { new: 0, returning: 0 };
 
   const filteredVisitors = useMemo(() => detailedVisitors
-    .filter(v => visitorFilter === 'all' || v.deviceType.toLowerCase() === visitorFilter)
+    .filter(v => visitorFilter === 'all' || (v.deviceType || '').toLowerCase() === visitorFilter)
     .filter(v => !visitorSearch ||
-      v.ip.includes(visitorSearch) ||
-      v.country.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-      v.city.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-      v.browser.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-      v.os.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-      v.isp.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-      v.referrer.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+      (v.ip || '').includes(visitorSearch) ||
+      (v.country || '').toLowerCase().includes(visitorSearch.toLowerCase()) ||
+      (v.city || '').toLowerCase().includes(visitorSearch.toLowerCase()) ||
+      (v.browser || '').toLowerCase().includes(visitorSearch.toLowerCase()) ||
+      (v.os || '').toLowerCase().includes(visitorSearch.toLowerCase()) ||
+      (v.isp || '').toLowerCase().includes(visitorSearch.toLowerCase()) ||
+      (v.referrer || '').toLowerCase().includes(visitorSearch.toLowerCase()) ||
       (v.entryPage || '').toLowerCase().includes(visitorSearch.toLowerCase())
     )
-    .sort((a, b) => visitorSort === 'duration' ? b.sessionDuration - a.sessionDuration : visitorSort === 'pages' ? b.pageViews - a.pageViews : new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    .sort((a, b) => visitorSort === 'duration' ? b.sessionDuration - a.sessionDuration : visitorSort === 'pages' ? b.pageViews - a.pageViews : new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()),
     [detailedVisitors, visitorFilter, visitorSearch, visitorSort]
   );
 
