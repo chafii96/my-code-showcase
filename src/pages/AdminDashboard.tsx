@@ -35,6 +35,49 @@ const CarrierDetectionTab = lazy(() => import("@/components/admin/api-manager/Ca
 const RateLimitingTab = lazy(() => import("@/components/admin/api-manager/RateLimitingTab"));
 const ApiLogsTab = lazy(() => import("@/components/admin/api-manager/ApiLogsTab"));
 const ApiSystemSettingsTab = lazy(() => import("@/components/admin/api-manager/ApiSystemSettingsTab"));
+
+class TabErrorBoundary extends React.Component<
+  { children: React.ReactNode; tabName: string },
+  { hasError: boolean; error: string }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error: String(error?.message || error) };
+  }
+  componentDidCatch(error: any, info: any) {
+    console.error(`[AdminTab Error] ${this.props.tabName}:`, error, info);
+  }
+  componentDidUpdate(prev: any) {
+    if (prev.tabName !== this.props.tabName) {
+      this.setState({ hasError: false, error: '' });
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+            <Bug size={28} className="text-red-400" />
+          </div>
+          <div className="text-center">
+            <p className="text-base font-semibold text-white mb-1">حدث خطأ في هذا القسم</p>
+            <p className="text-xs text-slate-500 max-w-sm">{this.state.error}</p>
+          </div>
+          <button
+            onClick={() => this.setState({ hasError: false, error: '' })}
+            className="px-4 py-2 rounded-xl bg-blue-600/80 hover:bg-blue-600 text-white text-xs transition-all border border-blue-500/30"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try { const s = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}'); return s.ts && (Date.now() - s.ts < SESSION_DURATION); } catch { return false; }
@@ -293,34 +336,36 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
         {/* Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto" dir="ltr">
           <div className="max-w-7xl mx-auto">
-            {tab === "overview" && <OverviewTab stats={stats} sitemaps={sitemaps} />}
-            {tab === "tools" && <ToolsTab scripts={scripts} onRun={runScript} running={running} />}
-            {tab === "terminal" && <TerminalTab lines={termLines} running={running} onClear={() => setTermLines([])} onRun={runScript} />}
-            {tab === "visitors" && <VisitorAnalyticsTab />}
-            {tab === "apikeys" && <ApiKeysTab />}
-            {tab === "ads" && <AdsManagerTab />}
-            {tab === "adsense" && <AdSenseManagerTab />}
-            {tab === "settings" && <SiteSettingsTab />}
-            {tab === "seo" && <SeoAuditTab />}
-            {tab === "keywords" && <KeywordsTab />}
-            {tab === "git" && <GitTab onRun={runScript} />}
-            {tab === "robots" && <RobotsTab />}
-            {tab === "content" && <ContentManagementTab />}
-            {tab === "performance" && <PerformanceTab />}
-            {tab === "database" && <DatabaseTab />}
-            {tab === "logs" && <ActivityLogsTab />}
-            {tab === "prerender" && <PrerenderTab />}
-            {/* API Manager Tabs */}
-            <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-blue-400" size={24} /></div>}>
-              {tab === "api-overview" && <ApiOverviewTab />}
-              {tab === "api-providers" && <ApiProvidersTab />}
-              {tab === "api-cache" && <CacheManagementTab />}
-              {tab === "api-scrapers" && <ScraperManagementTab />}
-              {tab === "api-carriers" && <CarrierDetectionTab />}
-              {tab === "api-ratelimit" && <RateLimitingTab />}
-              {tab === "api-logs" && <ApiLogsTab />}
-              {tab === "api-settings" && <ApiSystemSettingsTab />}
-            </Suspense>
+            <TabErrorBoundary tabName={tab}>
+              {tab === "overview" && <OverviewTab stats={stats} sitemaps={sitemaps} />}
+              {tab === "tools" && <ToolsTab scripts={scripts} onRun={runScript} running={running} />}
+              {tab === "terminal" && <TerminalTab lines={termLines} running={running} onClear={() => setTermLines([])} onRun={runScript} />}
+              {tab === "visitors" && <VisitorAnalyticsTab />}
+              {tab === "apikeys" && <ApiKeysTab />}
+              {tab === "ads" && <AdsManagerTab />}
+              {tab === "adsense" && <AdSenseManagerTab />}
+              {tab === "settings" && <SiteSettingsTab />}
+              {tab === "seo" && <SeoAuditTab />}
+              {tab === "keywords" && <KeywordsTab />}
+              {tab === "git" && <GitTab onRun={runScript} />}
+              {tab === "robots" && <RobotsTab />}
+              {tab === "content" && <ContentManagementTab />}
+              {tab === "performance" && <PerformanceTab />}
+              {tab === "database" && <DatabaseTab />}
+              {tab === "logs" && <ActivityLogsTab />}
+              {tab === "prerender" && <PrerenderTab />}
+              {/* API Manager Tabs */}
+              <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-blue-400" size={24} /></div>}>
+                {tab === "api-overview" && <ApiOverviewTab />}
+                {tab === "api-providers" && <ApiProvidersTab />}
+                {tab === "api-cache" && <CacheManagementTab />}
+                {tab === "api-scrapers" && <ScraperManagementTab />}
+                {tab === "api-carriers" && <CarrierDetectionTab />}
+                {tab === "api-ratelimit" && <RateLimitingTab />}
+                {tab === "api-logs" && <ApiLogsTab />}
+                {tab === "api-settings" && <ApiSystemSettingsTab />}
+              </Suspense>
+            </TabErrorBoundary>
           </div>
         </main>
       </div>
