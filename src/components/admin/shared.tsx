@@ -1,10 +1,9 @@
 import React from "react";
 import {
   LayoutDashboard, Globe, TrendingUp, Activity, FileText, Cpu, GitBranch,
-  Zap, LucideIcon,
+  Zap, LucideIcon, Hammer, Server, Database,
 } from "lucide-react";
 
-// ─── Category config ──────────────────────────────────────────────────────────
 export const CATEGORIES: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   all:        { label: "الكل", color: "text-white", bg: "bg-white/10", icon: <LayoutDashboard size={14}/> },
   elite:      { label: "☢️ Elite", color: "text-red-300", bg: "bg-red-500/15 border border-red-500/20", icon: <Zap size={14}/> },
@@ -13,6 +12,9 @@ export const CATEGORIES: Record<string, { label: string; color: string; bg: stri
   monitoring: { label: "مراقبة", color: "text-amber-300", bg: "bg-amber-500/15", icon: <Activity size={14}/> },
   content:    { label: "محتوى", color: "text-violet-300", bg: "bg-violet-500/15", icon: <FileText size={14}/> },
   technical:  { label: "تقني", color: "text-orange-300", bg: "bg-orange-500/15", icon: <Cpu size={14}/> },
+  build:      { label: "بناء", color: "text-yellow-300", bg: "bg-yellow-500/15", icon: <Hammer size={14}/> },
+  server:     { label: "سيرفر", color: "text-cyan-300", bg: "bg-cyan-500/15", icon: <Server size={14}/> },
+  data:       { label: "بيانات", color: "text-teal-300", bg: "bg-teal-500/15", icon: <Database size={14}/> },
   git:        { label: "Git", color: "text-pink-300", bg: "bg-pink-500/15", icon: <GitBranch size={14}/> },
 };
 

@@ -12,67 +12,13 @@ import {
   LineChart, Line,
 } from "recharts";
 import { StatCard } from "./shared";
+import { useApiData } from "./api-manager/useApiData";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type WeeklyData = { day: string; visitors: number; views: number };
 type HourlyData = { hour: string; count: number };
 type SourceData = { name: string; value: number; color: string };
 type PageData = { page: string; views: number; pct: number };
 type AlertItem = { type: 'success' | 'warning' | 'error' | 'info'; message: string; time: string };
-
-// ─── Fetch helper ─────────────────────────────────────────────────────────────
-function useApiData<T>(url: string, fallback: T): { data: T; isLive: boolean; loading: boolean; refetch: () => void } {
-  const [data, setData] = useState<T>(fallback);
-  const [isLive, setIsLive] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetch(url, { signal: AbortSignal.timeout(5000) })
-      .then(r => {
-        const ct = r.headers.get('content-type') || '';
-        if (!r.ok || !ct.includes('application/json')) throw new Error();
-        return r.json();
-      })
-      .then(d => { if (!cancelled) { setData(d); setIsLive(true); } })
-      .catch(() => { if (!cancelled) { setData(fallback); setIsLive(false); } })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [url, tick]);
-
-  return { data, isLive, loading, refetch: () => setTick(t => t + 1) };
-}
-
-// ─── Fallback demo data ───────────────────────────────────────────────────────
-const DEMO_WEEKLY: WeeklyData[] = [
-  { day: 'سبت', visitors: 120, views: 340 },
-  { day: 'أحد', visitors: 230, views: 520 },
-  { day: 'إثنين', visitors: 310, views: 680 },
-  { day: 'ثلاثاء', visitors: 280, views: 610 },
-  { day: 'أربعاء', visitors: 390, views: 820 },
-  { day: 'خميس', visitors: 350, views: 750 },
-  { day: 'جمعة', visitors: 420, views: 910 },
-];
-const DEMO_HOURLY: HourlyData[] = [
-  { hour: '00', count: 12 }, { hour: '03', count: 8 }, { hour: '06', count: 25 },
-  { hour: '09', count: 85 }, { hour: '12', count: 120 }, { hour: '15', count: 95 },
-  { hour: '18', count: 140 }, { hour: '21', count: 65 },
-];
-const DEMO_SOURCES: SourceData[] = [
-  { name: 'بحث Google', value: 45, color: '#3b82f6' },
-  { name: 'مباشر', value: 25, color: '#10b981' },
-  { name: 'مواقع التواصل', value: 18, color: '#8b5cf6' },
-  { name: 'إحالات', value: 12, color: '#f59e0b' },
-];
-const DEMO_PAGES: PageData[] = [
-  { page: '/tracking', views: 1240, pct: 32 },
-  { page: '/services', views: 890, pct: 23 },
-  { page: '/', views: 760, pct: 20 },
-  { page: '/contact', views: 450, pct: 12 },
-  { page: '/about', views: 310, pct: 8 },
-];
 
 const chartTooltipStyle = {
   contentStyle: {
@@ -86,19 +32,6 @@ const chartTooltipStyle = {
   cursor: { fill: 'rgba(255,255,255,0.03)' },
 };
 
-function DataSourceBadge({ isLive, loading }: { isLive: boolean; loading: boolean }) {
-  if (loading) return (
-    <span className="flex items-center gap-1 text-[10px] text-slate-500">
-      <Loader2 size={10} className="animate-spin" /> جارٍ التحميل...
-    </span>
-  );
-  return (
-    <span className={`flex items-center gap-1 text-[10px] font-medium ${isLive ? 'text-emerald-400' : 'text-slate-500'}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-      {isLive ? 'بيانات حقيقية' : 'بيانات تجريبية'}
-    </span>
-  );
-}
 
 // ─── Real Time Widget ─────────────────────────────────────────────────────────
 function RealTimeWidget() {
@@ -356,105 +289,121 @@ function AnalyticsSummaryWidget() {
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
 function VisitorAreaChart() {
-  const { data, isLive, loading } = useApiData<WeeklyData[]>('/api/analytics/weekly', DEMO_WEEKLY);
+  const { data, loading } = useApiData<WeeklyData[]>('/analytics/weekly', []);
   return (
     <div className="admin-card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="admin-section-title"><TrendingUp size={16} className="text-blue-400" />الزوار وصفحات المشاهدة (أسبوعي)</h3>
-        <DataSourceBadge isLive={isLive} loading={loading} />
+        {loading && <Loader2 size={14} className="animate-spin text-slate-500" />}
       </div>
-      <div className="h-[220px] sm:h-[260px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gVisitors" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} /><stop offset="100%" stopColor="#3b82f6" stopOpacity={0} /></linearGradient>
-              <linearGradient id="gViews" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity={0.3} /><stop offset="100%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-            <XAxis dataKey="day" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip {...chartTooltipStyle} />
-            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
-            <Area type="monotone" dataKey="visitors" name="زوار" stroke="#3b82f6" strokeWidth={2} fill="url(#gVisitors)" />
-            <Area type="monotone" dataKey="views" name="مشاهدات" stroke="#10b981" strokeWidth={2} fill="url(#gViews)" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {data.length === 0 && !loading ? (
+        <div className="h-[220px] sm:h-[260px] flex items-center justify-center text-sm text-slate-500">لا توجد بيانات</div>
+      ) : (
+        <div className="h-[220px] sm:h-[260px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gVisitors" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} /><stop offset="100%" stopColor="#3b82f6" stopOpacity={0} /></linearGradient>
+                <linearGradient id="gViews" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity={0.3} /><stop offset="100%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis dataKey="day" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip {...chartTooltipStyle} />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
+              <Area type="monotone" dataKey="visitors" name="زوار" stroke="#3b82f6" strokeWidth={2} fill="url(#gVisitors)" />
+              <Area type="monotone" dataKey="views" name="مشاهدات" stroke="#10b981" strokeWidth={2} fill="url(#gViews)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
 
 function TrafficBarChart() {
-  const { data, isLive, loading } = useApiData<HourlyData[]>('/api/analytics/hourly', DEMO_HOURLY);
+  const { data, loading } = useApiData<HourlyData[]>('/analytics/hourly', []);
   return (
     <div className="admin-card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="admin-section-title"><Activity size={16} className="text-emerald-400" />حركة المرور بالساعة (اليوم)</h3>
-        <DataSourceBadge isLive={isLive} loading={loading} />
+        {loading && <Loader2 size={14} className="animate-spin text-slate-500" />}
       </div>
-      <div className="h-[220px] sm:h-[260px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-            <XAxis dataKey="hour" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip {...chartTooltipStyle} />
-            <Bar dataKey="count" name="زوار" radius={[6, 6, 0, 0]} fill="url(#barGrad)" />
-            <defs>
-              <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} /><stop offset="100%" stopColor="#6366f1" stopOpacity={0.4} /></linearGradient>
-            </defs>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {data.length === 0 && !loading ? (
+        <div className="h-[220px] sm:h-[260px] flex items-center justify-center text-sm text-slate-500">لا توجد بيانات</div>
+      ) : (
+        <div className="h-[220px] sm:h-[260px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis dataKey="hour" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip {...chartTooltipStyle} />
+              <Bar dataKey="count" name="زوار" radius={[6, 6, 0, 0]} fill="url(#barGrad)" />
+              <defs>
+                <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} /><stop offset="100%" stopColor="#6366f1" stopOpacity={0.4} /></linearGradient>
+              </defs>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
 
 function SourcesPieChart() {
-  const { data, isLive, loading } = useApiData<SourceData[]>('/api/analytics/sources', DEMO_SOURCES);
+  const { data, loading } = useApiData<SourceData[]>('/analytics/sources', []);
   return (
     <div className="admin-card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="admin-section-title"><Globe size={16} className="text-violet-400" />مصادر الزيارات</h3>
-        <DataSourceBadge isLive={isLive} loading={loading} />
+        {loading && <Loader2 size={14} className="animate-spin text-slate-500" />}
       </div>
-      <div className="h-[220px] sm:h-[260px] flex items-center">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" stroke="none">
-              {data.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-            </Pie>
-            <Tooltip {...chartTooltipStyle} />
-            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+      {data.length === 0 && !loading ? (
+        <div className="h-[220px] sm:h-[260px] flex items-center justify-center text-sm text-slate-500">لا توجد بيانات</div>
+      ) : (
+        <div className="h-[220px] sm:h-[260px] flex items-center">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" stroke="none">
+                {data.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+              </Pie>
+              <Tooltip {...chartTooltipStyle} />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#94a3b8' }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
 
 function TopPagesTable() {
-  const { data, isLive, loading } = useApiData<PageData[]>('/api/analytics/top-pages', DEMO_PAGES);
+  const { data, loading } = useApiData<PageData[]>('/analytics/top-pages', []);
   return (
     <div className="admin-card">
       <div className="flex items-center justify-between mb-4">
         <h3 className="admin-section-title"><MousePointer size={16} className="text-amber-400" />أكثر الصفحات زيارة</h3>
-        <DataSourceBadge isLive={isLive} loading={loading} />
+        {loading && <Loader2 size={14} className="animate-spin text-slate-500" />}
       </div>
-      <div className="space-y-2">
-        {data.map((p, i) => (
-          <div key={i} className="flex items-center gap-3 bg-white/[0.02] rounded-xl p-3 group hover:bg-white/[0.04] transition-colors">
-            <span className="text-[10px] font-bold text-slate-500 w-5 text-center">{i + 1}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-slate-300 font-medium truncate font-mono">{p.page}</p>
-              <div className="mt-1.5 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all" style={{ width: `${p.pct}%` }} />
+      {data.length === 0 && !loading ? (
+        <div className="py-8 text-center text-sm text-slate-500">لا توجد بيانات</div>
+      ) : (
+        <div className="space-y-2">
+          {data.map((p, i) => (
+            <div key={i} className="flex items-center gap-3 bg-white/[0.02] rounded-xl p-3 group hover:bg-white/[0.04] transition-colors">
+              <span className="text-[10px] font-bold text-slate-500 w-5 text-center">{i + 1}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-300 font-medium truncate font-mono">{p.page}</p>
+                <div className="mt-1.5 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all" style={{ width: `${p.pct}%` }} />
+                </div>
               </div>
+              <span className="text-xs font-semibold text-white tabular-nums">{p.views.toLocaleString()}</span>
             </div>
-            <span className="text-xs font-semibold text-white tabular-nums">{p.views.toLocaleString()}</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

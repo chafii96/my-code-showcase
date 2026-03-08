@@ -1,47 +1,115 @@
 import React, { useState } from "react";
 import {
   Search, Plus, Save, Edit3, Trash2, BookOpen, Calendar, Tag, Link2,
-  ToggleLeft, ToggleRight,
+  ToggleLeft, ToggleRight, CheckCircle, AlertCircle, Loader2,
 } from "lucide-react";
 import { ContentItem } from "./types";
+import { useApiData, apiCall } from "./api-manager/useApiData";
 
 export default function ContentManagementTab() {
-  const [items, setItems] = useState<ContentItem[]>(() => {
-    const saved = localStorage.getItem('uspostaltracking_content');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { data: items, loading, refetch } = useApiData<ContentItem[]>('/content', []);
   const [editing, setEditing] = useState<ContentItem | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [filter, setFilter] = useState<'all' | 'article' | 'page'>('all');
   const [searchQ, setSearchQ] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const saveItems = (updated: ContentItem[]) => { setItems(updated); localStorage.setItem('uspostaltracking_content', JSON.stringify(updated)); };
+  const showMessage = (type: 'success' | 'error', text: string) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 3000);
+  };
 
   const createNew = () => {
-    setEditing({ id: Date.now().toString(), title: '', slug: '', type: 'article', status: 'draft', content: '', tags: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    setEditing({
+      id: '',
+      title: '',
+      slug: '',
+      type: 'article',
+      status: 'draft',
+      content: '',
+      tags: [],
+      seoTitle: '',
+      seoDescription: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
     setIsNew(true);
   };
 
-  const saveItem = () => {
+  const saveItem = async () => {
     if (!editing || !editing.title.trim()) return;
-    const updated = { ...editing, updatedAt: new Date().toISOString(), slug: editing.slug || editing.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '') };
-    saveItems(isNew ? [updated, ...items] : items.map(i => i.id === updated.id ? updated : i));
-    setEditing(null); setIsNew(false);
+    setSaving(true);
+    const slug = editing.slug || editing.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+    const payload = { ...editing, slug };
+
+    let result;
+    if (isNew) {
+      result = await apiCall('/content', 'POST', payload);
+    } else {
+      result = await apiCall(`/content/${editing.id}`, 'PUT', payload);
+    }
+
+    setSaving(false);
+    if (result.ok) {
+      showMessage('success', isNew ? 'تم إنشاء المحتوى بنجاح' : 'تم تحديث المحتوى بنجاح');
+      setEditing(null);
+      setIsNew(false);
+      refetch();
+    } else {
+      showMessage('error', result.error || 'حدث خطأ أثناء الحفظ');
+    }
   };
 
-  const deleteItem = (id: string) => { if (confirm('هل أنت متأكد من الحذف؟')) saveItems(items.filter(i => i.id !== id)); };
-  const toggleStatus = (id: string) => { saveItems(items.map(i => i.id === id ? { ...i, status: i.status === 'published' ? 'draft' : 'published', updatedAt: new Date().toISOString() } : i)); };
+  const deleteItem = async (id: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا المحتوى؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    const result = await apiCall(`/content/${id}`, 'DELETE');
+    if (result.ok) {
+      showMessage('success', 'تم حذف المحتوى بنجاح');
+      refetch();
+    } else {
+      showMessage('error', result.error || 'حدث خطأ أثناء الحذف');
+    }
+  };
+
+  const toggleStatus = async (item: ContentItem) => {
+    const newStatus = item.status === 'published' ? 'draft' : 'published';
+    const result = await apiCall(`/content/${item.id}`, 'PUT', { status: newStatus });
+    if (result.ok) {
+      refetch();
+    } else {
+      showMessage('error', 'حدث خطأ أثناء تغيير الحالة');
+    }
+  };
 
   const filtered = items.filter(i => (filter === 'all' || i.type === filter) && (!searchQ || i.title.toLowerCase().includes(searchQ.toLowerCase())));
+
+  if (loading && items.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={24} className="animate-spin text-blue-400" />
+        <span className="text-slate-400 mr-2">جاري التحميل...</span>
+      </div>
+    );
+  }
 
   if (editing) {
     return (
       <div className="space-y-4">
+        {message && (
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-900/30 border border-green-700/50 text-green-400' : 'bg-red-900/30 border border-red-700/50 text-red-400'}`}>
+            {message.type === 'success' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+            {message.text}
+          </div>
+        )}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="text-lg font-bold text-white">{isNew ? '➕ إضافة محتوى جديد' : '✏️ تعديل المحتوى'}</h2>
           <div className="flex gap-2">
             <button onClick={() => { setEditing(null); setIsNew(false); }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm text-slate-300 transition-colors">إلغاء</button>
-            <button onClick={saveItem} disabled={!editing.title.trim()} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-xl text-sm text-white transition-colors flex items-center gap-1.5"><Save size={14} />حفظ</button>
+            <button onClick={saveItem} disabled={!editing.title.trim() || saving} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-xl text-sm text-white transition-colors flex items-center gap-1.5">
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              {saving ? 'جاري الحفظ...' : 'حفظ'}
+            </button>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -51,7 +119,7 @@ export default function ContentManagementTab() {
           </div>
           <div>
             <label className="text-xs text-slate-400 mb-1 block">Slug (URL)</label>
-            <input value={editing.slug} onChange={e => setEditing({ ...editing, slug: e.target.value })} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 font-mono" placeholder="auto-generated" />
+            <input value={editing.slug} onChange={e => setEditing({ ...editing, slug: e.target.value })} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 font-mono" placeholder="يُولّد تلقائياً من العنوان" />
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -72,6 +140,16 @@ export default function ContentManagementTab() {
             <input value={editing.tags.join(', ')} onChange={e => setEditing({ ...editing, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500" placeholder="usps, tracking" />
           </div>
         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs text-slate-400 mb-1 block">عنوان SEO</label>
+            <input value={editing.seoTitle} onChange={e => setEditing({ ...editing, seoTitle: e.target.value })} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500" placeholder="عنوان محركات البحث (اختياري)" />
+          </div>
+          <div>
+            <label className="text-xs text-slate-400 mb-1 block">وصف SEO</label>
+            <input value={editing.seoDescription} onChange={e => setEditing({ ...editing, seoDescription: e.target.value })} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500" placeholder="وصف محركات البحث (اختياري)" />
+          </div>
+        </div>
         <div>
           <label className="text-xs text-slate-400 mb-1 block">المحتوى</label>
           <textarea value={editing.content} onChange={e => setEditing({ ...editing, content: e.target.value })} className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-blue-500 h-[250px] sm:h-[350px] resize-none font-mono" placeholder="اكتب المحتوى هنا... (يدعم HTML)" />
@@ -82,6 +160,12 @@ export default function ContentManagementTab() {
 
   return (
     <div className="space-y-4">
+      {message && (
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-900/30 border border-green-700/50 text-green-400' : 'bg-red-900/30 border border-red-700/50 text-red-400'}`}>
+          {message.type === 'success' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+          {message.text}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-white">📋 إدارة المحتوى</h2>
         <button onClick={createNew} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm text-white transition-colors flex items-center gap-1.5 self-start"><Plus size={14} />إضافة جديد</button>
@@ -125,10 +209,10 @@ export default function ContentManagementTab() {
                 </div>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                <button onClick={() => toggleStatus(item.id)} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                <button onClick={() => toggleStatus(item)} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
                   {item.status === 'published' ? <ToggleRight size={14} className="text-green-400" /> : <ToggleLeft size={14} className="text-slate-400" />}
                 </button>
-                <button onClick={() => { setEditing(item); setIsNew(false); }} className="p-2 hover:bg-slate-700 rounded-lg transition-colors"><Edit3 size={14} className="text-blue-400" /></button>
+                <button onClick={() => { setEditing({ ...item, seoTitle: item.seoTitle || '', seoDescription: item.seoDescription || '' }); setIsNew(false); }} className="p-2 hover:bg-slate-700 rounded-lg transition-colors"><Edit3 size={14} className="text-blue-400" /></button>
                 <button onClick={() => deleteItem(item.id)} className="p-2 hover:bg-red-900/30 rounded-lg transition-colors"><Trash2 size={14} className="text-red-400" /></button>
               </div>
             </div>

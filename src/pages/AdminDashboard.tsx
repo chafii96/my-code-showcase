@@ -295,7 +295,7 @@ function AdminDashboardContent({ onLogout }: { onLogout: () => void }) {
           <div className="max-w-7xl mx-auto">
             {tab === "overview" && <OverviewTab stats={stats} sitemaps={sitemaps} />}
             {tab === "tools" && <ToolsTab scripts={scripts} onRun={runScript} running={running} />}
-            {tab === "terminal" && <TerminalTab lines={termLines} running={running} onClear={() => setTermLines([])} />}
+            {tab === "terminal" && <TerminalTab lines={termLines} running={running} onClear={() => setTermLines([])} onRun={runScript} />}
             {tab === "visitors" && <VisitorAnalyticsTab />}
             {tab === "apikeys" && <ApiKeysTab />}
             {tab === "ads" && <AdsManagerTab />}

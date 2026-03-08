@@ -33,19 +33,45 @@ A React + Vite SPA for USPS package tracking with a fully-functional admin dashb
 - Workflow: `npm run dev`
 - Package manager: npm (package-lock.json present)
 
-## Admin Dashboard — Completed Features
-All admin tabs are fully functional with real data (zero mock data):
-- **ApiOverviewTab**: Real stats from `/api/system-stats`, `/api/system-stats/hourly`, `/api/system-stats/provider-usage`
-- **ApiProvidersTab**: CRUD for Ship24/TrackingMore/17Track/Custom Scraper via `/api/providers`
-- **VisitorAnalyticsTab**: Real visitor data from `seo-data/visitors.json` — charts for OS, countries, hourly trend
-- **DatabaseTab**: Browses seo-data/ JSON files as tables with search/export
-- **PerformanceTab**: Lighthouse scores, build size info, CWV estimates
-- **SeoAuditTab**: SEO health check (robots.txt, sitemaps, schema, OG tags)
-- **RobotsTab**: Edit & save public/robots.txt in real-time
-- **GitTab**: Shows branch, commit count, modified files + run git commands
-- **ActivityLogsTab**: Reads/writes seo-data/logs.json
-- **AdSenseManagerTab**: Config save to localStorage + `/api/adsense-config`
-- **ApiSystemSettingsTab**: Rate limiting, VPN blocking, CAPTCHA thresholds saved to `seo-data/config.json`
+## Admin Dashboard — All 25 Tabs Fully Functional (100%)
+All admin tabs use real backend data persisted to JSON files. Zero mock/demo/localStorage data:
+
+### Main Section (الرئيسية)
+- **OverviewTab**: Real weekly/hourly analytics, traffic sources, top pages from visitors.json
+- **PerformanceTab**: Real build size breakdown (JS/CSS/images/fonts), response time stats from tracking-logs.json
+- **VisitorAnalyticsTab**: Full analytics — line/pie/bar charts, browsers/devices/OS/countries/referrers, time range selector
+
+### API Manager Section (مدير API)
+- **ApiOverviewTab**: Real system stats, cache hit rate gauge, provider health badges, no localStorage fallback
+- **ApiProvidersTab**: Full CRUD, numbered priority ordering, per-provider stats, test with real response
+- **CacheManagementTab**: Real cache entries with search/filter/pagination, TTL settings, bulk flush modes, CSV export
+- **ScraperManagementTab**: 5-layer scraper display, per-layer test with tracking number, UA pool, runtime stats, error logs
+- **CarrierDetectionTab**: All regex patterns displayed, test interface, add/edit/delete patterns, detection stats
+- **RateLimitingTab**: Real IP tracking from tracking-logs.json, block/unblock IPs, settings with CAPTCHA threshold
+- **ApiLogsTab**: Advanced filters (date/provider/status/carrier), search, pagination, CSV export, auto-refresh
+- **ApiSystemSettingsTab**: 5 settings sections (General/Security/CAPTCHA/Cache/Maintenance), confirmation dialogs
+
+### Tools Section (الأدوات)
+- **ToolsTab**: 30+ tools in 6 categories (SEO/Build/Server/Data/Content/Analytics), dangerous tool confirmation, search
+- **PrerenderTab**: Start/stop with SSE progress, prerendered pages list, selective prerender, delete pages
+- **TerminalTab**: Command history (up/down arrows), quick commands, line count, SSE streaming
+
+### Content Section (المحتوى)
+- **ContentManagementTab**: Full CRUD persisted to seo-data/content.json, SEO fields, no localStorage
+- **AdsManagerTab**: Publisher ID + slot management persisted to config.json, no localStorage
+- **AdSenseManagerTab**: Config/units/placements/revenue/compliance/ads.txt persisted to seo-data/adsense-data.json
+
+### SEO Section
+- **SeoAuditTab**: 20 comprehensive checks, weighted score gauge, recommendations, re-run audit
+- **KeywordsTab**: Rankings + tracked + meta tag keywords, add/delete tracked, CSV export, sort/filter
+- **RobotsTab**: Syntax highlighting, validation warnings, template presets, preview panel
+
+### System Section (النظام)
+- **ApiKeysTab**: Masked key display, add/edit/delete keys, test functionality, usage stats
+- **DatabaseTab**: Pagination (50/page), column sorting, search, CSV/JSON export, zebra striping
+- **GitTab**: Commit history table, modified files with status badges, pull/push with confirmation
+- **ActivityLogsTab**: Level/action/date filters, search, pagination, auto-refresh, export, clear old logs
+- **SiteSettingsTab**: 5 sections (General/SEO/Security/Appearance/Maintenance), all persisted to config.json
 
 ## Real API Provider Failover (Tracking)
 - `/api/usps-track/:number` tries providers in order: Ship24 → TrackingMore → 17Track → USPS XML
@@ -64,16 +90,21 @@ All admin tabs are fully functional with real data (zero mock data):
 ## API Endpoints (vite.config.ts — adminApiPlugin)
 Key endpoints:
 - `/api/analytics`, `/api/analytics/active`, `/api/track`
-- `/api/git`, `/api/performance`, `/api/logs` (GET/POST)
+- `/api/git`, `/api/performance`, `/api/logs` (GET/POST/DELETE)
 - `/api/robots` (GET/POST), `/api/seo-audit`
 - `/api/database/tables`, `/api/database/table/:name`
-- `/api/adsense/*` (4 endpoints), `/api/adsense-config`
+- `/api/adsense/data` (GET/POST), `/api/adsense/stats`, `/api/adsense/ads-txt`, `/api/adsense/oauth-status`
+- `/api/ads` (GET/POST), `/api/content` (CRUD), `/api/keywords` (CRUD)
+- `/api/apikeys` (CRUD+test), `/api/api-settings` (GET/POST)
 - `/api/providers` (GET/PUT), `/api/accounts` (CRUD+test+validate)
+- `/api/scrapers` (CRUD+test), `/api/carrier-patterns` (CRUD+test)
+- `/api/rate-limits/settings`, `/api/rate-limits/top-ips`, `/api/rate-limits/block/:ipHash`
 - `/api/system-stats`, `/api/system-stats/hourly`, `/api/system-stats/provider-usage`
-- `/api/tracking-logs`, `/api/cache/stats`, `/api/cache/entries`, `/api/cache/flush`, `/api/cache/:id` (DELETE)
+- `/api/tracking-logs`, `/api/cache/*` (stats/entries/flush/settings/delete)
+- `/api/prerender/*` (status/start/stop/pages/delete)
 - `/api/usps-track/:number` — real failover tracking
 - `/api/admin/login`, `/api/admin/change-password`
-- `/api/config` (GET/PUT) — rate limiting, VPN, CAPTCHA settings
+- `/api/config` (GET/POST) — full site config, rate limiting, VPN, CAPTCHA settings
 
 ## AI-Generated Visual Assets (47 Images in `public/images/`)
 - `public/images/carriers/` — 5 carrier trucks: fedex-van, ups-truck, dhl-truck, amazon-van, usps-truck
@@ -105,7 +136,7 @@ Key endpoints:
 - Real visitor analytics tracking via `useVisitorTracking` hook in App.tsx
 - Sitemap management & SEO tools (19 XML sitemaps, 16,000+ total URLs)
 - Inline API routes via Vite plugin
-- AdSense configuration manager with localStorage persistence
+- AdSense configuration manager with backend persistence (seo-data/adsense-data.json)
 
 ## Static SEO Data
 - `src/data/seoStaticData.ts` — exports `trackingStatuses`, `majorLocations`, `faqData`, `TrackingEvent` interface, `TrackingData` interface

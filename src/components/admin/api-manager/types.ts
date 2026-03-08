@@ -101,10 +101,17 @@ export interface CacheStats {
 }
 
 export interface SystemStats {
+  totalProviders: number;
+  activeProviders: number;
+  totalAccounts: number;
+  activeAccounts: number;
+  totalRequests: number;
   totalRequestsToday: number;
   cacheHitRate: number;
-  activeProvider: string;
   apiCallsSaved: number;
   estimatedCost: number;
   successRate: number;
+  avgResponseTime: number;
+  activeProvider: string;
+  uptime: number;
 }

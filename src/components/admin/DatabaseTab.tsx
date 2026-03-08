@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Database, FileText, HardDrive, Eye, Download, RefreshCw, X, ChevronRight, ChevronLeft, Search } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Database, FileText, HardDrive, Eye, Download, RefreshCw, X, ChevronRight, ChevronLeft, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { StatCard, EmptyState } from "./shared";
 
 export default function DatabaseTab() {
@@ -10,7 +10,9 @@ export default function DatabaseTab() {
   const [tableLoading, setTableLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
-  const PAGE_SIZE = 20;
+  const [sortCol, setSortCol] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const PAGE_SIZE = 50;
 
   const loadTables = () => {
     setLoading(true);
@@ -28,6 +30,8 @@ export default function DatabaseTab() {
     setTableLoading(true);
     setPage(0);
     setSearch('');
+    setSortCol(null);
+    setSortDir('asc');
     fetch(`/api/database/table/${t.name}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => setTableRows(d.rows || []))
@@ -35,7 +39,7 @@ export default function DatabaseTab() {
       .finally(() => setTableLoading(false));
   };
 
-  const exportTable = (t: any) => {
+  const exportJSON = (t: any) => {
     fetch(`/api/database/table/${t.name}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => {
@@ -46,18 +50,59 @@ export default function DatabaseTab() {
       }).catch(() => {});
   };
 
+  const exportCSV = () => {
+    if (filteredRows.length === 0) return;
+    const keys = Object.keys(filteredRows[0]);
+    const csvRows = [keys.join(',')];
+    for (const row of filteredRows) {
+      csvRows.push(keys.map(k => {
+        const val = row[k];
+        const str = val === null || val === undefined ? '' : typeof val === 'object' ? JSON.stringify(val) : String(val);
+        return `"${str.replace(/"/g, '""')}"`;
+      }).join(','));
+    }
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `${selectedTable?.name || 'data'}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const totalRows = tables.reduce((sum, t) => sum + (t.rows || 0), 0);
   const totalSize = tables.reduce((s, t) => s + (t.sizeBytes || 0), 0);
 
-  const filteredRows = tableRows.filter(row => {
-    if (!search) return true;
-    return JSON.stringify(row).toLowerCase().includes(search.toLowerCase());
-  });
+  const filteredRows = useMemo(() => {
+    let rows = tableRows.filter(row => {
+      if (!search) return true;
+      return JSON.stringify(row).toLowerCase().includes(search.toLowerCase());
+    });
+    if (sortCol) {
+      rows = [...rows].sort((a, b) => {
+        const av = a[sortCol] ?? '';
+        const bv = b[sortCol] ?? '';
+        if (typeof av === 'number' && typeof bv === 'number') return sortDir === 'asc' ? av - bv : bv - av;
+        const sa = String(av).toLowerCase();
+        const sb = String(bv).toLowerCase();
+        return sortDir === 'asc' ? sa.localeCompare(sb) : sb.localeCompare(sa);
+      });
+    }
+    return rows;
+  }, [tableRows, search, sortCol, sortDir]);
+
   const pagedRows = filteredRows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE);
 
+  const handleSort = (col: string) => {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortCol(col);
+      setSortDir('asc');
+    }
+    setPage(0);
+  };
+
   if (selectedTable) {
-    const rowKeys = pagedRows.length > 0 ? Object.keys(pagedRows[0]).slice(0, 6) : [];
+    const rowKeys = tableRows.length > 0 ? Object.keys(tableRows[0]).slice(0, 8) : [];
     return (
       <div className="space-y-4" dir="rtl">
         <div className="flex items-center gap-2 flex-wrap">
@@ -67,10 +112,16 @@ export default function DatabaseTab() {
           <h2 className="text-base font-bold text-white flex items-center gap-2">
             <Database size={16} className="text-cyan-400" /> {selectedTable.name}
             <span className="text-xs text-slate-500 font-normal">{filteredRows.length} سجل</span>
+            {selectedTable.size && <span className="text-xs text-slate-600 font-normal">({selectedTable.size})</span>}
           </h2>
-          <button onClick={() => exportTable(selectedTable)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 rounded-lg text-xs text-white transition-colors mr-auto">
-            <Download size={12} /> تصدير JSON
-          </button>
+          <div className="flex gap-1.5 mr-auto">
+            <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-lg text-xs text-white transition-colors">
+              <Download size={12} /> CSV
+            </button>
+            <button onClick={() => exportJSON(selectedTable)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 rounded-lg text-xs text-white transition-colors">
+              <Download size={12} /> JSON
+            </button>
+          </div>
         </div>
 
         <div className="relative">
@@ -91,13 +142,19 @@ export default function DatabaseTab() {
                 <thead>
                   <tr className="bg-slate-900/60 border-b border-slate-700">
                     {rowKeys.map(k => (
-                      <th key={k} className="px-3 py-2.5 text-right text-slate-400 font-medium whitespace-nowrap">{k}</th>
+                      <th key={k} onClick={() => handleSort(k)}
+                        className="px-3 py-2.5 text-right text-slate-400 font-medium whitespace-nowrap cursor-pointer hover:text-white select-none transition-colors">
+                        <span className="inline-flex items-center gap-1">
+                          {k}
+                          {sortCol === k ? (sortDir === 'asc' ? <ArrowUp size={10} /> : <ArrowDown size={10} />) : <ArrowUpDown size={10} className="opacity-30" />}
+                        </span>
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {pagedRows.map((row, i) => (
-                    <tr key={i} className="border-b border-slate-800 hover:bg-slate-700/30 transition-colors">
+                    <tr key={i} className={`border-b border-slate-800 hover:bg-slate-700/30 transition-colors ${i % 2 === 0 ? 'bg-slate-800/30' : 'bg-slate-900/20'}`}>
                       {rowKeys.map(k => (
                         <td key={k} className="px-3 py-2 text-slate-300 max-w-[200px]">
                           <span className="truncate block" title={String(row[k] ?? '')}>
@@ -112,19 +169,21 @@ export default function DatabaseTab() {
                 </tbody>
               </table>
             </div>
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 rounded-lg transition-colors">
-                  <ChevronRight size={12} /> السابق
-                </button>
-                <span>صفحة {page + 1} من {totalPages}</span>
-                <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page === totalPages - 1}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 rounded-lg transition-colors">
-                  التالي <ChevronLeft size={12} />
-                </button>
-              </div>
-            )}
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>{filteredRows.length} سجل — صفحة {page + 1} من {totalPages}</span>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 rounded-lg transition-colors">
+                    <ChevronRight size={12} /> السابق
+                  </button>
+                  <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page === totalPages - 1}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 rounded-lg transition-colors">
+                    التالي <ChevronLeft size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
@@ -156,7 +215,7 @@ export default function DatabaseTab() {
             <span>الجدول</span><span>السجلات</span><span>الحجم</span><span>آخر تحديث</span><span>إجراءات</span>
           </div>
           {tables.map((t, i) => (
-            <div key={i} className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 px-3 sm:px-4 py-3 border-b border-slate-800 hover:bg-slate-700/20 transition-colors items-center">
+            <div key={i} className={`grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 px-3 sm:px-4 py-3 border-b border-slate-800 hover:bg-slate-700/20 transition-colors items-center ${i % 2 === 0 ? 'bg-slate-800/20' : ''}`}>
               <span className="text-sm text-white font-mono flex items-center gap-2">
                 <Database size={12} className="text-cyan-500 flex-shrink-0" />
                 <span className="truncate">{t.name}</span>
@@ -170,7 +229,7 @@ export default function DatabaseTab() {
                 <button onClick={() => viewTable(t)} className="flex items-center gap-1 px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[10px] text-slate-300 transition-colors">
                   <Eye size={10} /> عرض
                 </button>
-                <button onClick={() => exportTable(t)} className="flex items-center gap-1 px-2 py-1 bg-blue-700 hover:bg-blue-600 rounded text-[10px] text-white transition-colors">
+                <button onClick={() => exportJSON(t)} className="flex items-center gap-1 px-2 py-1 bg-blue-700 hover:bg-blue-600 rounded text-[10px] text-white transition-colors">
                   <Download size={10} /> تصدير
                 </button>
               </div>

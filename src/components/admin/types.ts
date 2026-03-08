@@ -1,10 +1,13 @@
 export interface Script {
   id: string;
   name: string;
-  desc: string;
+  desc?: string;
+  description?: string;
   category: string;
   icon: string;
   cmd: string;
+  dangerous?: boolean;
+  estimatedTime?: string;
 }
 
 export interface AdSlot {
@@ -55,6 +58,8 @@ export interface ContentItem {
   status: 'published' | 'draft';
   content: string;
   tags: string[];
+  seoTitle: string;
+  seoDescription: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -38,8 +38,11 @@ function getMaskedConfig(cfg: any): any {
 
 function getDefaultConfig(): any {
   return {
-    site: { siteName: 'US Postal Tracking', siteUrl: '', siteDescription: '', contactEmail: '', twitterHandle: '', facebookPage: '', timezone: 'America/New_York', maintenanceMode: false, maintenanceMessage: '' },
-    seo: { defaultTitle: 'USPS Package Tracking', defaultDescription: '', defaultKeywords: 'usps tracking', canonicalDomain: '', robotsIndex: true, robotsFollow: true, structuredDataEnabled: true, openGraphEnabled: true, twitterCardsEnabled: true, hreflangEnabled: false },
+    site: { siteName: 'US Postal Tracking', siteUrl: '', siteDescription: '', contactEmail: '', twitterHandle: '', facebookPage: '', language: 'en', timezone: 'America/New_York' },
+    seo: { defaultTitle: 'USPS Package Tracking', defaultDescription: '', defaultKeywords: 'usps tracking', ogImage: '', canonicalDomain: '', robotsIndex: true, robotsFollow: true, structuredDataEnabled: true, openGraphEnabled: true, twitterCardsEnabled: true, hreflangEnabled: false },
+    security: { sessionTimeout: 30 },
+    appearance: { theme: 'dark', logo: '' },
+    maintenance: { enabled: false, message: '' },
     apiKeys: { googleSearchConsole: '', googleAnalytics4: '', googleAdsense: '', googleIndexingApi: '', bingWebmaster: '', semrushApiKey: '', ahrefsApiKey: '', indexNowKey: '', openaiApiKey: '', cloudflareApiKey: '', cloudflareZoneId: '', recaptchaSiteKey: '', recaptchaSecretKey: '', slackWebhook: '', discordWebhook: '', telegramBotToken: '', telegramChatId: '' },
     ads: { adsenseEnabled: false, adsensePublisherId: '', adSlots: [
       { id: 'header-ad',      name: '📢 إعلان الهيدر (728×90)',         position: 'header',      type: 'adsense', slotId: '', enabled: false, htmlCode: '', description: 'يظهر أعلى كل صفحة مباشرةً تحت الـ Navbar' },
@@ -73,16 +76,22 @@ function trackVisitInline(req: any): void {
   } catch {}
 }
 
-function getAnalyticsInline(): any {
+function getAnalyticsInline(range?: string): any {
   try {
     let data: any = { visits: [], sessions: {} };
     if (fs.existsSync(VISITORS_FILE)) data = JSON.parse(fs.readFileSync(VISITORS_FILE, 'utf8'));
-    const visits: any[] = data.visits || [];
+    let visits: any[] = data.visits || [];
     const sessions = data.sessions || {};
-    const today = new Date().toISOString().slice(0, 10);
     const now = Date.now();
+    const today = new Date().toISOString().slice(0, 10);
 
-    // Maps for aggregation
+    if (range && range !== 'all') {
+      const cutoff = range === 'today' ? new Date(today).getTime()
+        : range === '7d' ? now - 7 * 86400000
+        : range === '30d' ? now - 30 * 86400000 : 0;
+      if (cutoff > 0) visits = visits.filter((v: any) => new Date(v.timestamp).getTime() >= cutoff);
+    }
+
     const pageMap: Record<string, number> = {};
     const refMap: Record<string, number> = {};
     const devMap: Record<string, number> = {};
@@ -93,104 +102,167 @@ function getAnalyticsInline(): any {
     const connMap: Record<string, number> = {};
     const sourceMap: Record<string, number> = {};
     const dayMap: Record<string, number> = {};
+    const dayIpMap: Record<string, Set<string>> = {};
     const hourMap: Record<number, number> = {};
     const ipSet = new Set<string>();
-    const newIpSet = new Set<string>();
+    const ipFirstSeen: Record<string, number> = {};
+    const ipPages: Record<string, string[]> = {};
+
+    function guessOS(browser: string, device: string): string {
+      const dev = (device || '').toLowerCase();
+      if (dev === 'mobile') {
+        if (browser === 'Safari') return 'iOS';
+        return 'Android';
+      }
+      if (dev === 'tablet') {
+        if (browser === 'Safari') return 'iPadOS';
+        return 'Android';
+      }
+      if (browser === 'Safari') return 'macOS';
+      if (browser === 'Edge') return 'Windows';
+      return 'Windows';
+    }
 
     for (const v of visits) {
       if (v.path) pageMap[v.path] = (pageMap[v.path] || 0) + 1;
-      const ref = v.referrer && v.referrer !== '' ? v.referrer : 'direct';
+      const ref = v.referrer && v.referrer !== '' && v.referrer !== 'direct' ? v.referrer : 'direct';
       refMap[ref] = (refMap[ref] || 0) + 1;
-      if (v.device) devMap[v.device] = (devMap[v.device] || 0) + 1;
-      if (v.browser) brMap[v.browser] = (brMap[v.browser] || 0) + 1;
-      if (v.os) osMap[v.os] = (osMap[v.os] || 0) + 1;
+      const dev = v.device || 'desktop';
+      const devName = dev === 'mobile' ? 'Mobile' : dev === 'tablet' ? 'Tablet' : 'Desktop';
+      devMap[devName] = (devMap[devName] || 0) + 1;
+      const br = v.browser || 'Other';
+      brMap[br] = (brMap[br] || 0) + 1;
+      const os = v.os || guessOS(br, dev);
+      osMap[os] = (osMap[os] || 0) + 1;
       if (v.screen) screenMap[v.screen] = (screenMap[v.screen] || 0) + 1;
       if (v.language) langMap[v.language] = (langMap[v.language] || 0) + 1;
       if (v.source) sourceMap[v.source] = (sourceMap[v.source] || 0) + 1;
       const connType = v.connectionType || v.connection || 'unknown';
       connMap[connType] = (connMap[connType] || 0) + 1;
       const day = v.timestamp?.slice(0, 10);
-      if (day) dayMap[day] = (dayMap[day] || 0) + 1;
+      if (day) {
+        dayMap[day] = (dayMap[day] || 0) + 1;
+        if (!dayIpMap[day]) dayIpMap[day] = new Set();
+        if (v.ip) dayIpMap[day].add(v.ip);
+      }
       if (v.timestamp) {
         const ts = new Date(v.timestamp);
-        if (!isNaN(ts.getTime())) {
-          const h = ts.getHours();
-          hourMap[h] = (hourMap[h] || 0) + 1;
-        }
+        if (!isNaN(ts.getTime())) hourMap[ts.getHours()] = (hourMap[ts.getHours()] || 0) + 1;
       }
-      if (v.ip) ipSet.add(v.ip);
-      if (v.isNew) newIpSet.add(v.ip || 'new');
+      if (v.ip) {
+        ipSet.add(v.ip);
+        const vTime = new Date(v.timestamp).getTime();
+        if (!ipFirstSeen[v.ip] || vTime < ipFirstSeen[v.ip]) ipFirstSeen[v.ip] = vTime;
+        if (!ipPages[v.ip]) ipPages[v.ip] = [];
+        ipPages[v.ip].push(v.path || '/');
+      }
     }
 
     const total = visits.length || 1;
     const todayViews = visits.filter((v: any) => v.timestamp?.startsWith(today)).length;
     const uniqueVisitors = ipSet.size;
 
-    // Session stats
+    const ipSessionPages: Record<string, number> = {};
+    const ipSessionCount: Record<string, number> = {};
+    for (const ip of Object.keys(ipPages)) {
+      const pages = ipPages[ip];
+      ipSessionPages[ip] = pages.length;
+      ipSessionCount[ip] = 1;
+    }
+    const totalSessions = Object.keys(ipSessionPages).length || Math.ceil(visits.length / 3);
+    const bounceSessions = Object.values(ipSessionPages).filter(p => p <= 1).length;
+    const bounceRate = totalSessions > 0 ? Math.round(bounceSessions / totalSessions * 100) : 0;
+    const pagesPerVisit = totalSessions > 0 ? +(Object.values(ipSessionPages).reduce((s, p) => s + p, 0) / totalSessions).toFixed(1) : 1;
+
     const sessionList = Object.values(sessions) as any[];
     const totalDuration = sessionList.reduce((s: number, sess: any) => s + (sess.duration || 0), 0);
     const avgSessionDuration = sessionList.length > 0 ? Math.round(totalDuration / sessionList.length) : 0;
-    const bounceSessions = sessionList.filter((s: any) => (s.pages || 0) <= 1).length;
-    const bounceRate = sessionList.length > 0 ? Math.round(bounceSessions / sessionList.length * 100) : 0;
-    const pagesPerVisit = sessionList.length > 0 ? +(sessionList.reduce((s: number, sess: any) => s + (sess.pages || 1), 0) / sessionList.length).toFixed(1) : 1;
 
-    // Build last-14-day trend with zeros for missing days
+    const allIPs = Object.keys(ipFirstSeen);
+    const allVisits = data.visits || [];
+    const allIpFirstGlobal: Record<string, number> = {};
+    for (const v of allVisits) {
+      if (v.ip) {
+        const t = new Date(v.timestamp).getTime();
+        if (!allIpFirstGlobal[v.ip] || t < allIpFirstGlobal[v.ip]) allIpFirstGlobal[v.ip] = t;
+      }
+    }
+    let newVisitorCount = 0;
+    for (const ip of ipSet) {
+      const firstInRange = ipFirstSeen[ip];
+      const firstGlobal = allIpFirstGlobal[ip];
+      if (firstInRange && firstGlobal && firstInRange <= firstGlobal) newVisitorCount++;
+    }
+    const returningVisitorCount = Math.max(0, uniqueVisitors - newVisitorCount);
+
     const dailyTrend: { date: string; views: number; visitors: number }[] = [];
-    for (let i = 13; i >= 0; i--) {
+    const trendDays = range === 'today' ? 1 : range === '7d' ? 7 : 30;
+    for (let i = trendDays - 1; i >= 0; i--) {
       const d = new Date(now - i * 86400000);
       const dateStr = d.toISOString().slice(0, 10);
-      dailyTrend.push({ date: dateStr, views: dayMap[dateStr] || 0, visitors: Math.round((dayMap[dateStr] || 0) * 0.7) });
+      dailyTrend.push({ date: dateStr, views: dayMap[dateStr] || 0, visitors: dayIpMap[dateStr]?.size || 0 });
     }
 
-    // Hourly distribution (0-23) — field: views (matches tab's <Bar dataKey="views" />)
     const hourlyDist = Array.from({ length: 24 }, (_, h) => ({ hour: h, count: hourMap[h] || 0, views: hourMap[h] || 0 }));
-    const hourlyTrend = hourlyDist;
 
-    // Detailed visitors (last 100)
-    const detailedVisitors = visits.slice(-100).reverse().map((v: any, i: number) => ({
-      id: `v${i}`,
-      ip: v.ip ? v.ip.replace(/\.\d+$/, '.xxx') : 'xxx.xxx.xxx.xxx',
-      country: 'United States',
-      countryCode: 'US',
-      city: 'Unknown',
-      region: 'Unknown',
-      isp: 'Unknown',
-      device: v.device || 'desktop',
-      deviceType: v.device || 'desktop',
-      os: v.os || 'Unknown',
-      osVersion: '',
-      browser: v.browser || 'Unknown',
-      browserVersion: '',
-      screenRes: v.screen || '1920x1080',
-      language: v.language || 'en-US',
-      referrer: v.referrer || '',
-      referrerDomain: v.referrer ? (() => { try { return new URL(v.referrer.startsWith('http') ? v.referrer : 'https://' + v.referrer).hostname; } catch { return v.referrer; } })() : 'direct',
-      entryPage: v.path || '/',
-      exitPage: v.path || '/',
-      pagesVisited: [v.path || '/'],
-      pageViews: v.pageViews || 1,
-      sessionDuration: v.duration || 0,
-      timestamp: v.timestamp || new Date().toISOString(),
-      returning: !v.isNew,
-      timezone: v.timezone || 'America/New_York',
-      connectionType: v.connectionType || 'unknown',
-    }));
+    const countryMap: Record<string, { country: string; code: string; count: number }> = {};
+    for (const v of visits) {
+      const cc = v.countryCode || v.country_code || 'US';
+      const cn = v.country || 'United States';
+      if (!countryMap[cc]) countryMap[cc] = { country: cn, code: cc, count: 0 };
+      countryMap[cc].count++;
+    }
+    if (Object.keys(countryMap).length === 0 || (Object.keys(countryMap).length === 1 && countryMap['US'])) {
+      countryMap['US'] = { country: 'United States', code: 'US', count: total };
+    }
+    const countries = Object.values(countryMap).sort((a, b) => b.count - a.count).map(c => ({ ...c, countryCode: c.code, pct: Math.round(c.count / total * 100) }));
 
-    // Countries (uses 'code' field as expected by the tab's WorldHeatmap)
-    const countries = [
-      { country: 'United States', code: 'US', countryCode: 'US', count: total, pct: 100 }
-    ];
+    const detailedVisitors = visits.slice(0, 100).map((v: any, i: number) => {
+      const dev = v.device || 'desktop';
+      const br = v.browser || 'Unknown';
+      const os = v.os || guessOS(br, dev);
+      const ipKey = v.ip || '';
+      const isReturning = ipKey && allIpFirstGlobal[ipKey] && ipFirstSeen[ipKey] && ipFirstSeen[ipKey] > allIpFirstGlobal[ipKey];
+      return {
+        id: `v${i}`,
+        ip: v.ip ? v.ip.replace(/\.\d+$/, '.xxx') : 'xxx.xxx.xxx.xxx',
+        country: v.country || 'United States',
+        countryCode: v.countryCode || 'US',
+        city: v.city || 'Unknown',
+        region: v.region || 'Unknown',
+        isp: v.isp || 'Unknown',
+        device: dev === 'mobile' ? 'Mobile' : dev === 'tablet' ? 'Tablet' : 'Desktop',
+        deviceType: dev === 'mobile' ? 'mobile' : dev === 'tablet' ? 'tablet' : 'desktop',
+        os,
+        osVersion: v.osVersion || '',
+        browser: br,
+        browserVersion: v.browserVersion || '',
+        screenRes: v.screen || '1920x1080',
+        language: v.language || 'en-US',
+        referrer: v.referrer || '',
+        referrerDomain: v.referrer && v.referrer !== 'direct' ? (() => { try { return new URL(v.referrer.startsWith('http') ? v.referrer : 'https://' + v.referrer).hostname; } catch { return v.referrer; } })() : 'direct',
+        entryPage: v.path || '/',
+        exitPage: v.path || '/',
+        pagesVisited: ipPages[v.ip]?.slice(0, 10) || [v.path || '/'],
+        pageViews: ipPages[v.ip]?.length || 1,
+        sessionDuration: v.duration || 0,
+        timestamp: v.timestamp || new Date().toISOString(),
+        returning: !!isReturning,
+        timezone: v.timezone || 'America/New_York',
+        connectionType: v.connectionType || 'unknown',
+      };
+    });
 
-    const osList = Object.entries(osMap).sort((a, b) => b[1] - a[1]).map(([os, count]) => ({ os, count, pct: Math.round(count / total * 100) }));
+    const osList = Object.entries(osMap).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, os: name, count, pct: Math.round(count / total * 100) }));
 
     return {
       summary: {
         totalPageviews: visits.length,
         todayViews,
-        totalSessions: sessionList.length || Math.ceil(visits.length / 3),
+        totalSessions,
         totalUniqueVisitors: uniqueVisitors,
-        newVisitors: newIpSet.size,
-        returningVisitors: Math.max(0, uniqueVisitors - newIpSet.size),
+        newVisitors: newVisitorCount,
+        returningVisitors: returningVisitorCount,
         avgSessionDuration,
         bounceRate,
         pagesPerVisit,
@@ -198,8 +270,8 @@ function getAnalyticsInline(): any {
       topPages: Object.entries(pageMap).sort((a, b) => b[1] - a[1]).slice(0, 20).map(([path, views]) => ({ path, views })),
       topReferrers: Object.entries(refMap).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([referrer, count]) => ({ referrer, count })),
       trafficSources: Object.entries(sourceMap).sort((a, b) => b[1] - a[1]).map(([source, count]) => ({ source, count, pct: Math.round(count / total * 100) })),
-      devices: Object.entries(devMap).sort((a, b) => b[1] - a[1]).map(([device, count]) => ({ device, count, pct: Math.round(count / total * 100) })),
-      browsers: Object.entries(brMap).sort((a, b) => b[1] - a[1]).map(([browser, count]) => ({ browser, count, pct: Math.round(count / total * 100) })),
+      devices: Object.entries(devMap).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, device: name, count, pct: Math.round(count / total * 100) })),
+      browsers: Object.entries(brMap).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, browser: name, count, pct: Math.round(count / total * 100) })),
       os: osList,
       operatingSystems: osList,
       screenResolutions: Object.entries(screenMap).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([res, count]) => ({ res, count, pct: Math.round(count / total * 100) })),
@@ -208,16 +280,19 @@ function getAnalyticsInline(): any {
       countries,
       dailyTrend,
       hourlyDist,
-      hourlyTrend,
+      hourlyTrend: hourlyDist,
       detailedVisitors,
-      recentVisits: visits.slice(-20).reverse(),
+      recentVisits: visits.slice(0, 20),
+      newVsReturning: { new: newVisitorCount, returning: returningVisitorCount },
     };
   } catch (e: any) {
     return {
       error: e.message,
       summary: { totalPageviews: 0, todayViews: 0, totalSessions: 0, totalUniqueVisitors: 0, newVisitors: 0, returningVisitors: 0, avgSessionDuration: 0, bounceRate: 0, pagesPerVisit: 1 },
       topPages: [], topReferrers: [], trafficSources: [], devices: [], browsers: [], os: [],
-      screenResolutions: [], languages: [], connectionTypes: [], countries: [], dailyTrend: [], hourlyDist: [], detailedVisitors: [], recentVisits: [],
+      operatingSystems: [], screenResolutions: [], languages: [], connectionTypes: [], countries: [],
+      dailyTrend: [], hourlyDist: [], hourlyTrend: [], detailedVisitors: [], recentVisits: [],
+      newVsReturning: { new: 0, returning: 0 },
     };
   }
 }
@@ -324,6 +399,26 @@ function adminApiPlugin() {
         { id: "adsense-maximizer", name: "💵 مضاعف دخل AdSense", description: "يولّد مكون AdSense React + يحسب الدخل المتوقع لكل موضع إعلان + يعرض أفضل 6 برامج Affiliate بعمولات حقيقية", category: "elite", icon: "💵", cmd: "node scripts/adsense-maximizer.cjs 2>&1", dangerous: false, estimatedTime: "10s" },
         { id: "page-speed-optimizer", name: "⚡ محسّن سرعة الصفحة", description: "يحلل Bundle size + React optimizations + Core Web Vitals + يولّد .htaccess + _headers + vercel.json محسّنة", category: "elite", icon: "⚡", cmd: "node scripts/page-speed-optimizer.cjs 2>&1", dangerous: false, estimatedTime: "15s" },
         { id: "visitor-analytics", name: "👥 تقرير تحليلات الزوار", description: "يعرض إحصائيات الزوار الحقيقية: أكثر الصفحات زيارة + مصادر الزيارات + الأجهزة + التوزيع الجغرافي", category: "monitoring", icon: "👥", cmd: "node -e \"const t=require('./server/visitor-tracker.cjs');const a=t.getAnalytics();console.log(JSON.stringify(a,null,2));\" 2>&1", dangerous: false, estimatedTime: "3s" },
+        // ── BUILD ───────────────────────────────────────────────────────────────
+        { id: "build-project", name: "بناء المشروع", description: "يبني نسخة الإنتاج الكاملة (npm run build) جاهزة للنشر", category: "build", icon: "🏗️", cmd: "npm run build 2>&1", dangerous: false, estimatedTime: "2-3 دقائق" },
+        { id: "clean-dist", name: "حذف مجلد dist", description: "يحذف مجلد dist/ بالكامل لبناء نظيف — عملية لا يمكن التراجع عنها", category: "build", icon: "🧹", cmd: "rm -rf dist && echo '✅ dist/ deleted successfully' 2>&1", dangerous: true, estimatedTime: "2s" },
+        { id: "rebuild-full", name: "إعادة بناء كاملة", description: "يحذف dist/ ثم يعيد بناء المشروع من الصفر — بناء نظيف بالكامل", category: "build", icon: "🔨", cmd: "rm -rf dist && npm run build 2>&1", dangerous: true, estimatedTime: "3-5 دقائق" },
+        // ── SERVER ──────────────────────────────────────────────────────────────
+        { id: "restart-pm2", name: "إعادة تشغيل PM2", description: "يعيد تشغيل جميع عمليات PM2 على السيرفر", category: "server", icon: "🔄", cmd: "pm2 restart all 2>&1 || echo '⚠️ PM2 غير مثبّت أو لا توجد عمليات نشطة'", dangerous: false, estimatedTime: "5s" },
+        { id: "reload-nginx", name: "إعادة تحميل Nginx", description: "يعيد تحميل إعدادات Nginx بدون إيقاف السيرفر", category: "server", icon: "🌐", cmd: "sudo nginx -t && sudo nginx -s reload 2>&1 || echo '⚠️ Nginx غير مثبّت أو لا توجد صلاحيات'", dangerous: false, estimatedTime: "3s" },
+        { id: "clear-server-logs", name: "مسح سجلات السيرفر", description: "يمسح جميع ملفات السجلات القديمة لتوفير مساحة على القرص", category: "server", icon: "🗑️", cmd: "find /var/log -name '*.log' -mtime +7 -exec truncate -s 0 {} \\; 2>/dev/null; echo '✅ تم مسح السجلات القديمة' 2>&1 || echo '⚠️ لا توجد صلاحيات لمسح السجلات'", dangerous: true, estimatedTime: "3s" },
+        { id: "health-check", name: "فحص صحة السيرفر", description: "يفحص حالة السيرفر: CPU + RAM + Disk + عمليات PM2 + Nginx", category: "server", icon: "💚", cmd: "echo '=== SERVER HEALTH ===' && echo '' && echo '🖥️ CPU:' && uptime 2>/dev/null && echo '' && echo '💾 Memory:' && free -h 2>/dev/null || echo 'N/A' && echo '' && echo '📀 Disk:' && df -h / 2>/dev/null && echo '' && echo '🔄 PM2:' && pm2 list 2>/dev/null || echo 'PM2 not installed' && echo '' && echo '🌐 Nginx:' && nginx -t 2>&1 || echo 'Nginx not installed' 2>&1", dangerous: false, estimatedTime: "5s" },
+        // ── DATA ────────────────────────────────────────────────────────────────
+        { id: "backup-data", name: "نسخ احتياطي للبيانات", description: "ينشئ نسخة احتياطية مضغوطة من مجلد seo-data/ مع الطابع الزمني", category: "data", icon: "💾", cmd: "BACKUP_NAME=\"backup-$(date +%Y%m%d-%H%M%S).tar.gz\" && tar -czf \"$BACKUP_NAME\" seo-data/ 2>/dev/null && echo \"✅ تم إنشاء النسخة الاحتياطية: $BACKUP_NAME\" && ls -lh \"$BACKUP_NAME\" 2>&1 || echo '⚠️ فشل إنشاء النسخة الاحتياطية'", dangerous: false, estimatedTime: "5s" },
+        { id: "sync-config", name: "مزامنة الإعدادات", description: "يتحقق من ملف config.json ويعرض الإعدادات الحالية (بدون المفاتيح السرية)", category: "data", icon: "🔧", cmd: "if [ -f seo-data/config.json ]; then echo '✅ config.json موجود' && echo '' && echo '📋 الإعدادات:' && cat seo-data/config.json | node -e \"const d=require('fs').readFileSync('/dev/stdin','utf8');const c=JSON.parse(d);if(c.apiKeys)Object.keys(c.apiKeys).forEach(k=>{if(c.apiKeys[k]&&c.apiKeys[k].length>8)c.apiKeys[k]=c.apiKeys[k].slice(0,4)+'****'});console.log(JSON.stringify(c,null,2))\" 2>&1; else echo '❌ config.json غير موجود'; fi", dangerous: false, estimatedTime: "3s" },
+        { id: "export-visitors", name: "تصدير بيانات الزوار", description: "يعرض إحصائيات الزوار وعدد السجلات المحفوظة في visitors.json", category: "data", icon: "📊", cmd: "if [ -f seo-data/visitors.json ]; then echo '✅ visitors.json موجود' && echo \"📈 الحجم: $(du -sh seo-data/visitors.json | cut -f1)\" && echo \"👥 عدد الزيارات: $(node -e \"const d=JSON.parse(require('fs').readFileSync('seo-data/visitors.json','utf8'));console.log(d.visits?.length||0)\" 2>/dev/null)\" 2>&1; else echo '❌ لا توجد بيانات زوار بعد'; fi", dangerous: false, estimatedTime: "3s" },
+        { id: "clear-tracking-cache", name: "مسح ذاكرة التتبع المؤقتة", description: "يمسح ملفات التتبع المؤقتة لتحرير المساحة — لا يمسح البيانات الأساسية", category: "data", icon: "🧹", cmd: "find seo-data -name '*.tmp' -o -name '*.cache' 2>/dev/null | xargs rm -f 2>/dev/null; echo '✅ تم مسح الملفات المؤقتة' 2>&1", dangerous: true, estimatedTime: "2s" },
+        // ── CONTENT (additional) ────────────────────────────────────────────────
+        { id: "generate-carrier-sitemap", name: "توليد Sitemap الناقلين", description: "يولّد sitemap خاص بصفحات شركات الشحن (USPS, FedEx, UPS, DHL...)", category: "content", icon: "🚚", cmd: "echo '=== CARRIER SITEMAP ===' && ls public/carrier-sitemap*.xml 2>/dev/null && echo '' && echo 'Carrier pages:' && find public -path '*/carrier/*' -name 'index.html' 2>/dev/null | wc -l && echo 'pages found' || echo 'No carrier sitemap yet — run Sitemap generator first' 2>&1", dangerous: false, estimatedTime: "5s" },
+        { id: "update-robots-txt", name: "تحديث robots.txt", description: "يعرض ويتحقق من ملف robots.txt ويقترح تحسينات", category: "content", icon: "🤖", cmd: "echo '=== ROBOTS.TXT ===' && echo '' && cat public/robots.txt 2>/dev/null && echo '' && echo '=== VALIDATION ===' && echo \"Disallow rules: $(grep -c 'Disallow' public/robots.txt 2>/dev/null || echo 0)\" && echo \"Allow rules: $(grep -c 'Allow' public/robots.txt 2>/dev/null || echo 0)\" && echo \"Sitemap entries: $(grep -c 'Sitemap' public/robots.txt 2>/dev/null || echo 0)\" && echo '' && echo '✅ robots.txt check complete' 2>&1", dangerous: false, estimatedTime: "2s" },
+        // ── SEO (additional) ────────────────────────────────────────────────────
+        { id: "verify-sitemap-coverage", name: "فحص تغطية Sitemap", description: "يقارن URLs في Sitemaps مع الصفحات الفعلية ويكشف الصفحات غير المفهرسة", category: "seo", icon: "🔎", cmd: "echo '=== SITEMAP COVERAGE ===' && SITEMAP_URLS=$(grep -h '<loc>' public/*.xml 2>/dev/null | wc -l) && PAGES=$(find public -name 'index.html' 2>/dev/null | wc -l) && echo \"📋 URLs in Sitemaps: $SITEMAP_URLS\" && echo \"📄 HTML pages: $PAGES\" && echo '' && if [ \"$SITEMAP_URLS\" -ge \"$PAGES\" ]; then echo '✅ تغطية جيدة'; else echo \"⚠️ هناك $(($PAGES - $SITEMAP_URLS)) صفحة غير مفهرسة\"; fi 2>&1", dangerous: false, estimatedTime: "5s" },
+        { id: "noindex-programmatic", name: "فحص صفحات Noindex", description: "يبحث عن صفحات تحمل علامة noindex ويعرض قائمة بها", category: "seo", icon: "🚫", cmd: "echo '=== NOINDEX PAGES ===' && grep -rl 'noindex' src/pages/ src/components/ 2>/dev/null | head -20 && echo '' && NOINDEX_COUNT=$(grep -rl 'noindex' src/ 2>/dev/null | wc -l) && echo \"إجمالي الملفات بعلامة noindex: $NOINDEX_COUNT\" 2>&1", dangerous: false, estimatedTime: "3s" },
       ];
 
       // ── Seed startup logs if empty ────────────────────────────────────────
@@ -594,7 +689,7 @@ function adminApiPlugin() {
 
       const runUspsScrapers = async (tn: string): Promise<ScraperResult | null> => {
         // Load enabled layers from scrapers.json
-        const SCRAPERS_FILE_PATH = path.join(process.cwd(), 'seo-data', 'scrapers.json');
+        const SCRAPERS_FILE_PATH = path.join(process.cwd(), 'seo-data', 'scrapers-config.json');
         let layerConfig: Record<string, boolean> = {};
         try {
           if (fs.existsSync(SCRAPERS_FILE_PATH)) {
@@ -726,39 +821,148 @@ function adminApiPlugin() {
         // ── GET /api/seo-audit ───────────────────────────────────────────
         if (url === "/api/seo-audit" && req.method === "GET") {
           try {
-            const checks = [];
-            // robots.txt
-            const robotsExists = fs.existsSync(path.join(ROOT, "public/robots.txt"));
-            checks.push({ name: "robots.txt", status: robotsExists ? "pass" : "fail", detail: robotsExists ? "موجود ومُهيَّأ بشكل صحيح" : "مفقود — أنشئه فوراً" });
-            // sitemap.xml
+            const checks: { name: string; status: string; message: string; impact: string }[] = [];
+            const recommendations: string[] = [];
+
+            const robotsPath = path.join(ROOT, "public/robots.txt");
+            const robotsExists = fs.existsSync(robotsPath);
+            let robotsValid = false;
+            if (robotsExists) {
+              const rc = fs.readFileSync(robotsPath, "utf8");
+              robotsValid = rc.includes("User-agent") && rc.includes("Sitemap");
+            }
+            checks.push({ name: "ملف robots.txt", status: robotsExists && robotsValid ? "pass" : robotsExists ? "warn" : "fail", message: robotsExists && robotsValid ? "موجود ويحتوي على User-agent و Sitemap" : robotsExists ? "موجود لكن ينقصه تعليمات Sitemap أو User-agent" : "مفقود — أنشئه فوراً", impact: "high" });
+            if (!robotsExists) recommendations.push("أنشئ ملف robots.txt في public/ مع تعليمات User-agent و Sitemap");
+            else if (!robotsValid) recommendations.push("أضف Sitemap URL و User-agent إلى robots.txt");
+
             const sitemapExists = fs.existsSync(path.join(ROOT, "public/sitemap.xml"));
-            checks.push({ name: "sitemap.xml", status: sitemapExists ? "pass" : "fail", detail: sitemapExists ? "موجود" : "مفقود" });
-            // Total sitemaps
-            const xmlCount = fs.readdirSync(path.join(ROOT, "public")).filter(f => f.endsWith(".xml")).length;
-            checks.push({ name: "عدد Sitemaps", status: xmlCount >= 5 ? "pass" : "warn", detail: `${xmlCount} ملف XML` });
-            // Total URLs
-            const totalUrls = parseInt(await runCmd("grep -h '<loc>' public/*.xml 2>/dev/null | wc -l")) || 0;
-            checks.push({ name: "إجمالي URLs", status: totalUrls >= 1000 ? "pass" : "warn", detail: `${totalUrls.toLocaleString()} URL مفهرس` });
-            // SEO components
-            const seoComponents = fs.existsSync(path.join(ROOT, "src/components/seo"));
-            checks.push({ name: "مكونات SEO", status: seoComponents ? "pass" : "fail", detail: seoComponents ? "موجودة في src/components/seo/" : "مفقودة" });
-            // Build exists
+            checks.push({ name: "ملف sitemap.xml الرئيسي", status: sitemapExists ? "pass" : "fail", message: sitemapExists ? "موجود وجاهز للفهرسة" : "مفقود — محركات البحث لن تجد صفحاتك", impact: "high" });
+            if (!sitemapExists) recommendations.push("أنشئ sitemap.xml رئيسي في public/");
+
+            const xmlFiles = fs.readdirSync(path.join(ROOT, "public")).filter((f: string) => f.endsWith(".xml"));
+            const xmlCount = xmlFiles.length;
+            checks.push({ name: "عدد ملفات Sitemap", status: xmlCount >= 5 ? "pass" : xmlCount >= 1 ? "warn" : "fail", message: `${xmlCount} ملف Sitemap — ${xmlCount >= 5 ? "تغطية ممتازة" : "يمكن إضافة المزيد"}`, impact: "medium" });
+
+            let totalUrls = 0;
+            try {
+              for (const xf of xmlFiles) {
+                const xc = fs.readFileSync(path.join(ROOT, "public", xf), "utf8");
+                totalUrls += (xc.match(/<loc>/g) || []).length;
+              }
+            } catch {}
+            checks.push({ name: "إجمالي URLs المفهرسة", status: totalUrls >= 1000 ? "pass" : totalUrls >= 100 ? "warn" : "fail", message: `${totalUrls.toLocaleString()} URL مفهرس في Sitemaps`, impact: "high" });
+            if (totalUrls < 100) recommendations.push("أضف المزيد من الصفحات إلى Sitemaps لزيادة التغطية");
+
+            const pagesDir = path.join(ROOT, "src/pages");
+            let pageFiles: string[] = [];
+            try { pageFiles = fs.readdirSync(pagesDir).filter((f: string) => f.endsWith(".tsx")); } catch {}
+            const totalPages = pageFiles.length;
+            checks.push({ name: "إجمالي صفحات React", status: totalPages >= 20 ? "pass" : totalPages >= 5 ? "warn" : "fail", message: `${totalPages} صفحة في src/pages/`, impact: "medium" });
+
+            let pagesWithHelmet = 0;
+            let pagesWithMeta = 0;
+            let pagesWithOG = 0;
+            let pagesWithCanonical = 0;
+            const samplePages = pageFiles.slice(0, 50);
+            for (const pf of samplePages) {
+              try {
+                const pc = fs.readFileSync(path.join(pagesDir, pf), "utf8");
+                if (pc.includes("Helmet") || pc.includes("<title>") || pc.includes("title=")) pagesWithHelmet++;
+                if (pc.includes("meta") && (pc.includes("description") || pc.includes("Description"))) pagesWithMeta++;
+                if (pc.includes("og:title") || pc.includes("og:description") || pc.includes("openGraph") || pc.includes("SEOHead") || pc.includes("SeoHead")) pagesWithOG++;
+                if (pc.includes("canonical") || pc.includes("Canonical")) pagesWithCanonical++;
+              } catch {}
+            }
+
+            const helmetRatio = samplePages.length > 0 ? pagesWithHelmet / samplePages.length : 0;
+            checks.push({ name: "عناوين Title في الصفحات", status: helmetRatio >= 0.8 ? "pass" : helmetRatio >= 0.5 ? "warn" : "fail", message: `${pagesWithHelmet}/${samplePages.length} صفحة تحتوي على عنوان Title`, impact: "high" });
+            if (helmetRatio < 0.8) recommendations.push("أضف عناوين Title لجميع الصفحات عبر Helmet");
+
+            const metaRatio = samplePages.length > 0 ? pagesWithMeta / samplePages.length : 0;
+            checks.push({ name: "وصف Meta Description", status: metaRatio >= 0.8 ? "pass" : metaRatio >= 0.5 ? "warn" : "fail", message: `${pagesWithMeta}/${samplePages.length} صفحة تحتوي على Meta Description`, impact: "high" });
+            if (metaRatio < 0.8) recommendations.push("أضف Meta Description لجميع الصفحات لتحسين نسبة النقر CTR");
+
+            const ogRatio = samplePages.length > 0 ? pagesWithOG / samplePages.length : 0;
+            checks.push({ name: "علامات Open Graph", status: ogRatio >= 0.6 ? "pass" : ogRatio >= 0.3 ? "warn" : "fail", message: `${pagesWithOG}/${samplePages.length} صفحة تحتوي على OG Tags`, impact: "medium" });
+            if (ogRatio < 0.6) recommendations.push("أضف علامات og:title و og:description لتحسين المشاركة على السوشيال ميديا");
+
+            const canonicalRatio = samplePages.length > 0 ? pagesWithCanonical / samplePages.length : 0;
+            checks.push({ name: "روابط Canonical", status: canonicalRatio >= 0.5 ? "pass" : canonicalRatio >= 0.2 ? "warn" : "fail", message: `${pagesWithCanonical}/${samplePages.length} صفحة تحتوي على رابط Canonical`, impact: "medium" });
+            if (canonicalRatio < 0.5) recommendations.push("أضف روابط Canonical لمنع تكرار المحتوى في نتائج البحث");
+
+            const schemaAdv = fs.existsSync(path.join(ROOT, "src/components/seo/AdvancedSchemas.tsx"));
+            let schemaCount = 0;
+            try {
+              const srcFiles = await runCmd("grep -rl 'application/ld\\+json\\|JsonLd\\|json-ld\\|schema.*org\\|AdvancedSchema' src/ 2>/dev/null");
+              schemaCount = srcFiles.split("\n").filter(Boolean).length;
+            } catch {}
+            checks.push({ name: "Schema / بيانات منظمة", status: schemaAdv && schemaCount >= 3 ? "pass" : schemaCount >= 1 ? "warn" : "fail", message: schemaAdv ? `Schema متقدم مُطبَّق — ${schemaCount} ملف يستخدم بيانات منظمة` : `${schemaCount} ملف فقط يحتوي على Schema`, impact: "high" });
+            if (schemaCount < 3) recommendations.push("أضف Schema Markup (JSON-LD) لتحسين Rich Snippets في نتائج البحث");
+
+            const indexHtml = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+            const hasViewport = indexHtml.includes('name="viewport"');
+            checks.push({ name: "Viewport Meta Tag", status: hasViewport ? "pass" : "fail", message: hasViewport ? "موجود في index.html — متوافق مع الجوال" : "مفقود — الموقع لن يعمل بشكل صحيح على الجوال", impact: "high" });
+            if (!hasViewport) recommendations.push("أضف <meta name=\"viewport\"> في index.html");
+
+            const faviconIco = fs.existsSync(path.join(ROOT, "public/favicon.ico"));
+            const faviconWebp = fs.existsSync(path.join(ROOT, "public/favicon.webp"));
+            const hasFavicon = faviconIco || faviconWebp;
+            checks.push({ name: "أيقونة Favicon", status: hasFavicon ? "pass" : "fail", message: hasFavicon ? "موجودة ومُهيَّأة" : "مفقودة — الموقع يظهر بأيقونة افتراضية", impact: "low" });
+            if (!hasFavicon) recommendations.push("أضف favicon.ico في public/");
+
+            const notFoundExists = fs.existsSync(path.join(ROOT, "src/pages/NotFound.tsx"));
+            checks.push({ name: "صفحة 404", status: notFoundExists ? "pass" : "fail", message: notFoundExists ? "موجودة — تجربة مستخدم جيدة" : "مفقودة — المستخدمون سيرون خطأ غير ودود", impact: "medium" });
+            if (!notFoundExists) recommendations.push("أنشئ صفحة NotFound.tsx لمعالجة الروابط المكسورة");
+
+            const distSitemap = fs.existsSync(path.join(ROOT, "dist/sitemap.xml"));
             const buildExists = fs.existsSync(path.join(ROOT, "dist"));
-            checks.push({ name: "Production Build", status: buildExists ? "pass" : "warn", detail: buildExists ? "dist/ موجود وجاهز للنشر" : "لا يوجد build — شغّل npm run build" });
-            // HelmetProvider
+            checks.push({ name: "Sitemap في dist/", status: distSitemap ? "pass" : buildExists ? "warn" : "warn", message: distSitemap ? "Sitemap موجود في مجلد النشر" : buildExists ? "مجلد dist موجود لكن sitemap.xml مفقود — أعد البناء" : "لا يوجد build بعد — شغّل npm run build", impact: "medium" });
+
             const appContent = fs.readFileSync(path.join(ROOT, "src/App.tsx"), "utf8");
             const hasHelmet = appContent.includes("HelmetProvider");
-            checks.push({ name: "HelmetProvider", status: hasHelmet ? "pass" : "fail", detail: hasHelmet ? "مُضاف بشكل صحيح في App.tsx" : "مفقود — سيسبب صفحة بيضاء" });
-            // Schema markup
-            const schemaFiles = fs.existsSync(path.join(ROOT, "src/components/seo/AdvancedSchemas.tsx"));
-            checks.push({ name: "Schema Markup", status: schemaFiles ? "pass" : "warn", detail: schemaFiles ? "Schema متقدم مُطبَّق" : "Schema أساسي فقط" });
-            // E-E-A-T
+            checks.push({ name: "HelmetProvider", status: hasHelmet ? "pass" : "fail", message: hasHelmet ? "مُضاف في App.tsx — إدارة Meta Tags تعمل" : "مفقود — عناوين الصفحات لن تتغير", impact: "high" });
+            if (!hasHelmet) recommendations.push("أضف HelmetProvider في App.tsx لإدارة عناوين ووصف الصفحات");
+
+            const seoDir = path.join(ROOT, "src/components/seo");
+            const seoComponents = fs.existsSync(seoDir);
+            let seoFileCount = 0;
+            try { seoFileCount = fs.readdirSync(seoDir).filter((f: string) => f.endsWith(".tsx")).length; } catch {}
+            checks.push({ name: "مكونات SEO", status: seoFileCount >= 3 ? "pass" : seoFileCount >= 1 ? "warn" : "fail", message: seoComponents ? `${seoFileCount} مكون SEO في src/components/seo/` : "مجلد مكونات SEO مفقود", impact: "medium" });
+
             const eeatFile = fs.existsSync(path.join(ROOT, "src/components/seo/EEATSignals.tsx"));
-            checks.push({ name: "E-E-A-T Signals", status: eeatFile ? "pass" : "warn", detail: eeatFile ? "E-E-A-T مُطبَّق بالكامل" : "يحتاج تحسين" });
-            const passed = checks.filter(c => c.status === "pass").length;
-            const score = Math.round((passed / checks.length) * 100);
+            checks.push({ name: "إشارات E-E-A-T", status: eeatFile ? "pass" : "warn", message: eeatFile ? "E-E-A-T مُطبَّق — يعزز ثقة Google" : "يحتاج تحسين إشارات الخبرة والثقة", impact: "medium" });
+            if (!eeatFile) recommendations.push("أضف إشارات E-E-A-T (الخبرة، الموثوقية، الثقة) لتحسين الترتيب");
+
+            const config = loadConfig();
+            const hasDomain = config.seo?.canonicalDomain && config.seo.canonicalDomain.length > 5;
+            checks.push({ name: "إعداد الدومين / SSL", status: hasDomain ? "pass" : "warn", message: hasDomain ? `الدومين مُعدّ: ${config.seo.canonicalDomain}` : "لم يتم تعيين دومين رئيسي — عيّنه في الإعدادات", impact: "medium" });
+            if (!hasDomain) recommendations.push("عيّن Canonical Domain في إعدادات SEO لتفعيل SSL وروابط Canonical");
+
+            let progSeoPages = 0;
+            try {
+              const cityDirs = fs.readdirSync(path.join(ROOT, "public/city")).filter((f: string) => {
+                try { return fs.statSync(path.join(ROOT, "public/city", f)).isDirectory(); } catch { return false; }
+              });
+              progSeoPages = cityDirs.length;
+            } catch {}
+            checks.push({ name: "صفحات SEO البرمجية", status: progSeoPages >= 50 ? "pass" : progSeoPages >= 10 ? "warn" : "fail", message: `${progSeoPages} مدينة مع صفحات برمجية`, impact: "high" });
+            if (progSeoPages < 50) recommendations.push("شغّل مولد صفحات SEO البرمجية لإنشاء المزيد من صفحات المدن");
+
+            checks.push({ name: "حالة Build", status: buildExists ? "pass" : "warn", message: buildExists ? "dist/ موجود وجاهز للنشر" : "لا يوجد build — شغّل npm run build", impact: "low" });
+
+            const weights: Record<string, number> = { high: 3, medium: 2, low: 1 };
+            let totalWeight = 0;
+            let passedWeight = 0;
+            for (const c of checks) {
+              const w = weights[c.impact] || 1;
+              totalWeight += w;
+              if (c.status === "pass") passedWeight += w;
+              else if (c.status === "warn") passedWeight += w * 0.5;
+            }
+            const score = totalWeight > 0 ? Math.round((passedWeight / totalWeight) * 100) : 0;
+
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ score, checks }));
+            res.end(JSON.stringify({ score, checks, recommendations }));
           } catch (e: any) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: e.message }));
@@ -908,28 +1112,138 @@ function adminApiPlugin() {
         }
 
         // ── GET /api/analytics ───────────────────────────────────────────────
-        if (url === "/api/analytics" && req.method === "GET") {
+        if (url.startsWith("/api/analytics") && !url.startsWith("/api/analytics/") && req.method === "GET") {
+          const urlObj = new URL(url, 'http://localhost');
+          const range = urlObj.searchParams.get('range') || undefined;
           res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify(getAnalyticsInline()));
+          res.end(JSON.stringify(getAnalyticsInline(range)));
           return;
         }
         // ── GET /api/analytics/active ────────────────────────────────────────────
         if (url === "/api/analytics/active" && req.method === "GET") {
-          // Count active sessions (seen in last 5 minutes)
           try {
-            let data: any = { sessions: {} };
+            let data: any = { visits: [], sessions: {} };
             if (fs.existsSync(VISITORS_FILE)) data = JSON.parse(fs.readFileSync(VISITORS_FILE, "utf8"));
             const now = Date.now();
             const fiveMinAgo = now - 5 * 60 * 1000;
+            const visits: any[] = data.visits || [];
+            const recentVisits = visits.filter((v: any) => {
+              const ts = new Date(v.timestamp).getTime();
+              return ts > fiveMinAgo;
+            });
+            const activePages = [...new Set(recentVisits.map((v: any) => v.path).filter(Boolean))];
             const activeSessions = Object.values(data.sessions || {}).filter((s: any) => {
               const lastSeen = new Date(s.lastSeen).getTime();
               return lastSeen > fiveMinAgo;
             });
+            const count = Math.max(activeSessions.length, recentVisits.length);
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ count: activeSessions.length, pages: [] }));
+            res.end(JSON.stringify({ count, pages: activePages.slice(0, 10) }));
           } catch {
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({ count: 0, pages: [] }));
+          }
+          return;
+        }
+        // ── GET /api/analytics/weekly ────────────────────────────────────────────
+        if (url === "/api/analytics/weekly" && req.method === "GET") {
+          try {
+            let data: any = { visits: [] };
+            if (fs.existsSync(VISITORS_FILE)) data = JSON.parse(fs.readFileSync(VISITORS_FILE, "utf8"));
+            const visits: any[] = data.visits || [];
+            const now = Date.now();
+            const dayNames = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+            const result: { day: string; visitors: number; views: number }[] = [];
+            for (let i = 6; i >= 0; i--) {
+              const d = new Date(now - i * 86400000);
+              const dateStr = d.toISOString().slice(0, 10);
+              const dayVisits = visits.filter((v: any) => v.timestamp?.startsWith(dateStr));
+              const uniqueIps = new Set(dayVisits.map((v: any) => v.ip).filter(Boolean));
+              result.push({ day: dayNames[d.getDay()], visitors: uniqueIps.size, views: dayVisits.length });
+            }
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(result));
+          } catch {
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify([]));
+          }
+          return;
+        }
+        // ── GET /api/analytics/hourly ────────────────────────────────────────────
+        if (url === "/api/analytics/hourly" && req.method === "GET") {
+          try {
+            let data: any = { visits: [] };
+            if (fs.existsSync(VISITORS_FILE)) data = JSON.parse(fs.readFileSync(VISITORS_FILE, "utf8"));
+            const visits: any[] = data.visits || [];
+            const today = new Date().toISOString().slice(0, 10);
+            const todayVisits = visits.filter((v: any) => v.timestamp?.startsWith(today));
+            const hourMap: Record<string, number> = {};
+            for (let h = 0; h < 24; h++) hourMap[String(h).padStart(2, '0')] = 0;
+            for (const v of todayVisits) {
+              const ts = new Date(v.timestamp);
+              if (!isNaN(ts.getTime())) {
+                const hStr = String(ts.getHours()).padStart(2, '0');
+                hourMap[hStr] = (hourMap[hStr] || 0) + 1;
+              }
+            }
+            const result = Object.entries(hourMap).map(([hour, count]) => ({ hour, count }));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(result));
+          } catch {
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify([]));
+          }
+          return;
+        }
+        // ── GET /api/analytics/sources ───────────────────────────────────────────
+        if (url === "/api/analytics/sources" && req.method === "GET") {
+          try {
+            let data: any = { visits: [] };
+            if (fs.existsSync(VISITORS_FILE)) data = JSON.parse(fs.readFileSync(VISITORS_FILE, "utf8"));
+            const visits: any[] = data.visits || [];
+            const sourceMap: Record<string, number> = {};
+            for (const v of visits) {
+              const ref = v.referrer && v.referrer !== '' ? v.referrer : 'direct';
+              let sourceName = 'مباشر';
+              if (ref === 'direct') sourceName = 'مباشر';
+              else if (ref.includes('google')) sourceName = 'بحث Google';
+              else if (ref.includes('bing')) sourceName = 'بحث Bing';
+              else if (ref.includes('facebook') || ref.includes('twitter') || ref.includes('instagram') || ref.includes('linkedin') || ref.includes('t.co')) sourceName = 'مواقع التواصل';
+              else if (ref.includes('yahoo')) sourceName = 'بحث Yahoo';
+              else sourceName = 'إحالات';
+              sourceMap[sourceName] = (sourceMap[sourceName] || 0) + 1;
+            }
+            const colors: Record<string, string> = { 'بحث Google': '#3b82f6', 'مباشر': '#10b981', 'مواقع التواصل': '#8b5cf6', 'إحالات': '#f59e0b', 'بحث Bing': '#06b6d4', 'بحث Yahoo': '#ef4444' };
+            const defaultColor = '#6b7280';
+            const result = Object.entries(sourceMap)
+              .sort((a, b) => b[1] - a[1])
+              .map(([name, value]) => ({ name, value, color: colors[name] || defaultColor }));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(result));
+          } catch {
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify([]));
+          }
+          return;
+        }
+        // ── GET /api/analytics/top-pages ─────────────────────────────────────────
+        if (url === "/api/analytics/top-pages" && req.method === "GET") {
+          try {
+            let data: any = { visits: [] };
+            if (fs.existsSync(VISITORS_FILE)) data = JSON.parse(fs.readFileSync(VISITORS_FILE, "utf8"));
+            const visits: any[] = data.visits || [];
+            const pageMap: Record<string, number> = {};
+            for (const v of visits) {
+              if (v.path) pageMap[v.path] = (pageMap[v.path] || 0) + 1;
+            }
+            const sorted = Object.entries(pageMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const maxViews = sorted.length > 0 ? sorted[0][1] : 1;
+            const result = sorted.map(([page, views]) => ({ page, views, pct: Math.round((views / maxViews) * 100) }));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(result));
+          } catch {
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify([]));
           }
           return;
         }
@@ -937,6 +1251,151 @@ function adminApiPlugin() {
         if (!url.startsWith("/api/") && !url.startsWith("/@") && !url.startsWith("/node_modules") && !url.includes(".")) {
           trackVisitInline(req);
         }
+        // ── GET /api/keywords ─────────────────────────────────────────
+        if (url === "/api/keywords" && req.method === "GET") {
+          try {
+            const keywordsResult: any[] = [];
+            const RANKINGS_FILE = path.resolve(ROOT, "seo-data/rankings.json");
+            const TRACKED_FILE = path.resolve(ROOT, "seo-data/tracked-keywords.json");
+
+            if (fs.existsSync(RANKINGS_FILE)) {
+              try {
+                const rankings = JSON.parse(fs.readFileSync(RANKINGS_FILE, "utf8"));
+                for (const [kw, data] of Object.entries(rankings) as any) {
+                  keywordsResult.push({
+                    id: "rank_" + Buffer.from(kw).toString("base64url").slice(0, 16),
+                    keyword: kw,
+                    targetPage: data.url || "/",
+                    position: data.position ?? null,
+                    previousPosition: data.previousPosition ?? null,
+                    change: data.change ?? 0,
+                    clicks: data.clicks ?? 0,
+                    impressions: data.searchVolume ?? 0,
+                    ctr: data.ctr ?? 0,
+                    difficulty: data.difficulty ?? null,
+                    priority: data.priority ?? "medium",
+                    status: data.status ?? "",
+                    source: "rankings",
+                  });
+                }
+              } catch {}
+            }
+
+            if (fs.existsSync(TRACKED_FILE)) {
+              try {
+                const tracked = JSON.parse(fs.readFileSync(TRACKED_FILE, "utf8"));
+                for (const item of (tracked.keywords || [])) {
+                  const exists = keywordsResult.find(k => k.keyword.toLowerCase() === item.keyword.toLowerCase());
+                  if (!exists) {
+                    keywordsResult.push({
+                      id: item.id || "trk_" + Date.now(),
+                      keyword: item.keyword,
+                      targetPage: item.targetPage || "/",
+                      position: item.position ?? null,
+                      change: item.change ?? 0,
+                      clicks: item.clicks ?? 0,
+                      impressions: item.impressions ?? 0,
+                      ctr: item.ctr ?? 0,
+                      source: "tracked",
+                    });
+                  }
+                }
+              } catch {}
+            }
+
+            try {
+              const pagesDir = path.resolve(ROOT, "src/pages");
+              if (fs.existsSync(pagesDir)) {
+                const pageFiles = fs.readdirSync(pagesDir).filter((f: string) => f.endsWith(".tsx"));
+                for (const file of pageFiles) {
+                  try {
+                    const content = fs.readFileSync(path.join(pagesDir, file), "utf8");
+                    const metaMatch = content.match(/keywords['"]\s*(?:content|:)\s*[=:]\s*['"`]([^'"`]+)['"`]/i);
+                    if (metaMatch) {
+                      const kws = metaMatch[1].split(",").map((k: string) => k.trim()).filter(Boolean);
+                      for (const kw of kws) {
+                        const exists = keywordsResult.find(k => k.keyword.toLowerCase() === kw.toLowerCase());
+                        if (!exists) {
+                          keywordsResult.push({
+                            id: "meta_" + Buffer.from(kw).toString("base64url").slice(0, 16),
+                            keyword: kw,
+                            targetPage: "/" + file.replace(/\.tsx$/, "").replace(/Page$/, "").toLowerCase(),
+                            position: null,
+                            change: 0,
+                            clicks: 0,
+                            impressions: 0,
+                            ctr: 0,
+                            source: "meta",
+                          });
+                        }
+                      }
+                    }
+                  } catch {}
+                }
+              }
+            } catch {}
+
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({
+              keywords: keywordsResult,
+              total: keywordsResult.length,
+              lastUpdated: new Date().toISOString(),
+            }));
+          } catch (e: any) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: e.message }));
+          }
+          return;
+        }
+
+        // ── POST /api/keywords ────────────────────────────────────────
+        if (url === "/api/keywords" && req.method === "POST") {
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const { keyword, targetPage } = JSON.parse(body);
+              if (!keyword) { res.statusCode = 400; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ error: "keyword required" })); return; }
+              const TRACKED_FILE = path.resolve(ROOT, "seo-data/tracked-keywords.json");
+              const dir = path.dirname(TRACKED_FILE);
+              if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+              let tracked: any = { keywords: [] };
+              if (fs.existsSync(TRACKED_FILE)) tracked = JSON.parse(fs.readFileSync(TRACKED_FILE, "utf8"));
+              const newKw = { id: "trk_" + Date.now(), keyword, targetPage: targetPage || "/", position: null, change: 0, clicks: 0, impressions: 0, ctr: 0, addedAt: new Date().toISOString() };
+              tracked.keywords.push(newKw);
+              fs.writeFileSync(TRACKED_FILE, JSON.stringify(tracked, null, 2));
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, keyword: newKw }));
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ error: e.message }));
+            }
+          });
+          return;
+        }
+
+        // ── DELETE /api/keywords/:id ──────────────────────────────────
+        if (url.startsWith("/api/keywords/") && req.method === "DELETE") {
+          try {
+            const id = url.split("/api/keywords/")[1];
+            const TRACKED_FILE = path.resolve(ROOT, "seo-data/tracked-keywords.json");
+            if (fs.existsSync(TRACKED_FILE)) {
+              const tracked = JSON.parse(fs.readFileSync(TRACKED_FILE, "utf8"));
+              tracked.keywords = (tracked.keywords || []).filter((k: any) => k.id !== id);
+              fs.writeFileSync(TRACKED_FILE, JSON.stringify(tracked, null, 2));
+            }
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch (e: any) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: e.message }));
+          }
+          return;
+        }
+
         // ── GET /api/config───────────────────────────────────────────
         if (url === "/api/config" && req.method === "GET") {
           try {
@@ -977,6 +1436,248 @@ function adminApiPlugin() {
           return;
         }
 
+        // ── GET /api/apikeys ──────────────────────────────────────────────
+        if (url === "/api/apikeys" && req.method === "GET") {
+          try {
+            const config = loadConfig();
+            const apiKeys = config.apiKeys || {};
+            const FAILOVER_FILE = path.join(ROOT, 'seo-data', 'failover-providers.json');
+            let failoverProviders: any[] = [];
+            try { if (fs.existsSync(FAILOVER_FILE)) failoverProviders = JSON.parse(fs.readFileSync(FAILOVER_FILE, 'utf8')); } catch {}
+
+            const maskKey = (k: string) => {
+              if (!k || k.length < 5) return k ? '****' : '';
+              return '****' + k.slice(-4);
+            };
+
+            const keys: any[] = [];
+            const providerMap: Record<string, string> = {
+              uspsUserId: 'USPS', uspsPassword: 'USPS',
+              googleSearchConsole: 'Google', googleAnalytics4: 'Google', googleAdsense: 'Google', googleIndexingApi: 'Google',
+              bingWebmaster: 'SEO', semrushApiKey: 'SEO', ahrefsApiKey: 'SEO', indexNowKey: 'IndexNow',
+              openaiApiKey: 'AI', cloudflareApiKey: 'Cloudflare', cloudflareZoneId: 'Cloudflare',
+              recaptchaSiteKey: 'Security', recaptchaSecretKey: 'Security',
+              slackWebhook: 'Notifications', discordWebhook: 'Notifications', telegramBotToken: 'Notifications', telegramChatId: 'Notifications',
+            };
+            const nameMap: Record<string, string> = {
+              uspsUserId: 'USPS Web Tools USERID', uspsPassword: 'USPS Web Tools Password',
+              googleSearchConsole: 'Google Search Console', googleAnalytics4: 'Google Analytics 4', googleAdsense: 'Google AdSense', googleIndexingApi: 'Google Indexing API',
+              bingWebmaster: 'Bing Webmaster', semrushApiKey: 'SEMrush API', ahrefsApiKey: 'Ahrefs API', indexNowKey: 'IndexNow',
+              openaiApiKey: 'OpenAI API', cloudflareApiKey: 'Cloudflare API', cloudflareZoneId: 'Cloudflare Zone ID',
+              recaptchaSiteKey: 'reCAPTCHA Site Key', recaptchaSecretKey: 'reCAPTCHA Secret Key',
+              slackWebhook: 'Slack Webhook', discordWebhook: 'Discord Webhook', telegramBotToken: 'Telegram Bot Token', telegramChatId: 'Telegram Chat ID',
+            };
+
+            for (const [k, v] of Object.entries(apiKeys)) {
+              keys.push({
+                id: `config-${k}`,
+                keyField: k,
+                name: nameMap[k] || k,
+                provider: providerMap[k] || 'custom',
+                maskedKey: maskKey(v as string),
+                status: (v as string) ? 'active' : 'inactive',
+                lastUsed: null,
+                createdAt: null,
+                source: 'config',
+              });
+            }
+
+            for (const provider of failoverProviders) {
+              for (const acc of (provider.accounts || [])) {
+                keys.push({
+                  id: `failover-${acc.id}`,
+                  accountId: acc.id,
+                  providerId: provider.id,
+                  name: acc.name || provider.name,
+                  provider: provider.name,
+                  maskedKey: maskKey(acc.apiKey || ''),
+                  status: acc.apiKey && acc.apiKey !== 'N/A' && acc.enabled ? 'active' : !acc.enabled ? 'disabled' : 'inactive',
+                  lastUsed: acc.lastUsed || null,
+                  createdAt: null,
+                  source: 'failover',
+                  usedToday: acc.usedToday || 0,
+                  successCount: acc.successCount || 0,
+                  errorCount: acc.errorCount || 0,
+                  dailyQuota: acc.dailyQuota || 0,
+                  monthlyQuota: acc.monthlyQuota || 0,
+                });
+              }
+            }
+
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(keys));
+          } catch (e: any) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: e.message }));
+          }
+          return;
+        }
+
+        // ── POST /api/apikeys ──────────────────────────────────────────────
+        if (url === "/api/apikeys" && req.method === "POST") {
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const { keyField, value, provider, name: keyName, source } = JSON.parse(body);
+              if (source === 'failover') {
+                const FAILOVER_FILE = path.join(ROOT, 'seo-data', 'failover-providers.json');
+                let providers: any[] = [];
+                try { if (fs.existsSync(FAILOVER_FILE)) providers = JSON.parse(fs.readFileSync(FAILOVER_FILE, 'utf8')); } catch {}
+                const prov = providers.find((p: any) => p.id === provider || p.name === provider);
+                if (prov) {
+                  const newId = `${prov.id}-${Date.now()}`;
+                  prov.accounts = prov.accounts || [];
+                  prov.accounts.push({
+                    id: newId, providerId: prov.id, name: keyName || `${prov.name} - Account ${prov.accounts.length + 1}`,
+                    apiKey: value, dailyQuota: 1000, usedToday: 0, enabled: true, lastUsed: '', successCount: 0, errorCount: 0, avgResponseTime: 0, status: 'active', monthlyQuota: 500,
+                  });
+                  fs.writeFileSync(FAILOVER_FILE, JSON.stringify(providers, null, 2));
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ ok: true, id: `failover-${newId}` }));
+                } else {
+                  res.statusCode = 400;
+                  res.end(JSON.stringify({ error: 'Provider not found' }));
+                }
+              } else {
+                const config = loadConfig();
+                config.apiKeys = config.apiKeys || {};
+                config.apiKeys[keyField] = value;
+                saveConfig(config);
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ ok: true, id: `config-${keyField}` }));
+              }
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: e.message }));
+            }
+          });
+          return;
+        }
+
+        // ── PUT /api/apikeys/:id ─────────────────────────────────────────
+        if (url.match(/^\/api\/apikeys\/[^/]+$/) && req.method === "PUT") {
+          const keyId = decodeURIComponent(url.split('/api/apikeys/')[1]);
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const { value } = JSON.parse(body);
+              if (keyId.startsWith('config-')) {
+                const field = keyId.replace('config-', '');
+                const config = loadConfig();
+                config.apiKeys = config.apiKeys || {};
+                config.apiKeys[field] = value;
+                saveConfig(config);
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ ok: true }));
+              } else if (keyId.startsWith('failover-')) {
+                const accId = keyId.replace('failover-', '');
+                const FAILOVER_FILE = path.join(ROOT, 'seo-data', 'failover-providers.json');
+                let providers: any[] = [];
+                try { if (fs.existsSync(FAILOVER_FILE)) providers = JSON.parse(fs.readFileSync(FAILOVER_FILE, 'utf8')); } catch {}
+                let found = false;
+                for (const prov of providers) {
+                  for (const acc of (prov.accounts || [])) {
+                    if (acc.id === accId) { acc.apiKey = value; found = true; break; }
+                  }
+                  if (found) break;
+                }
+                if (found) {
+                  fs.writeFileSync(FAILOVER_FILE, JSON.stringify(providers, null, 2));
+                  res.setHeader("Content-Type", "application/json");
+                  res.end(JSON.stringify({ ok: true }));
+                } else {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ error: 'Key not found' }));
+                }
+              } else {
+                res.statusCode = 400;
+                res.end(JSON.stringify({ error: 'Invalid key ID' }));
+              }
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: e.message }));
+            }
+          });
+          return;
+        }
+
+        // ── DELETE /api/apikeys/:id ──────────────────────────────────────
+        if (url.match(/^\/api\/apikeys\/[^/]+$/) && req.method === "DELETE") {
+          const keyId = decodeURIComponent(url.split('/api/apikeys/')[1]);
+          try {
+            if (keyId.startsWith('config-')) {
+              const field = keyId.replace('config-', '');
+              const config = loadConfig();
+              if (config.apiKeys) { config.apiKeys[field] = ''; saveConfig(config); }
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true }));
+            } else if (keyId.startsWith('failover-')) {
+              const accId = keyId.replace('failover-', '');
+              const FAILOVER_FILE = path.join(ROOT, 'seo-data', 'failover-providers.json');
+              let providers: any[] = [];
+              try { if (fs.existsSync(FAILOVER_FILE)) providers = JSON.parse(fs.readFileSync(FAILOVER_FILE, 'utf8')); } catch {}
+              for (const prov of providers) {
+                prov.accounts = (prov.accounts || []).filter((a: any) => a.id !== accId);
+              }
+              fs.writeFileSync(FAILOVER_FILE, JSON.stringify(providers, null, 2));
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true }));
+            } else {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: 'Invalid key ID' }));
+            }
+          } catch (e: any) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: e.message }));
+          }
+          return;
+        }
+
+        // ── POST /api/apikeys/:id/test ───────────────────────────────────
+        if (url.match(/^\/api\/apikeys\/[^/]+\/test$/) && req.method === "POST") {
+          const keyId = decodeURIComponent(url.split('/api/apikeys/')[1].replace('/test', ''));
+          try {
+            let keyValue = '';
+            let provider = '';
+            if (keyId.startsWith('config-')) {
+              const field = keyId.replace('config-', '');
+              const config = loadConfig();
+              keyValue = config.apiKeys?.[field] || '';
+              provider = field;
+            } else if (keyId.startsWith('failover-')) {
+              const accId = keyId.replace('failover-', '');
+              const FAILOVER_FILE = path.join(ROOT, 'seo-data', 'failover-providers.json');
+              let providers: any[] = [];
+              try { if (fs.existsSync(FAILOVER_FILE)) providers = JSON.parse(fs.readFileSync(FAILOVER_FILE, 'utf8')); } catch {}
+              for (const prov of providers) {
+                for (const acc of (prov.accounts || [])) {
+                  if (acc.id === accId) { keyValue = acc.apiKey || ''; provider = prov.id; break; }
+                }
+              }
+            }
+
+            if (!keyValue || keyValue === 'N/A') {
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: false, status: 'invalid', message: 'المفتاح فارغ أو غير صالح' }));
+              return;
+            }
+
+            let testResult = { ok: true, status: 'active', message: 'المفتاح يبدو صالحاً (تحقق أساسي)' };
+            if (keyValue.length < 4) {
+              testResult = { ok: false, status: 'invalid', message: 'المفتاح قصير جداً' };
+            }
+
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(testResult));
+          } catch (e: any) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: e.message }));
+          }
+          return;
+        }
+
         // ── GET /api/ads ────────────────────────────────────────────────────
         if (url === "/api/ads" && req.method === "GET") {
           try {
@@ -1010,12 +1711,104 @@ function adminApiPlugin() {
           return;
         }
 
+        // ── Content Management API ──────────────────────────────────────────
+        const CONTENT_FILE = path.join(ROOT, 'seo-data', 'content.json');
+        const loadContent = (): any[] => {
+          try { if (fs.existsSync(CONTENT_FILE)) return JSON.parse(fs.readFileSync(CONTENT_FILE, 'utf8')); } catch {}
+          return [];
+        };
+        const saveContent = (items: any[]) => {
+          const d = path.dirname(CONTENT_FILE);
+          if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+          fs.writeFileSync(CONTENT_FILE, JSON.stringify(items, null, 2));
+        };
+
+        if (url === "/api/content" && req.method === "GET") {
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(loadContent()));
+          return;
+        }
+
+        if (url === "/api/content" && req.method === "POST") {
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const item = JSON.parse(body);
+              const now = new Date().toISOString();
+              const newItem = {
+                id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 6),
+                title: item.title || '',
+                slug: item.slug || item.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '') || '',
+                type: item.type || 'article',
+                status: item.status || 'draft',
+                content: item.content || '',
+                tags: item.tags || [],
+                seoTitle: item.seoTitle || '',
+                seoDescription: item.seoDescription || '',
+                createdAt: now,
+                updatedAt: now,
+              };
+              const items = loadContent();
+              items.unshift(newItem);
+              saveContent(items);
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, item: newItem }));
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: e.message }));
+            }
+          });
+          return;
+        }
+
+        const contentPutMatch = url.match(/^\/api\/content\/([^/]+)$/);
+        if (contentPutMatch && req.method === "PUT") {
+          const id = contentPutMatch[1];
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const updates = JSON.parse(body);
+              let items = loadContent();
+              const idx = items.findIndex((i: any) => i.id === id);
+              if (idx === -1) { res.statusCode = 404; res.end(JSON.stringify({ error: 'Not found' })); return; }
+              items[idx] = { ...items[idx], ...updates, id, updatedAt: new Date().toISOString() };
+              saveContent(items);
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, item: items[idx] }));
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: e.message }));
+            }
+          });
+          return;
+        }
+
+        const contentDeleteMatch = url.match(/^\/api\/content\/([^/]+)$/);
+        if (contentDeleteMatch && req.method === "DELETE") {
+          const id = contentDeleteMatch[1];
+          try {
+            let items = loadContent();
+            const len = items.length;
+            items = items.filter((i: any) => i.id !== id);
+            if (items.length === len) { res.statusCode = 404; res.end(JSON.stringify({ error: 'Not found' })); return; }
+            saveContent(items);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch (e: any) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: e.message }));
+          }
+          return;
+        }
+
         // ══════════════════════════════════════════════════════════════════
         // ── API MANAGER: Failover Providers System ─────────────────────────
         // ══════════════════════════════════════════════════════════════════
         const FAILOVER_PROVIDERS_FILE = path.join(ROOT, 'seo-data', 'failover-providers.json');
         const CACHE_SETTINGS_FILE = path.join(ROOT, 'seo-data', 'cache-settings.json');
-        const SCRAPERS_FILE = path.join(ROOT, 'seo-data', 'scrapers.json');
+        const SCRAPERS_FILE = path.join(ROOT, 'seo-data', 'scrapers-config.json');
         const CARRIERS_FILE = path.join(ROOT, 'seo-data', 'carrier-patterns.json');
         const RATELIMIT_FILE = path.join(ROOT, 'seo-data', 'rate-limit-settings.json');
         const API_SETTINGS_FILE = path.join(ROOT, 'seo-data', 'api-settings.json');
@@ -1331,8 +2124,19 @@ function adminApiPlugin() {
             const lastCommitMsg = await runCmd("git log -1 --format='%s' 2>/dev/null || echo ''");
             const lastCommitAuthor = await runCmd("git log -1 --format='%an' 2>/dev/null || echo ''");
             const lastCommitDate = await runCmd("git log -1 --format='%ci' 2>/dev/null || echo ''");
+            const recentCommitsRaw = await runCmd("git log -20 --format='%H|||%s|||%ci|||%an' 2>/dev/null || echo ''");
             const statusLines = statusRaw.split('\n').filter(Boolean);
             const logLines = logRaw.split('\n').filter(Boolean);
+            const recentCommits = recentCommitsRaw.split('\n').filter(Boolean).map(line => {
+              const [hash, message, date, author] = line.split('|||');
+              return { hash: (hash || '').trim(), message: (message || '').trim(), date: (date || '').trim(), author: (author || '').trim() };
+            });
+            const modifiedFilesList = statusLines.map(line => {
+              const status = line.trim().substring(0, 2).trim();
+              const file = line.trim().substring(2).trim();
+              const statusLabel = status === 'M' ? 'modified' : status === 'A' ? 'added' : status === 'D' ? 'deleted' : status === '??' ? 'untracked' : status === 'R' ? 'renamed' : 'other';
+              return { file, status: statusLabel, raw: status };
+            });
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({
               branch: branch || 'main',
@@ -1340,12 +2144,14 @@ function adminApiPlugin() {
               status: statusLines,
               log: logLines,
               lastCommit: { message: lastCommitMsg, author: lastCommitAuthor, date: lastCommitDate },
+              recentCommits,
+              modifiedFilesList,
               modifiedFiles: statusLines.filter(l => l.trim().startsWith('M')).length,
               untrackedFiles: statusLines.filter(l => l.trim().startsWith('?')).length,
             }));
           } catch (e: any) {
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ branch: 'main', totalCommits: 0, status: [], log: [], lastCommit: {}, modifiedFiles: 0, untrackedFiles: 0 }));
+            res.end(JSON.stringify({ branch: 'main', totalCommits: 0, status: [], log: [], lastCommit: {}, recentCommits: [], modifiedFilesList: [], modifiedFiles: 0, untrackedFiles: 0 }));
           }
           return;
         }
@@ -1353,30 +2159,158 @@ function adminApiPlugin() {
         // ── GET /api/performance ──────────────────────────────────────────
         if (url === "/api/performance" && req.method === "GET") {
           try {
-            const distExists = fs.existsSync(path.join(ROOT, 'dist'));
-            const buildSizeRaw = distExists ? await runCmd("du -sh dist/ 2>/dev/null | cut -f1") : '0';
-            const jsSize = distExists ? await runCmd("find dist/assets -name '*.js' -exec du -ch {} + 2>/dev/null | tail -1 | cut -f1 || echo '0'") : '0';
-            const cssSize = distExists ? await runCmd("find dist/assets -name '*.css' -exec du -ch {} + 2>/dev/null | tail -1 | cut -f1 || echo '0'") : '0';
-            const pageCount = await runCmd("ls src/pages/*.tsx 2>/dev/null | wc -l");
-            const compCount = await runCmd("find src/components -name '*.tsx' 2>/dev/null | wc -l");
+            const distDir = path.join(ROOT, 'dist');
+            const distExists = fs.existsSync(distDir);
+
+            const getDirSizeByExt = (dir: string, exts: string[]): number => {
+              if (!fs.existsSync(dir)) return 0;
+              let total = 0;
+              const walk = (d: string) => {
+                const items = fs.readdirSync(d, { withFileTypes: true });
+                for (const item of items) {
+                  const p = path.join(d, item.name);
+                  if (item.isDirectory()) walk(p);
+                  else if (exts.some(e => item.name.endsWith(e))) total += fs.statSync(p).size;
+                }
+              };
+              walk(dir);
+              return total;
+            };
+            const getDirSize = (dir: string): number => {
+              if (!fs.existsSync(dir)) return 0;
+              let total = 0;
+              const walk = (d: string) => {
+                const items = fs.readdirSync(d, { withFileTypes: true });
+                for (const item of items) {
+                  const p = path.join(d, item.name);
+                  if (item.isDirectory()) walk(p);
+                  else total += fs.statSync(p).size;
+                }
+              };
+              walk(dir);
+              return total;
+            };
+            const countFiles = (dir: string, exts?: string[]): number => {
+              if (!fs.existsSync(dir)) return 0;
+              let c = 0;
+              const walk = (d: string) => {
+                const items = fs.readdirSync(d, { withFileTypes: true });
+                for (const item of items) {
+                  const p = path.join(d, item.name);
+                  if (item.isDirectory()) walk(p);
+                  else if (!exts || exts.some(e => item.name.endsWith(e))) c++;
+                }
+              };
+              walk(dir);
+              return c;
+            };
+            const fmtSize = (bytes: number): string => {
+              if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + ' MB';
+              if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+              return bytes + ' B';
+            };
+
+            const totalBytes = distExists ? getDirSize(distDir) : 0;
+            const jsSizeBytes = distExists ? getDirSizeByExt(distDir, ['.js', '.mjs']) : 0;
+            const cssSizeBytes = distExists ? getDirSizeByExt(distDir, ['.css']) : 0;
+            const imgSizeBytes = distExists ? getDirSizeByExt(distDir, ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif', '.ico']) : 0;
+            const fontSizeBytes = distExists ? getDirSizeByExt(distDir, ['.woff', '.woff2', '.ttf', '.otf', '.eot']) : 0;
+            const htmlSizeBytes = distExists ? getDirSizeByExt(distDir, ['.html']) : 0;
+            const assetsDir = path.join(distDir, 'assets');
+            const assetCount = distExists ? countFiles(assetsDir) : 0;
+
+            const pageCount = countFiles(path.join(ROOT, 'src/pages'), ['.tsx']);
+            const compCount = countFiles(path.join(ROOT, 'src/components'), ['.tsx']);
+
+            let routeCount = 0;
+            try {
+              const appContent = fs.readFileSync(path.join(ROOT, 'src/App.tsx'), 'utf8');
+              const routeMatches = appContent.match(/<Route\s/g);
+              routeCount = routeMatches ? routeMatches.length : 0;
+            } catch {}
+
+            let responseTimeStats: any = { avg: 'N/A', p95: 'N/A', p99: 'N/A', min: 'N/A', max: 'N/A', count: 0, recentTimes: [] };
+            try {
+              const trackingLogsPath = path.join(ROOT, 'seo-data/tracking-logs.json');
+              if (fs.existsSync(trackingLogsPath)) {
+                const logs = JSON.parse(fs.readFileSync(trackingLogsPath, 'utf8'));
+                const times: number[] = [];
+                if (Array.isArray(logs)) {
+                  for (const l of logs) {
+                    const rt = l.responseTimeMs || l.responseTime;
+                    if (typeof rt === 'number' && rt > 0) times.push(rt);
+                  }
+                }
+                if (times.length > 0) {
+                  times.sort((a, b) => a - b);
+                  const sum = times.reduce((s, v) => s + v, 0);
+                  const avg = Math.round(sum / times.length);
+                  const p95 = times[Math.floor(times.length * 0.95)] || times[times.length - 1];
+                  const p99 = times[Math.floor(times.length * 0.99)] || times[times.length - 1];
+                  responseTimeStats = {
+                    avg: avg + 'ms',
+                    p95: p95 + 'ms',
+                    p99: p99 + 'ms',
+                    min: times[0] + 'ms',
+                    max: times[times.length - 1] + 'ms',
+                    count: times.length,
+                    recentTimes: times.slice(-50),
+                  };
+                }
+              }
+            } catch {}
+
+            const jsKB = jsSizeBytes / 1024;
+            const estimatedLCP = jsKB < 200 ? '< 1.5s' : jsKB < 500 ? '~2.0s' : jsKB < 1000 ? '~2.8s' : '> 3.5s';
+            const estimatedTBT = jsKB < 200 ? '< 150ms' : jsKB < 500 ? '~300ms' : jsKB < 1000 ? '~600ms' : '> 1000ms';
+            const estimatedFCP = jsKB < 200 ? '< 1.0s' : jsKB < 500 ? '~1.5s' : '~2.5s';
+
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({
-              lighthouse: { performance: 94, accessibility: 96, bestPractices: 95, seo: 98 },
-              coreWebVitals: { lcp: '1.8s', fid: '12ms', cls: '0.02', ttfb: '180ms', inp: '95ms' },
-              buildInfo: { totalSize: buildSizeRaw || '—', jsSize: jsSize || '—', cssSize: cssSize || '—', built: distExists, pageCount: parseInt(pageCount) || 0, componentCount: parseInt(compCount) || 0 },
-              pageSpeeds: [
-                { page: '/', score: 94, lcp: '1.6s', cls: '0.01' },
-                { page: '/track/*', score: 92, lcp: '1.9s', cls: '0.02' },
-                { page: '/city/*', score: 91, lcp: '2.1s', cls: '0.03' },
-              ],
-              history: Array.from({ length: 7 }, (_, i) => {
-                const d = new Date(Date.now() - (6 - i) * 86400000);
-                return { date: d.toISOString().slice(0, 10), score: 90 + Math.floor(Math.random() * 8) };
-              }),
+              lighthouse: { performance: 'N/A', accessibility: 'N/A', bestPractices: 'N/A', seo: 'N/A', note: 'يتطلب فحص يدوي عبر Chrome DevTools' },
+              coreWebVitals: {
+                lcp: distExists ? estimatedLCP : 'N/A',
+                fid: 'N/A',
+                cls: 'N/A',
+                ttfb: responseTimeStats.avg !== 'N/A' ? responseTimeStats.avg : 'N/A',
+                inp: 'N/A',
+                tbt: distExists ? estimatedTBT : 'N/A',
+                fcp: distExists ? estimatedFCP : 'N/A',
+                note: 'تقديرات مبنية على حجم البناء — القيم الفعلية تتطلب Lighthouse',
+              },
+              buildInfo: {
+                built: distExists,
+                totalSize: fmtSize(totalBytes),
+                totalBytes,
+                jsSize: fmtSize(jsSizeBytes),
+                jsSizeBytes,
+                cssSize: fmtSize(cssSizeBytes),
+                cssSizeBytes,
+                imgSize: fmtSize(imgSizeBytes),
+                imgSizeBytes,
+                fontSize: fmtSize(fontSizeBytes),
+                fontSizeBytes,
+                htmlSize: fmtSize(htmlSizeBytes),
+                htmlSizeBytes,
+                assetCount,
+                pageCount,
+                componentCount: compCount,
+                routeCount,
+              },
+              responseTimeStats,
+              pageSpeeds: [],
+              history: [],
             }));
           } catch (e: any) {
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ lighthouse: { performance: 0, accessibility: 0, bestPractices: 0, seo: 0 }, coreWebVitals: { lcp: '—', fid: '—', cls: '—', ttfb: '—', inp: '—' }, pageSpeeds: [], history: [] }));
+            res.end(JSON.stringify({
+              lighthouse: { performance: 'N/A', accessibility: 'N/A', bestPractices: 'N/A', seo: 'N/A', note: 'يتطلب فحص يدوي' },
+              coreWebVitals: { lcp: 'N/A', fid: 'N/A', cls: 'N/A', ttfb: 'N/A', inp: 'N/A' },
+              buildInfo: { built: false, totalSize: '—', jsSize: '—', cssSize: '—', imgSize: '—', fontSize: '—', pageCount: 0, componentCount: 0, routeCount: 0, assetCount: 0 },
+              responseTimeStats: { avg: 'N/A', p95: 'N/A', p99: 'N/A', count: 0, recentTimes: [] },
+              pageSpeeds: [],
+              history: [],
+            }));
           }
           return;
         }
@@ -1451,6 +2385,20 @@ function adminApiPlugin() {
           return;
         }
 
+        // ── DELETE /api/logs ──────────────────────────────────────────────
+        if (url === "/api/logs" && req.method === "DELETE") {
+          try {
+            let logs: any[] = [];
+            if (fs.existsSync(LOGS_FILE)) { try { logs = JSON.parse(fs.readFileSync(LOGS_FILE, 'utf8')); } catch {} }
+            if (!Array.isArray(logs)) logs = [];
+            const kept = logs.slice(-100);
+            fs.writeFileSync(LOGS_FILE, JSON.stringify(kept, null, 2));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true, removed: logs.length - kept.length, remaining: kept.length }));
+          } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          return;
+        }
+
         // ── POST /api/logs ────────────────────────────────────────────────
         if (url === "/api/logs" && req.method === "POST") {
           let body = "";
@@ -1473,57 +2421,89 @@ function adminApiPlugin() {
           return;
         }
 
-        // ── GET /api/adsense/oauth-status ─────────────────────────────────
-        if (url === "/api/adsense/oauth-status" && req.method === "GET") {
+        // ── AdSense data file helper ──────────────────────────────────────
+        const ADSENSE_FILE = path.resolve(__dirname, "seo-data/adsense-data.json");
+        function loadAdsenseData(): any {
           try {
-            const config = loadConfig();
-            const ads = config.ads || {};
+            if (fs.existsSync(ADSENSE_FILE)) return JSON.parse(fs.readFileSync(ADSENSE_FILE, 'utf8'));
+          } catch {}
+          return {
+            publisherId: '', enabled: false, autoAds: false,
+            placements: { header: true, afterResults: true, sidebar: false, footer: true, inArticle: true },
+            adUnits: [],
+            stats: { todayEarnings: 0, yesterdayEarnings: 0, monthEarnings: 0, lastMonthEarnings: 0, rpm: 0, impressions: 0, clicks: 0, ctr: 0, lastUpdated: null },
+            applicationStatus: 'not_applied', applicationDate: null, applicationNotes: '',
+            compliance: { privacyPolicyUrl: '', gdprEnabled: false, cookieConsentEnabled: false },
+            adsTxt: '',
+          };
+        }
+        function saveAdsenseData(data: any): boolean {
+          try {
+            const dir = path.dirname(ADSENSE_FILE);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(ADSENSE_FILE, JSON.stringify(data, null, 2));
+            return true;
+          } catch { return false; }
+        }
+
+        // ── GET /api/adsense/data — return all adsense data ─────────────
+        if (url === "/api/adsense/data" && req.method === "GET") {
+          try {
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({
-              connected: !!ads.adsensePublisherId,
-              publisherId: ads.adsensePublisherId || '',
-              enabled: !!ads.adsenseEnabled,
-              applicationStatus: ads.applicationStatus || 'not_applied',
-              applicationDate: ads.applicationDate || null,
-              applicationNotes: ads.applicationNotes || '',
-            }));
-          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ connected: false, publisherId: '', enabled: false })); }
+            res.end(JSON.stringify(loadAdsenseData()));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(loadAdsenseData())); }
           return;
         }
 
-        // ── POST /api/adsense/oauth-connect ───────────────────────────────
-        if (url === "/api/adsense/oauth-connect" && req.method === "POST") {
+        // ── POST /api/adsense/data — save all adsense data ──────────────
+        if (url === "/api/adsense/data" && req.method === "POST") {
           let body = "";
           req.on("data", (d: Buffer) => body += d.toString());
           req.on("end", () => {
             try {
-              const { publisherId, enabled, applicationStatus, applicationDate, applicationNotes } = JSON.parse(body);
-              const config = loadConfig();
-              config.ads = config.ads || {};
-              if (publisherId !== undefined) config.ads.adsensePublisherId = publisherId;
-              if (enabled !== undefined) config.ads.adsenseEnabled = enabled;
-              if (applicationStatus !== undefined) config.ads.applicationStatus = applicationStatus;
-              if (applicationDate !== undefined) config.ads.applicationDate = applicationDate;
-              if (applicationNotes !== undefined) config.ads.applicationNotes = applicationNotes;
-              config.apiKeys = config.apiKeys || {};
-              if (publisherId) config.apiKeys.googleAdsense = publisherId;
-              saveConfig(config);
+              const incoming = JSON.parse(body);
+              const current = loadAdsenseData();
+              const merged = { ...current, ...incoming };
+              if (incoming.stats) merged.stats = { ...current.stats, ...incoming.stats };
+              if (incoming.placements) merged.placements = { ...current.placements, ...incoming.placements };
+              if (incoming.compliance) merged.compliance = { ...current.compliance, ...incoming.compliance };
+              saveAdsenseData(merged);
+              const cfg = loadConfig();
+              cfg.ads = cfg.ads || {};
+              if (merged.publisherId !== undefined) cfg.ads.adsensePublisherId = merged.publisherId;
+              if (merged.enabled !== undefined) cfg.ads.adsenseEnabled = merged.enabled;
+              if (merged.publisherId) { cfg.apiKeys = cfg.apiKeys || {}; cfg.apiKeys.googleAdsense = merged.publisherId; }
+              saveConfig(cfg);
               res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ ok: true, message: 'تم الحفظ بنجاح' }));
+              res.end(JSON.stringify({ ok: true }));
             } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
           });
+          return;
+        }
+
+        // ── GET /api/adsense/oauth-status ─────────────────────────────────
+        if (url === "/api/adsense/oauth-status" && req.method === "GET") {
+          try {
+            const ad = loadAdsenseData();
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ connected: false, configured: !!ad.publisherId, publisherId: ad.publisherId || '' }));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ connected: false, configured: false })); }
           return;
         }
 
         // ── POST /api/adsense/oauth-disconnect ────────────────────────────
         if (url === "/api/adsense/oauth-disconnect" && req.method === "POST") {
           try {
-            const config = loadConfig();
-            config.ads = config.ads || {};
-            config.ads.adsensePublisherId = '';
-            config.ads.adsenseEnabled = false;
-            if (config.apiKeys) config.apiKeys.googleAdsense = '';
-            saveConfig(config);
+            const ad = loadAdsenseData();
+            ad.publisherId = '';
+            ad.enabled = false;
+            saveAdsenseData(ad);
+            const cfg = loadConfig();
+            cfg.ads = cfg.ads || {};
+            cfg.ads.adsensePublisherId = '';
+            cfg.ads.adsenseEnabled = false;
+            if (cfg.apiKeys) cfg.apiKeys.googleAdsense = '';
+            saveConfig(cfg);
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify({ ok: true }));
           } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
@@ -1533,20 +2513,54 @@ function adminApiPlugin() {
         // ── GET /api/adsense/stats ────────────────────────────────────────
         if (url === "/api/adsense/stats" && req.method === "GET") {
           try {
-            const config = loadConfig();
-            const ads = config.ads || {};
+            const ad = loadAdsenseData();
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({
-              todayEarnings: ads.todayEarnings || 0,
-              monthEarnings: ads.monthEarnings || 0,
-              rpm: ads.rpm || 0,
-              impressions: ads.impressions || 0,
-              clicks: ads.clicks || 0,
-              ctr: ads.ctr || 0,
-              lastUpdated: ads.statsLastUpdated || null,
-              adSlots: ads.adSlots || [],
-            }));
-          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ todayEarnings: 0, monthEarnings: 0, rpm: 0, impressions: 0, clicks: 0, ctr: 0, adSlots: [] })); }
+            res.end(JSON.stringify({ success: true, stats: ad.stats || {} }));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ success: false, stats: {} })); }
+          return;
+        }
+
+        // ── POST /api/adsense/stats — save manually entered revenue ──────
+        if (url === "/api/adsense/stats" && req.method === "POST") {
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const stats = JSON.parse(body);
+              const ad = loadAdsenseData();
+              ad.stats = { ...(ad.stats || {}), ...stats, lastUpdated: new Date().toLocaleString('ar') };
+              saveAdsenseData(ad);
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true }));
+            } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          });
+          return;
+        }
+
+        // ── GET /api/adsense/ads-txt — read public/ads.txt ──────────────
+        if (url === "/api/adsense/ads-txt" && req.method === "GET") {
+          try {
+            const adsPath = path.resolve(__dirname, "public/ads.txt");
+            const content = fs.existsSync(adsPath) ? fs.readFileSync(adsPath, 'utf8') : '';
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ content }));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ content: '' })); }
+          return;
+        }
+
+        // ── POST /api/adsense/ads-txt — write public/ads.txt ─────────────
+        if (url === "/api/adsense/ads-txt" && req.method === "POST") {
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const { content } = JSON.parse(body);
+              const adsPath = path.resolve(__dirname, "public/ads.txt");
+              fs.writeFileSync(adsPath, content || '', 'utf8');
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true }));
+            } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          });
           return;
         }
 
@@ -1556,16 +2570,24 @@ function adminApiPlugin() {
           req.on("data", (d: Buffer) => body += d.toString());
           req.on("end", () => {
             try {
-              const adsenseConfig = JSON.parse(body);
-              const config = loadConfig();
-              config.ads = config.ads || {};
-              if (adsenseConfig.publisherId !== undefined) config.ads.adsensePublisherId = adsenseConfig.publisherId;
-              if (adsenseConfig.enabled !== undefined) config.ads.adsenseEnabled = adsenseConfig.enabled;
-              if (adsenseConfig.autoAds !== undefined) config.ads.autoAds = adsenseConfig.autoAds;
-              if (adsenseConfig.adUnits !== undefined) config.ads.adUnits = adsenseConfig.adUnits;
-              if (adsenseConfig.placements !== undefined) config.ads.placements = adsenseConfig.placements;
-              if (adsenseConfig.applicationStatus !== undefined) config.ads.applicationStatus = adsenseConfig.applicationStatus;
-              saveConfig(config);
+              const incoming = JSON.parse(body);
+              const ad = loadAdsenseData();
+              if (incoming.publisherId !== undefined) ad.publisherId = incoming.publisherId;
+              if (incoming.enabled !== undefined) ad.enabled = incoming.enabled;
+              if (incoming.autoAds !== undefined) ad.autoAds = incoming.autoAds;
+              if (incoming.adUnits !== undefined) ad.adUnits = incoming.adUnits;
+              if (incoming.placements !== undefined) ad.placements = { ...(ad.placements || {}), ...incoming.placements };
+              if (incoming.applicationStatus !== undefined) ad.applicationStatus = incoming.applicationStatus;
+              if (incoming.applicationDate !== undefined) ad.applicationDate = incoming.applicationDate;
+              if (incoming.applicationNotes !== undefined) ad.applicationNotes = incoming.applicationNotes;
+              if (incoming.compliance !== undefined) ad.compliance = { ...(ad.compliance || {}), ...incoming.compliance };
+              if (incoming.stats !== undefined) ad.stats = { ...(ad.stats || {}), ...incoming.stats };
+              saveAdsenseData(ad);
+              const cfg = loadConfig();
+              cfg.ads = cfg.ads || {};
+              if (ad.publisherId !== undefined) cfg.ads.adsensePublisherId = ad.publisherId;
+              if (ad.enabled !== undefined) cfg.ads.adsenseEnabled = ad.enabled;
+              saveConfig(cfg);
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ ok: true }));
             } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
@@ -1845,31 +2867,72 @@ function adminApiPlugin() {
         }
 
         // ── GET /api/cache/entries ────────────────────────────────────────
-        if (url === "/api/cache/entries" && req.method === "GET") {
+        if (url.startsWith("/api/cache/entries") && req.method === "GET") {
           try {
             const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
             const cacheData = fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {};
             const now = new Date();
-            const entries = Object.entries(cacheData)
-              .filter(([, e]: any) => new Date(e.expiresAt) > now)
-              .map(([key, e]: any) => ({ trackingNumberHash: e.trackingNumberHash || key.slice(0, 4) + '****' + key.slice(-4), carrier: e.carrier || 'USPS', status: e.status || 'Unknown', cachedAt: e.cachedAt, expiresAt: e.expiresAt, hitCount: e.hitCount || 0, lastHit: e.lastHit || e.cachedAt }))
-              .slice(0, 100);
+            const parsedUrl = new URL(url, 'http://localhost');
+            const search = (parsedUrl.searchParams.get('search') || '').toLowerCase();
+            const filterStatus = parsedUrl.searchParams.get('status') || '';
+            const filterExpired = parsedUrl.searchParams.get('expired') || '';
+            const page = parseInt(parsedUrl.searchParams.get('page') || '1');
+            const limit = parseInt(parsedUrl.searchParams.get('limit') || '50');
+            let entries = Object.entries(cacheData)
+              .map(([key, e]: any) => {
+                const isExpired = new Date(e.expiresAt) <= now;
+                const status = e.notFound ? 'Not Found' : (e.status || 'Unknown');
+                return { trackingNumberHash: key, carrier: e.carrier || e.providerUsed || 'USPS', status, cachedAt: e.cachedAt, expiresAt: e.expiresAt, hitCount: e.hitCount || 0, lastHit: e.lastHit || e.cachedAt, expired: isExpired };
+              });
+            if (search) entries = entries.filter(e => e.trackingNumberHash.toLowerCase().includes(search) || e.carrier.toLowerCase().includes(search) || e.status.toLowerCase().includes(search));
+            if (filterStatus) entries = entries.filter(e => e.status.toLowerCase() === filterStatus.toLowerCase());
+            if (filterExpired === 'true') entries = entries.filter(e => e.expired);
+            if (filterExpired === 'false') entries = entries.filter(e => !e.expired);
+            entries.sort((a, b) => new Date(b.cachedAt).getTime() - new Date(a.cachedAt).getTime());
+            const total = entries.length;
+            const paginated = entries.slice((page - 1) * limit, page * limit);
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify(entries));
-          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify([])); }
+            res.end(JSON.stringify({ entries: paginated, total, page, limit, totalPages: Math.ceil(total / limit) }));
+          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ entries: [], total: 0, page: 1, limit: 50, totalPages: 0 })); }
           return;
         }
 
         // ── POST /api/cache/flush ─────────────────────────────────────────
         if (url === "/api/cache/flush" && req.method === "POST") {
-          try {
-            const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
-            const cacheData = fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {};
-            const count = Object.keys(cacheData).length;
-            fs.writeFileSync(TRACKING_CACHE_FILE, '{}');
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ ok: true, flushed: count, message: `تم مسح ${count} إدخال من الكاش` }));
-          } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ ok: true, flushed: 0 })); }
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const TRACKING_CACHE_FILE = path.join(ROOT, 'seo-data', 'tracking-cache.json');
+              const cacheData = fs.existsSync(TRACKING_CACHE_FILE) ? JSON.parse(fs.readFileSync(TRACKING_CACHE_FILE, 'utf8')) : {};
+              const opts = body ? JSON.parse(body) : {};
+              const now = new Date();
+              let flushed = 0;
+              if (opts.mode === 'expired') {
+                for (const [key, e] of Object.entries(cacheData) as any[]) {
+                  if (new Date(e.expiresAt) <= now) { delete cacheData[key]; flushed++; }
+                }
+                fs.writeFileSync(TRACKING_CACHE_FILE, JSON.stringify(cacheData));
+              } else if (opts.mode === 'status' && opts.status) {
+                for (const [key, e] of Object.entries(cacheData) as any[]) {
+                  const s = e.notFound ? 'not found' : (e.status || 'unknown').toLowerCase();
+                  if (s === opts.status.toLowerCase()) { delete cacheData[key]; flushed++; }
+                }
+                fs.writeFileSync(TRACKING_CACHE_FILE, JSON.stringify(cacheData));
+              } else if (opts.mode === 'age' && opts.maxAgeMinutes) {
+                const cutoff = now.getTime() - opts.maxAgeMinutes * 60 * 1000;
+                for (const [key, e] of Object.entries(cacheData) as any[]) {
+                  if (new Date(e.cachedAt).getTime() < cutoff) { delete cacheData[key]; flushed++; }
+                }
+                fs.writeFileSync(TRACKING_CACHE_FILE, JSON.stringify(cacheData));
+              } else {
+                flushed = Object.keys(cacheData).length;
+                fs.writeFileSync(TRACKING_CACHE_FILE, '{}');
+              }
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, flushed, message: `تم مسح ${flushed} إدخال من الكاش` }));
+            } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ ok: true, flushed: 0 })); }
+          });
           return;
         }
 
@@ -1927,6 +2990,25 @@ function adminApiPlugin() {
           return;
         }
 
+        // ── POST /api/scrapers — add a new scraper config ──────────────────
+        if (url === "/api/scrapers" && req.method === "POST") {
+          let body = "";
+          req.on("data", (d: Buffer) => body += d.toString());
+          req.on("end", () => {
+            try {
+              const newScraper = JSON.parse(body);
+              if (!newScraper.id) newScraper.id = 'l' + Date.now();
+              let scrapers: any[] = [];
+              if (fs.existsSync(SCRAPERS_FILE)) { try { scrapers = JSON.parse(fs.readFileSync(SCRAPERS_FILE, 'utf8')); } catch {} }
+              scrapers.push(newScraper);
+              ensureDir(SCRAPERS_FILE); fs.writeFileSync(SCRAPERS_FILE, JSON.stringify(scrapers, null, 2));
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ ok: true, id: newScraper.id }));
+            } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          });
+          return;
+        }
+
         // ── PUT /api/scrapers/:id ─────────────────────────────────────────
         const scraperMatch = url.match(/^\/api\/scrapers\/([^/]+)$/);
         if (scraperMatch && req.method === "PUT") {
@@ -1944,6 +3026,20 @@ function adminApiPlugin() {
               res.end(JSON.stringify({ ok: true }));
             } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
           });
+          return;
+        }
+
+        // ── DELETE /api/scrapers/:id ───────────────────────────────────────
+        const scraperDeleteMatch = url.match(/^\/api\/scrapers\/([^/]+)$/);
+        if (scraperDeleteMatch && req.method === "DELETE") {
+          try {
+            let scrapers: any[] = [];
+            if (fs.existsSync(SCRAPERS_FILE)) { try { scrapers = JSON.parse(fs.readFileSync(SCRAPERS_FILE, 'utf8')); } catch {} }
+            scrapers = scrapers.filter((s: any) => s.id !== scraperDeleteMatch[1]);
+            ensureDir(SCRAPERS_FILE); fs.writeFileSync(SCRAPERS_FILE, JSON.stringify(scrapers, null, 2));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
           return;
         }
 
@@ -2069,39 +3165,285 @@ function adminApiPlugin() {
 
         // ── GET /api/rate-limits/top-ips ─────────────────────────────────
         if (url === "/api/rate-limits/top-ips" && req.method === "GET") {
-          const topIps = Array.from({ length: 10 }, (_, i) => ({
-            id: `rl-${i}`, ipHash: `${['192', '10', '172', '203'][i % 4]}.***.***.*${i}`,
-            requestsCount: Math.floor(Math.random() * 500) + 10,
-            windowStart: new Date(Date.now() - i * 3600000).toISOString(),
-            blocked: i < 2,
-            country: ['US', 'CN', 'RU', 'IN', 'BR', 'DE', 'FR', 'JP', 'KR', 'UK'][i],
-          }));
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify(topIps));
+          try {
+            const TRACKING_LOGS_PATH = path.join(ROOT, 'seo-data', 'tracking-logs.json');
+            const logs: any[] = fs.existsSync(TRACKING_LOGS_PATH) ? JSON.parse(fs.readFileSync(TRACKING_LOGS_PATH, 'utf8')) : [];
+            const rlSettings = fs.existsSync(RATELIMIT_FILE) ? JSON.parse(fs.readFileSync(RATELIMIT_FILE, 'utf8')) : { blacklist: [] };
+            const blacklist: string[] = rlSettings.blacklist || [];
+            const ipMap: Record<string, { count: number; firstSeen: string; lastSeen: string }> = {};
+            for (const log of logs) {
+              const ip = log.ipHash || 'unknown';
+              if (!ipMap[ip]) { ipMap[ip] = { count: 0, firstSeen: log.timestamp, lastSeen: log.timestamp }; }
+              ipMap[ip].count++;
+              if (log.timestamp > ipMap[ip].lastSeen) ipMap[ip].lastSeen = log.timestamp;
+              if (log.timestamp < ipMap[ip].firstSeen) ipMap[ip].firstSeen = log.timestamp;
+            }
+            const topIps = Object.entries(ipMap)
+              .sort((a, b) => b[1].count - a[1].count)
+              .slice(0, 50)
+              .map(([ipHash, info], i) => ({
+                id: `rl-${i}`,
+                ipHash,
+                requestsCount: info.count,
+                windowStart: info.firstSeen,
+                lastRequest: info.lastSeen,
+                blocked: blacklist.includes(ipHash),
+                country: '',
+              }));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(topIps));
+          } catch (e: any) {
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify([]));
+          }
           return;
         }
 
-        // ── POST /api/rate-limits/block, /unblock, /whitelist ────────────
+        // ── POST /api/rate-limits/block/:ipHash ──────────────────────────
+        const blockMatch = url.match(/^\/api\/rate-limits\/block\/(.+)$/);
+        if (blockMatch && req.method === "POST") {
+          try {
+            const ipHash = decodeURIComponent(blockMatch[1]);
+            const rlSettings = fs.existsSync(RATELIMIT_FILE) ? JSON.parse(fs.readFileSync(RATELIMIT_FILE, 'utf8')) : { blacklist: [] };
+            if (!rlSettings.blacklist) rlSettings.blacklist = [];
+            if (!rlSettings.blacklist.includes(ipHash)) rlSettings.blacklist.push(ipHash);
+            ensureDir(RATELIMIT_FILE); fs.writeFileSync(RATELIMIT_FILE, JSON.stringify(rlSettings, null, 2));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          return;
+        }
+
+        // ── POST /api/rate-limits/unblock/:ipHash ────────────────────────
+        const unblockMatch = url.match(/^\/api\/rate-limits\/unblock\/(.+)$/);
+        if (unblockMatch && req.method === "POST") {
+          try {
+            const ipHash = decodeURIComponent(unblockMatch[1]);
+            const rlSettings = fs.existsSync(RATELIMIT_FILE) ? JSON.parse(fs.readFileSync(RATELIMIT_FILE, 'utf8')) : { blacklist: [] };
+            if (!rlSettings.blacklist) rlSettings.blacklist = [];
+            rlSettings.blacklist = rlSettings.blacklist.filter((ip: string) => ip !== ipHash);
+            ensureDir(RATELIMIT_FILE); fs.writeFileSync(RATELIMIT_FILE, JSON.stringify(rlSettings, null, 2));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          return;
+        }
+
+        // ── POST /api/rate-limits/* (other) ──────────────────────────────
         if (url.startsWith("/api/rate-limits/") && req.method === "POST" && !url.includes("/settings")) {
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ ok: true }));
           return;
         }
 
+        // ── Prerender state ─────────────────────────────────────────────
+        const PRERENDER_DIR = path.join(ROOT, 'prerendered');
+        const PRERENDER_STATUS_FILE = path.join(ROOT, 'seo-data', 'prerender-status.json');
+
+        function loadPrerenderStatus() {
+          try {
+            if (fs.existsSync(PRERENDER_STATUS_FILE)) return JSON.parse(fs.readFileSync(PRERENDER_STATUS_FILE, 'utf8'));
+          } catch {}
+          return { running: false, lastRun: null, lastDuration: null, lastTotal: 0, lastSuccess: 0, lastFailed: 0 };
+        }
+        function savePrerenderStatus(s: any) {
+          try {
+            const d = path.dirname(PRERENDER_STATUS_FILE);
+            if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+            fs.writeFileSync(PRERENDER_STATUS_FILE, JSON.stringify(s, null, 2));
+          } catch {}
+        }
+
+        // ── GET /api/prerender/status ───────────────────────────────────
+        if (url === "/api/prerender/status" && req.method === "GET") {
+          try {
+            const st = loadPrerenderStatus();
+            let totalPages = 0, totalSize = 0;
+            if (fs.existsSync(PRERENDER_DIR)) {
+              const walk = (d: string) => {
+                const items = fs.readdirSync(d, { withFileTypes: true });
+                for (const item of items) {
+                  const p = path.join(d, item.name);
+                  if (item.isDirectory()) walk(p);
+                  else if (item.name.endsWith('.html')) { totalPages++; totalSize += fs.statSync(p).size; }
+                }
+              };
+              walk(PRERENDER_DIR);
+            }
+            const formatSize = (b: number) => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB';
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ...st, totalPages, totalSize: formatSize(totalSize), totalSizeBytes: totalSize }));
+          } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          return;
+        }
+
+        // ── GET /api/prerender/pages ────────────────────────────────────
+        if (url === "/api/prerender/pages" && req.method === "GET") {
+          try {
+            const pages: { route: string; size: number; sizeFormatted: string; lastModified: string }[] = [];
+            if (fs.existsSync(PRERENDER_DIR)) {
+              const walk = (d: string) => {
+                const items = fs.readdirSync(d, { withFileTypes: true });
+                for (const item of items) {
+                  const p = path.join(d, item.name);
+                  if (item.isDirectory()) walk(p);
+                  else if (item.name.endsWith('.html')) {
+                    const stat = fs.statSync(p);
+                    const rel = '/' + path.relative(PRERENDER_DIR, p).replace(/[\\\/]index\.html$/, '').replace(/\.html$/, '').replace(/\\/g, '/');
+                    const route = rel === '/index' ? '/' : rel;
+                    const formatSize = (b: number) => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB';
+                    pages.push({ route, size: stat.size, sizeFormatted: formatSize(stat.size), lastModified: stat.mtime.toISOString() });
+                  }
+                }
+              };
+              walk(PRERENDER_DIR);
+            }
+            pages.sort((a, b) => a.route.localeCompare(b.route));
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ pages, total: pages.length }));
+          } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          return;
+        }
+
+        // ── DELETE /api/prerender/pages/* ────────────────────────────────
+        if (url.startsWith("/api/prerender/pages/") && req.method === "DELETE") {
+          try {
+            const route = decodeURIComponent(url.slice("/api/prerender/pages".length));
+            const filePath = path.join(PRERENDER_DIR, route, 'index.html');
+            const filePath2 = path.join(PRERENDER_DIR, route + '.html');
+            let deleted = false;
+            if (fs.existsSync(filePath)) { fs.unlinkSync(filePath); deleted = true; try { const dir = path.dirname(filePath); if (fs.readdirSync(dir).length === 0) fs.rmdirSync(dir); } catch {} }
+            else if (fs.existsSync(filePath2)) { fs.unlinkSync(filePath2); deleted = true; }
+            res.setHeader("Content-Type", "application/json");
+            if (deleted) { res.end(JSON.stringify({ ok: true })); }
+            else { res.statusCode = 404; res.end(JSON.stringify({ error: 'Page not found' })); }
+          } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          return;
+        }
+
+        // ── POST /api/prerender/start ───────────────────────────────────
+        if (url.startsWith("/api/prerender/start") && req.method === "POST") {
+          const parsed = new URL(url, 'http://localhost');
+          const concurrency = parsed.searchParams.get('concurrency') || '5';
+          const waitTime = parsed.searchParams.get('waitTime') || '800';
+          const restartEvery = parsed.searchParams.get('restartEvery') || '200';
+          const skipExisting = parsed.searchParams.get('skipExisting') || 'false';
+          const routes = parsed.searchParams.get('routes') || '';
+
+          const st = loadPrerenderStatus();
+          st.running = true;
+          savePrerenderStatus(st);
+
+          const routeArgs = routes ? ` --routes "${routes}"` : '';
+          const cmd = `node scripts/prerender.cjs --concurrency ${concurrency} --waitTime ${waitTime} --restartEvery ${restartEvery} --skipExisting ${skipExisting}${routeArgs} 2>&1`;
+
+          res.setHeader("Content-Type", "text/event-stream");
+          res.setHeader("Cache-Control", "no-cache");
+          res.setHeader("Connection", "keep-alive");
+          res.setHeader("Access-Control-Allow-Origin", "*");
+
+          const send = (data: object) => { try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch {} };
+          send({ type: "log", line: `[START] ▶ بدء عملية Prerender...` });
+          send({ type: "log", line: `⚙️ التوازي: ${concurrency} | الانتظار: ${waitTime}ms | إعادة تشغيل كل: ${restartEvery} صفحة` });
+
+          const startTime = Date.now();
+          const child = spawn("bash", ["-c", cmd], { cwd: ROOT });
+
+          (global as any).__prerenderChild = child;
+
+          let totalPages = 0, donePages = 0, successPages = 0, failedPages = 0;
+
+          child.stdout.on("data", (d: Buffer) => {
+            const lines = d.toString().split("\n").filter(Boolean);
+            for (const line of lines) {
+              if (line.includes('Total pages:') || line.includes('total:')) {
+                const m = line.match(/(\d+)/);
+                if (m) totalPages = parseInt(m[1]);
+              }
+              if (line.includes('✅') || line.includes('SUCCESS') || line.includes('[OK]')) {
+                donePages++; successPages++;
+              } else if (line.includes('❌') || line.includes('FAIL') || line.includes('[ERR]')) {
+                donePages++; failedPages++;
+              }
+
+              send({ type: "log", line });
+              send({ type: "progress", total: totalPages, done: donePages, success: successPages, failed: failedPages, page: line.slice(0, 120), phase: totalPages > 0 ? `جارٍ التوليد (${donePages}/${totalPages})` : 'جارٍ التوليد...' });
+            }
+          });
+          child.stderr.on("data", (d: Buffer) => {
+            d.toString().split("\n").filter(Boolean).forEach((line: string) => send({ type: "log", line: `[WARN] ${line}` }));
+          });
+          child.on("close", (code: number) => {
+            const elapsed = Math.round((Date.now() - startTime) / 1000);
+            const formatTime = (s: number) => s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+            send({ type: "summary", success: successPages, failed: failedPages, elapsed: formatTime(elapsed), size: '' });
+            send({ type: "log", line: `[DONE] ✅ اكتملت عملية Prerender (${formatTime(elapsed)})` });
+            send({ type: "progress", total: totalPages, done: donePages, success: successPages, failed: failedPages, page: '', phase: 'اكتمل ✅' });
+
+            const stFinal = loadPrerenderStatus();
+            stFinal.running = false;
+            stFinal.lastRun = new Date().toISOString();
+            stFinal.lastDuration = elapsed;
+            stFinal.lastTotal = totalPages;
+            stFinal.lastSuccess = successPages;
+            stFinal.lastFailed = failedPages;
+            savePrerenderStatus(stFinal);
+
+            (global as any).__prerenderChild = null;
+            res.end();
+          });
+          child.on("error", (e: Error) => {
+            send({ type: "log", line: `[ERROR] ${e.message}` });
+            const stErr = loadPrerenderStatus(); stErr.running = false; savePrerenderStatus(stErr);
+            (global as any).__prerenderChild = null;
+            res.end();
+          });
+          return;
+        }
+
+        // ── POST /api/prerender/stop ────────────────────────────────────
+        if (url === "/api/prerender/stop" && req.method === "POST") {
+          try {
+            const child = (global as any).__prerenderChild;
+            if (child && !child.killed) { child.kill('SIGTERM'); }
+            (global as any).__prerenderChild = null;
+            const st = loadPrerenderStatus(); st.running = false; savePrerenderStatus(st);
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
+          return;
+        }
+
         // ── GET/POST /api/api-settings ────────────────────────────────────
         if (url === "/api/api-settings") {
           const DEFAULT_API_SETTINGS = {
-            siteName: 'US Postal Tracking', adminEmail: 'admin@uspostaltracking.com', timezone: 'UTC',
-            defaultLanguage: 'ar', maintenanceMode: false,
-            notifications: { providerExhausted: true, allFail: true, lowCacheRate: true, highErrorRate: false, dailyReport: true },
-            responseFormat: 'json',
+            defaultTimeout: 30000,
+            maxRetries: 3,
+            loggingLevel: 'info',
+            rateLimitEnabled: true,
+            vpnBlockingEnabled: false,
+            corsEnabled: true,
+            captchaEnabled: false,
+            captchaThreshold: 100,
+            cacheEnabled: true,
+            cacheTTL: 3600,
+            maintenanceMode: false,
+            maintenanceMessage: '',
           };
           if (req.method === "GET") {
             try {
-              const data = fs.existsSync(API_SETTINGS_FILE) ? JSON.parse(fs.readFileSync(API_SETTINGS_FILE, 'utf8')) : DEFAULT_API_SETTINGS;
+              const cfg = loadConfig();
+              const apiSettings = cfg.apiSettings || {};
+              const merged = { ...DEFAULT_API_SETTINGS, ...apiSettings };
+              if (cfg.site?.maintenanceMode !== undefined && apiSettings.maintenanceMode === undefined) {
+                merged.maintenanceMode = cfg.site.maintenanceMode;
+              }
+              if (cfg.site?.maintenanceMessage !== undefined && apiSettings.maintenanceMessage === undefined) {
+                merged.maintenanceMessage = cfg.site.maintenanceMessage;
+              }
               res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify(data));
-            } catch { res.end(JSON.stringify(DEFAULT_API_SETTINGS)); }
+              res.end(JSON.stringify(merged));
+            } catch { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(DEFAULT_API_SETTINGS)); }
             return;
           }
           if (req.method === "POST") {
@@ -2109,8 +3451,27 @@ function adminApiPlugin() {
             req.on("data", (d: Buffer) => body += d.toString());
             req.on("end", () => {
               try {
-                const data = JSON.parse(body);
-                ensureDir(API_SETTINGS_FILE); fs.writeFileSync(API_SETTINGS_FILE, JSON.stringify(data, null, 2));
+                const incoming = JSON.parse(body);
+                const cfg = loadConfig();
+                cfg.apiSettings = {
+                  defaultTimeout: incoming.defaultTimeout ?? DEFAULT_API_SETTINGS.defaultTimeout,
+                  maxRetries: incoming.maxRetries ?? DEFAULT_API_SETTINGS.maxRetries,
+                  loggingLevel: incoming.loggingLevel ?? DEFAULT_API_SETTINGS.loggingLevel,
+                  rateLimitEnabled: incoming.rateLimitEnabled ?? DEFAULT_API_SETTINGS.rateLimitEnabled,
+                  vpnBlockingEnabled: incoming.vpnBlockingEnabled ?? DEFAULT_API_SETTINGS.vpnBlockingEnabled,
+                  corsEnabled: incoming.corsEnabled ?? DEFAULT_API_SETTINGS.corsEnabled,
+                  captchaEnabled: incoming.captchaEnabled ?? DEFAULT_API_SETTINGS.captchaEnabled,
+                  captchaThreshold: incoming.captchaThreshold ?? DEFAULT_API_SETTINGS.captchaThreshold,
+                  cacheEnabled: incoming.cacheEnabled ?? DEFAULT_API_SETTINGS.cacheEnabled,
+                  cacheTTL: incoming.cacheTTL ?? DEFAULT_API_SETTINGS.cacheTTL,
+                  maintenanceMode: incoming.maintenanceMode ?? DEFAULT_API_SETTINGS.maintenanceMode,
+                  maintenanceMessage: incoming.maintenanceMessage ?? DEFAULT_API_SETTINGS.maintenanceMessage,
+                };
+                if (cfg.site) {
+                  cfg.site.maintenanceMode = cfg.apiSettings.maintenanceMode;
+                  cfg.site.maintenanceMessage = cfg.apiSettings.maintenanceMessage;
+                }
+                saveConfig(cfg);
                 res.setHeader("Content-Type", "application/json");
                 res.end(JSON.stringify({ ok: true }));
               } catch (e: any) { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); }
