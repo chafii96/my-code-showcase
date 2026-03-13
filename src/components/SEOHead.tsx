@@ -61,7 +61,7 @@ const SEOHead = ({
   canonical,
   type = "website",
   keywords = "",
-  ogImage = "https://uspostaltracking.com/og-image.png",
+  ogImage = "https://uspostaltracking.com/og-image.webp",
   noindex = false,
   structuredData,
   city,
@@ -116,14 +116,14 @@ const SEOHead = ({
     logo: {
       "@type": "ImageObject",
       "@id": "https://uspostaltracking.com/#logo",
-      url: "https://uspostaltracking.com/favicon.png",
+      url: "https://uspostaltracking.com/favicon.webp",
       width: 512,
       height: 512,
       caption: "US Postal Tracking Logo"
     },
     image: {
       "@type": "ImageObject",
-      url: "https://uspostaltracking.com/og-image.png",
+      url: "https://uspostaltracking.com/og-image.webp",
       width: 1200,
       height: 630
     },

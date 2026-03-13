@@ -689,13 +689,32 @@ app.get('/api/visitors', (req, res) => {
 
 // ── Serve static files from dist/ ─────────────────────────────────────────────
 const DIST_DIR = path.join(ROOT, 'dist');
+
+// ── Bot/crawler detection ─────────────────────────────────────────────────────
+const BOT_PATTERNS = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|facebookexternalhit|ia_archiver|semrushbot|ahrefsbot|mj12bot|dotbot|rogerbot|screaming.frog|lighthouse|headlesschrome|prerender|crawler|spider|bot\b/i;
+const isBot = (req) => {
+  const ua = req.headers['user-agent'] || '';
+  return BOT_PATTERNS.test(ua);
+};
+
 if (fs.existsSync(DIST_DIR)) {
+  // Serve static assets (JS, CSS, images, etc.) with long cache
   app.use(express.static(DIST_DIR, { maxAge: '1h', etag: true }));
-  // SPA catch-all: serve index.html for all non-API routes
+
+  // SPA catch-all: crawlers get pre-rendered HTML, users get React SPA
   app.use((req, res) => {
-    const file = path.join(DIST_DIR, req.path, 'index.html');
-    if (fs.existsSync(file)) { res.sendFile(file); return; }
-    res.sendFile(path.join(DIST_DIR, 'index.html'));
+    const prerendered = path.join(DIST_DIR, req.path, 'index.html');
+    const spaIndex = path.join(DIST_DIR, 'index.html');
+
+    if (isBot(req) && fs.existsSync(prerendered)) {
+      // SEO crawlers → serve rich pre-rendered HTML for indexing
+      return res.sendFile(prerendered);
+    }
+    // Real users → always get the React SPA (full interactivity)
+    if (fs.existsSync(spaIndex)) {
+      return res.sendFile(spaIndex);
+    }
+    res.status(404).send('Not found');
   });
 } else {
   app.get('/', (req, res) => res.send('<h1>US Postal Tracking</h1><p>Run <code>npm run build:client-only</code> first to build the frontend.</p>'));
