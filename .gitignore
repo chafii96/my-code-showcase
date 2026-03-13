@@ -10,9 +10,8 @@ lerna-debug.log*
 # Dependencies
 node_modules
 
-# DO NOT ignore dist/ — Hostinger needs the built files
-# dist
-
+# Build output (Hostinger builds this itself via npm run build)
+dist
 dist-ssr
 *.local
 
