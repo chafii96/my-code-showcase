@@ -1,11 +1,12 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "us-postal-tracking",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "app.js",
   "scripts": {
     "dev": "vite --port 5000 --host 0.0.0.0",
-    "start": "node server-prod.cjs",
+    "start": "node app.js",
     "build": "vite build",
     "build:full": "node scripts/generate-all.cjs && vite build && node scripts/prerender.cjs",
     "build:client-only": "vite build",
