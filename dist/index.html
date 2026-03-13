@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- ===== THEME COLOR ===== -->
+    <meta name="theme-color" content="#1a56db" />
+
+    <!-- ===== FORMAT DETECTION ===== -->
+    <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+
+    <!-- ===== ROBOTS ===== -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
+    <!-- ===== FONT PRELOAD ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+
+    <!-- ===== ICONS ===== -->
+    <link rel="icon" href="/favicon.webp?v=kite2" type="image/webp" />
+    <link rel="apple-touch-icon" href="/favicon.webp?v=kite2" sizes="180x180" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- ===== TITLE & META ===== -->
+    <title>USPS Tracking – Track Your USPS Package & Mail in Real Time</title>
+    <meta name="description" content="Free USPS tracking tool. Track USPS packages, mail, and shipments by tracking number. Real-time delivery status updates. Track FedEx, UPS, DHL, and 200+ carriers worldwide." />
+    <meta name="author" content="US Postal Tracking" />
+    <meta name="copyright" content="US Postal Tracking" />
+    <meta name="keywords" content="USPS tracking, package tracking, mail tracking, track package, track my package, USPS tracking number, FedEx tracking, UPS tracking, DHL tracking, parcel tracking, usps package tracking, post office tracking, postal tracking" />
+
+    <!-- ===== CANONICAL URL: Managed dynamically by SEOHead component per page ===== -->
+
+    <!-- ===== PRECONNECT & DNS PREFETCH (Optimized - Max 4 preconnects) ===== -->
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+    <link rel="dns-prefetch" href="//www.google-analytics.com" />
+    <link rel="dns-prefetch" href="//stats.g.doubleclick.net" />
+    <link rel="dns-prefetch" href="//ep1.adtrafficquality.google" />
+    <link rel="dns-prefetch" href="//ep2.adtrafficquality.google" />
+
+    <!-- ===== OPEN GRAPH ===== -->
+    <meta property="og:title" content="USPS Tracking – Track Your USPS Package & Mail in Real Time" />
+    <meta property="og:description" content="Free USPS tracking tool. Track USPS packages, mail, and shipments by tracking number. Real-time delivery status updates. Track FedEx, UPS, DHL, and 200+ carriers worldwide." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://uspostaltracking.com/" />
+    <meta property="og:image" content="https://uspostaltracking.com/og-image.webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="US Postal Tracking" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ===== TWITTER CARD ===== -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@uspostaltracking" />
+    <meta name="twitter:title" content="USPS Tracking – Track Your USPS Package & Mail in Real Time" />
+    <meta name="twitter:description" content="Free USPS tracking tool. Track USPS packages in real time." />
+    <meta name="twitter:image" content="https://uspostaltracking.com/og-image.webp" />
+
+    <!-- ===== HREFLANG: Managed dynamically by SEOHead component per page ===== -->
+
+    <!-- ===== SCHEMA MARKUP: Managed dynamically by SEOHead component per page ===== -->
+    <!-- Organization, WebSite, and BreadcrumbList schemas are injected by SEOHead.tsx to avoid duplicates -->
+
+    <!-- ===== GOOGLE CONSENT MODE V2 ===== -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+
+      // Detect EU/UK visitors for GDPR compliance
+      var euTz = ['Europe','Atlantic','Africa/Ceuta','Africa/Tunis'];
+      var isEU = euTz.some(function(tz){ return (Intl.DateTimeFormat().resolvedOptions().timeZone||'').indexOf(tz) === 0; });
+
+      if (isEU) {
+        gtag('consent', 'default', {
+          'ad_storage': 'denied',
+          'analytics_storage': 'denied',
+          'ad_user_data': 'denied',
+          'ad_personalization': 'denied',
+          'wait_for_update': 500
+        });
+      } else {
+        gtag('consent', 'default', {
+          'ad_storage': 'granted',
+          'analytics_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'granted'
+        });
+      }
+      gtag('js', new Date());
+    </script>
+
+    <!-- ===== GOOGLE ANALYTICS GA-4 ===== -->
+    <!-- ⚠️ TODO: Replace G-XXXXXXXXXX with your real GA4 Measurement ID from analytics.google.com -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX', {
+        'anonymize_ip': true,
+        'page_path': window.location.pathname,
+        'send_page_view': true
+      });
+    </script>
+
+    <!-- ===== CONSENT HELPERS ===== -->
+    <script>
+      window.hasAnalyticsConsent = function() {
+        var euTz = ['Europe','Atlantic','Africa/Ceuta','Africa/Tunis'];
+        var isEU = euTz.some(function(tz){ return (Intl.DateTimeFormat().resolvedOptions().timeZone||'').indexOf(tz) === 0; });
+        if (!isEU) return true;
+        var cookies = document.cookie.split(';');
+        if (cookies.some(function(c){ return c.trim().indexOf('FCCDCF=') === 0; }) ||
+            cookies.some(function(c){ return c.trim().indexOf('FCNEC=') === 0; })) return true;
+        return localStorage.getItem('consent_status') === 'accepted';
+      };
+
+      window.trackConsentAwareEvent = function(eventName, parameters) {
+        if (window.hasAnalyticsConsent() && typeof gtag !== 'undefined') {
+          gtag('event', eventName, parameters || {});
+        }
+      };
+
+      window.trackConsentAwarePageView = function(pagePath) {
+        if (window.hasAnalyticsConsent() && typeof gtag !== 'undefined') {
+          gtag('config', 'G-XXXXXXXXXX', {
+            'page_path': pagePath || window.location.pathname,
+            'anonymize_ip': true
+          });
+        }
+      };
+    </script>
+    <script type="module" crossorigin src="/assets/js/index-D4Zii221.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-icons-DGP7sHuS.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-query-DKeyzi4J.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-akK2ueI4.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-ui-CZfpcWRh.js">
+    <link rel="stylesheet" crossorigin href="/assets/css/index-CZ_B2SER.css">
+  </head>
+
+  <body>
+    <!-- ===== SKIP TO CONTENT (Accessibility) ===== -->
+    <a href="#main-content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;" onfocus="this.style.cssText='position:absolute;top:8px;left:8px;z-index:9999;background:#fff;color:#1a56db;padding:8px 16px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.2);text-decoration:underline;font-weight:600;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">Skip to main content</a>
+
+    <div id="root">
+      <div id="initial-loader" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f1729;gap:1rem">
+        <img src="/images/loader-logo.webp" alt="" width="72" height="72" style="animation:float-logo 2s ease-in-out infinite" />
+        <div style="width:32px;height:32px;border:3px solid rgba(255,255,255,0.08);border-top-color:#34d399;border-radius:50%;animation:spin .7s linear infinite"></div>
+      </div>
+      <style>
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes float-logo{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+      </style>
+    </div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+
+    <!-- ===== NOSCRIPT: Crawlable links for search engines & site auditors ===== -->
+    <noscript>
+      <nav aria-label="Site Navigation">
+        <h1>US Postal Tracking — Site Directory</h1>
+
+        <h3>Main Pages</h3>
+        <ul>
+          <li><a href="/">USPS Tracking — Track Your Package</a></li>
+          <li><a href="/tracking">All Carriers Directory — 200+ Carriers</a></li>
+          <li><a href="/locations">USPS Locations Near You</a></li>
+          <li><a href="/guides">Shipping Guides</a></li>
+          <li><a href="/knowledge-center">Knowledge Center</a></li>
+          <li><a href="/article">Articles</a></li>
+          <li><a href="/about">About Us</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/sitemap">Full Sitemap</a></li>
+        </ul>
+
+        <h3>Guides</h3>
+        <ul>
+          <li><a href="/guides/tracking-number-format">Tracking Number Format Guide</a></li>
+          <li><a href="/guides/informed-delivery">USPS Informed Delivery</a></li>
+          <li><a href="/guides/international-shipping-rates">International Shipping Rates</a></li>
+          <li><a href="/guides/tracking-not-updating">Tracking Not Updating</a></li>
+          <li><a href="/guides/track-without-tracking-number">Track Without Number</a></li>
+          <li><a href="/guides/usps-mobile-tracking">Mobile Tracking</a></li>
+        </ul>
+
+        <h3>Knowledge Center</h3>
+        <ul>
+          <li><a href="/knowledge-center/customs-clearance-guide">Customs Clearance Guide</a></li>
+          <li><a href="/knowledge-center/international-shipping-guide">International Shipping Guide</a></li>
+          <li><a href="/knowledge-center/lost-package-guide">Lost Package Guide</a></li>
+          <li><a href="/knowledge-center/tracking-number-formats">Tracking Number Formats</a></li>
+          <li><a href="/knowledge-center/delivery-times-by-carrier">Delivery Times by Carrier</a></li>
+          <li><a href="/knowledge-center/customs-duties-taxes">Customs Duties &amp; Taxes</a></li>
+          <li><a href="/knowledge-center/shipping-restrictions">Shipping Restrictions</a></li>
+          <li><a href="/knowledge-center/best-shipping-carriers">Best Shipping Carriers 2026</a></li>
+        </ul>
+
+        <h3>Landing Pages</h3>
+        <ul>
+          <li><a href="/post-office-tracking">Post Office Tracking</a></li>
+          <li><a href="/mail-tracking">Mail Tracking</a></li>
+          <li><a href="/postal-tracking">Postal Tracking</a></li>
+          <li><a href="/track-usps">Track USPS</a></li>
+          <li><a href="/usa-tracking">USA Tracking</a></li>
+          <li><a href="/package-tracker-usps">Package Tracker USPS</a></li>
+          <li><a href="/where-is-my-package">Where Is My Package?</a></li>
+          <li><a href="/usps-delivery-time">USPS Delivery Time</a></li>
+          <li><a href="/usps-lost-package">USPS Lost Package</a></li>
+          <li><a href="/usps-schedule-pickup">Schedule Pickup</a></li>
+          <li><a href="/usps-hold-for-pickup">Hold for Pickup</a></li>
+          <li><a href="/usps-change-address">Change Address</a></li>
+          <li><a href="/usps-package-not-delivered">Package Not Delivered</a></li>
+          <li><a href="/usps-shipping-calculator">Shipping Calculator</a></li>
+        </ul>
+
+        <h3>Tracking Statuses</h3>
+        <ul>
+          <li><a href="/status/in-transit">In Transit</a></li>
+          <li><a href="/status/out-for-delivery">Out for Delivery</a></li>
+          <li><a href="/status/delivered">Delivered</a></li>
+          <li><a href="/status/delivery-attempted">Delivery Attempted</a></li>
+          <li><a href="/status/pre-shipment">Pre-Shipment</a></li>
+          <li><a href="/status/customs-clearance">Customs Clearance</a></li>
+          <li><a href="/status/return-to-sender">Return to Sender</a></li>
+          <li><a href="/status/alert">Alert</a></li>
+          <li><a href="/status/label-created">Label Created</a></li>
+          <li><a href="/status/in-transit-to-next-facility">In Transit to Next Facility</a></li>
+          <li><a href="/status/departed-shipping-partner-facility">Departed Shipping Partner Facility</a></li>
+          <li><a href="/status/arrived-at-hub">Arrived at Hub</a></li>
+          <li><a href="/status/alert-notice-left">Alert Notice Left</a></li>
+          <li><a href="/status/held-at-post-office">Held at Post Office</a></li>
+          <li><a href="/status/shipping-label-created">Shipping Label Created</a></li>
+        </ul>
+
+        <h3>US States</h3>
+        <ul>
+          <li><a href="/state/alabama">Alabama</a></li>
+          <li><a href="/state/alaska">Alaska</a></li>
+          <li><a href="/state/arizona">Arizona</a></li>
+          <li><a href="/state/arkansas">Arkansas</a></li>
+          <li><a href="/state/california">California</a></li>
+          <li><a href="/state/colorado">Colorado</a></li>
+          <li><a href="/state/connecticut">Connecticut</a></li>
+          <li><a href="/state/delaware">Delaware</a></li>
+          <li><a href="/state/florida">Florida</a></li>
+          <li><a href="/state/georgia">Georgia</a></li>
+          <li><a href="/state/hawaii">Hawaii</a></li>
+          <li><a href="/state/idaho">Idaho</a></li>
+          <li><a href="/state/illinois">Illinois</a></li>
+          <li><a href="/state/indiana">Indiana</a></li>
+          <li><a href="/state/iowa">Iowa</a></li>
+          <li><a href="/state/kansas">Kansas</a></li>
+          <li><a href="/state/kentucky">Kentucky</a></li>
+          <li><a href="/state/louisiana">Louisiana</a></li>
+          <li><a href="/state/maine">Maine</a></li>
+          <li><a href="/state/maryland">Maryland</a></li>
+          <li><a href="/state/massachusetts">Massachusetts</a></li>
+          <li><a href="/state/michigan">Michigan</a></li>
+          <li><a href="/state/minnesota">Minnesota</a></li>
+          <li><a href="/state/mississippi">Mississippi</a></li>
+          <li><a href="/state/missouri">Missouri</a></li>
+          <li><a href="/state/montana">Montana</a></li>
+          <li><a href="/state/nebraska">Nebraska</a></li>
+          <li><a href="/state/nevada">Nevada</a></li>
+          <li><a href="/state/new-hampshire">New Hampshire</a></li>
+          <li><a href="/state/new-jersey">New Jersey</a></li>
+          <li><a href="/state/new-mexico">New Mexico</a></li>
+          <li><a href="/state/new-york">New York</a></li>
+          <li><a href="/state/north-carolina">North Carolina</a></li>
+          <li><a href="/state/north-dakota">North Dakota</a></li>
+          <li><a href="/state/ohio">Ohio</a></li>
+          <li><a href="/state/oklahoma">Oklahoma</a></li>
+          <li><a href="/state/oregon">Oregon</a></li>
+          <li><a href="/state/pennsylvania">Pennsylvania</a></li>
+          <li><a href="/state/rhode-island">Rhode Island</a></li>
+          <li><a href="/state/south-carolina">South Carolina</a></li>
+          <li><a href="/state/south-dakota">South Dakota</a></li>
+          <li><a href="/state/tennessee">Tennessee</a></li>
+          <li><a href="/state/texas">Texas</a></li>
+          <li><a href="/state/utah">Utah</a></li>
+          <li><a href="/state/vermont">Vermont</a></li>
+          <li><a href="/state/virginia">Virginia</a></li>
+          <li><a href="/state/washington">Washington</a></li>
+          <li><a href="/state/west-virginia">West Virginia</a></li>
+          <li><a href="/state/wisconsin">Wisconsin</a></li>
+          <li><a href="/state/wyoming">Wyoming</a></li>
+        </ul>
+
+        <h3>US Cities — USPS Post Office Locations</h3>
+        <ul>
+          <li><a href="/city/new-york-ny">New York, NY</a></li>
+          <li><a href="/city/buffalo-ny">Buffalo, NY</a></li>
+          <li><a href="/city/rochester-ny">Rochester, NY</a></li>
+          <li><a href="/city/yonkers-ny">Yonkers, NY</a></li>
+          <li><a href="/city/syracuse-ny">Syracuse, NY</a></li>
+          <li><a href="/city/albany-ny">Albany, NY</a></li>
+          <li><a href="/city/new-rochelle-ny">New Rochelle, NY</a></li>
+          <li><a href="/city/mount-vernon-ny">Mount Vernon, NY</a></li>
+          <li><a href="/city/los-angeles-ca">Los Angeles, CA</a></li>
+          <li><a href="/city/san-diego-ca">San Diego, CA</a></li>
+          <li><a href="/city/san-jose-ca">San Jose, CA</a></li>
+          <li><a href="/city/san-francisco-ca">San Francisco, CA</a></li>
+          <li><a href="/city/fresno-ca">Fresno, CA</a></li>
+          <li><a href="/city/sacramento-ca">Sacramento, CA</a></li>
+          <li><a href="/city/long-beach-ca">Long Beach, CA</a></li>
+          <li><a href="/city/oakland-ca">Oakland, CA</a></li>
+          <li><a href="/city/bakersfield-ca">Bakersfield, CA</a></li>
+          <li><a href="/city/anaheim-ca">Anaheim, CA</a></li>
+          <li><a href="/city/riverside-ca">Riverside, CA</a></li>
+          <li><a href="/city/stockton-ca">Stockton, CA</a></li>
+          <li><a href="/city/irvine-ca">Irvine, CA</a></li>
+          <li><a href="/city/chula-vista-ca">Chula Vista, CA</a></li>
+          <li><a href="/city/santa-ana-ca">Santa Ana, CA</a></li>
+          <li><a href="/city/modesto-ca">Modesto, CA</a></li>
+          <li><a href="/city/houston-tx">Houston, TX</a></li>
+          <li><a href="/city/dallas-tx">Dallas, TX</a></li>
+          <li><a href="/city/san-antonio-tx">San Antonio, TX</a></li>
+          <li><a href="/city/austin-tx">Austin, TX</a></li>
+          <li><a href="/city/fort-worth-tx">Fort Worth, TX</a></li>
+          <li><a href="/city/el-paso-tx">El Paso, TX</a></li>
+          <li><a href="/city/arlington-tx">Arlington, TX</a></li>
+          <li><a href="/city/corpus-christi-tx">Corpus Christi, TX</a></li>
+          <li><a href="/city/plano-tx">Plano, TX</a></li>
+          <li><a href="/city/lubbock-tx">Lubbock, TX</a></li>
+          <li><a href="/city/laredo-tx">Laredo, TX</a></li>
+          <li><a href="/city/irving-tx">Irving, TX</a></li>
+          <li><a href="/city/garland-tx">Garland, TX</a></li>
+          <li><a href="/city/amarillo-tx">Amarillo, TX</a></li>
+          <li><a href="/city/grand-prairie-tx">Grand Prairie, TX</a></li>
+          <li><a href="/city/miami-fl">Miami, FL</a></li>
+          <li><a href="/city/jacksonville-fl">Jacksonville, FL</a></li>
+          <li><a href="/city/tampa-fl">Tampa, FL</a></li>
+          <li><a href="/city/orlando-fl">Orlando, FL</a></li>
+          <li><a href="/city/st-petersburg-fl">St. Petersburg, FL</a></li>
+          <li><a href="/city/hialeah-fl">Hialeah, FL</a></li>
+          <li><a href="/city/tallahassee-fl">Tallahassee, FL</a></li>
+          <li><a href="/city/fort-lauderdale-fl">Fort Lauderdale, FL</a></li>
+          <li><a href="/city/port-st-lucie-fl">Port St. Lucie, FL</a></li>
+          <li><a href="/city/cape-coral-fl">Cape Coral, FL</a></li>
+          <li><a href="/city/pembroke-pines-fl">Pembroke Pines, FL</a></li>
+          <li><a href="/city/chicago-il">Chicago, IL</a></li>
+          <li><a href="/city/aurora-il">Aurora, IL</a></li>
+          <li><a href="/city/joliet-il">Joliet, IL</a></li>
+          <li><a href="/city/rockford-il">Rockford, IL</a></li>
+          <li><a href="/city/naperville-il">Naperville, IL</a></li>
+          <li><a href="/city/springfield-il">Springfield, IL</a></li>
+          <li><a href="/city/peoria-il">Peoria, IL</a></li>
+          <li><a href="/city/philadelphia-pa">Philadelphia, PA</a></li>
+          <li><a href="/city/pittsburgh-pa">Pittsburgh, PA</a></li>
+          <li><a href="/city/allentown-pa">Allentown, PA</a></li>
+          <li><a href="/city/erie-pa">Erie, PA</a></li>
+          <li><a href="/city/reading-pa">Reading, PA</a></li>
+          <li><a href="/city/scranton-pa">Scranton, PA</a></li>
+          <li><a href="/city/phoenix-az">Phoenix, AZ</a></li>
+          <li><a href="/city/tucson-az">Tucson, AZ</a></li>
+          <li><a href="/city/mesa-az">Mesa, AZ</a></li>
+          <li><a href="/city/chandler-az">Chandler, AZ</a></li>
+          <li><a href="/city/scottsdale-az">Scottsdale, AZ</a></li>
+          <li><a href="/city/glendale-az">Glendale, AZ</a></li>
+          <li><a href="/city/gilbert-az">Gilbert, AZ</a></li>
+          <li><a href="/city/tempe-az">Tempe, AZ</a></li>
+          <li><a href="/city/atlanta-ga">Atlanta, GA</a></li>
+          <li><a href="/city/columbus-ga">Columbus, GA</a></li>
+          <li><a href="/city/savannah-ga">Savannah, GA</a></li>
+          <li><a href="/city/augusta-ga">Augusta, GA</a></li>
+          <li><a href="/city/macon-ga">Macon, GA</a></li>
+          <li><a href="/city/seattle-wa">Seattle, WA</a></li>
+          <li><a href="/city/spokane-wa">Spokane, WA</a></li>
+          <li><a href="/city/tacoma-wa">Tacoma, WA</a></li>
+          <li><a href="/city/bellevue-wa">Bellevue, WA</a></li>
+          <li><a href="/city/kent-wa">Kent, WA</a></li>
+          <li><a href="/city/everett-wa">Everett, WA</a></li>
+          <li><a href="/city/denver-co">Denver, CO</a></li>
+          <li><a href="/city/colorado-springs-co">Colorado Springs, CO</a></li>
+          <li><a href="/city/aurora-co">Aurora, CO</a></li>
+          <li><a href="/city/fort-collins-co">Fort Collins, CO</a></li>
+          <li><a href="/city/lakewood-co">Lakewood, CO</a></li>
+          <li><a href="/city/thornton-co">Thornton, CO</a></li>
+          <li><a href="/city/boston-ma">Boston, MA</a></li>
+          <li><a href="/city/worcester-ma">Worcester, MA</a></li>
+          <li><a href="/city/springfield-ma">Springfield, MA</a></li>
+          <li><a href="/city/lowell-ma">Lowell, MA</a></li>
+          <li><a href="/city/cambridge-ma">Cambridge, MA</a></li>
+          <li><a href="/city/detroit-mi">Detroit, MI</a></li>
+          <li><a href="/city/grand-rapids-mi">Grand Rapids, MI</a></li>
+          <li><a href="/city/warren-mi">Warren, MI</a></li>
+          <li><a href="/city/sterling-heights-mi">Sterling Heights, MI</a></li>
+          <li><a href="/city/ann-arbor-mi">Ann Arbor, MI</a></li>
+          <li><a href="/city/lansing-mi">Lansing, MI</a></li>
+          <li><a href="/city/nashville-tn">Nashville, TN</a></li>
+          <li><a href="/city/memphis-tn">Memphis, TN</a></li>
+          <li><a href="/city/knoxville-tn">Knoxville, TN</a></li>
+          <li><a href="/city/chattanooga-tn">Chattanooga, TN</a></li>
+          <li><a href="/city/clarksville-tn">Clarksville, TN</a></li>
+          <li><a href="/city/columbus-oh">Columbus, OH</a></li>
+          <li><a href="/city/cleveland-oh">Cleveland, OH</a></li>
+          <li><a href="/city/cincinnati-oh">Cincinnati, OH</a></li>
+          <li><a href="/city/toledo-oh">Toledo, OH</a></li>
+          <li><a href="/city/akron-oh">Akron, OH</a></li>
+          <li><a href="/city/dayton-oh">Dayton, OH</a></li>
+          <li><a href="/city/charlotte-nc">Charlotte, NC</a></li>
+          <li><a href="/city/raleigh-nc">Raleigh, NC</a></li>
+          <li><a href="/city/greensboro-nc">Greensboro, NC</a></li>
+          <li><a href="/city/durham-nc">Durham, NC</a></li>
+          <li><a href="/city/winston-salem-nc">Winston-Salem, NC</a></li>
+          <li><a href="/city/fayetteville-nc">Fayetteville, NC</a></li>
+          <li><a href="/city/virginia-beach-va">Virginia Beach, VA</a></li>
+          <li><a href="/city/norfolk-va">Norfolk, VA</a></li>
+          <li><a href="/city/richmond-va">Richmond, VA</a></li>
+          <li><a href="/city/chesapeake-va">Chesapeake, VA</a></li>
+          <li><a href="/city/arlington-va">Arlington, VA</a></li>
+          <li><a href="/city/newark-nj">Newark, NJ</a></li>
+          <li><a href="/city/jersey-city-nj">Jersey City, NJ</a></li>
+          <li><a href="/city/paterson-nj">Paterson, NJ</a></li>
+          <li><a href="/city/elizabeth-nj">Elizabeth, NJ</a></li>
+          <li><a href="/city/indianapolis-in">Indianapolis, IN</a></li>
+          <li><a href="/city/fort-wayne-in">Fort Wayne, IN</a></li>
+          <li><a href="/city/evansville-in">Evansville, IN</a></li>
+          <li><a href="/city/south-bend-in">South Bend, IN</a></li>
+          <li><a href="/city/kansas-city-mo">Kansas City, MO</a></li>
+          <li><a href="/city/st-louis-mo">St. Louis, MO</a></li>
+          <li><a href="/city/springfield-mo">Springfield, MO</a></li>
+          <li><a href="/city/milwaukee-wi">Milwaukee, WI</a></li>
+          <li><a href="/city/madison-wi">Madison, WI</a></li>
+          <li><a href="/city/green-bay-wi">Green Bay, WI</a></li>
+          <li><a href="/city/minneapolis-mn">Minneapolis, MN</a></li>
+          <li><a href="/city/st-paul-mn">St. Paul, MN</a></li>
+          <li><a href="/city/rochester-mn">Rochester, MN</a></li>
+          <li><a href="/city/las-vegas-nv">Las Vegas, NV</a></li>
+          <li><a href="/city/henderson-nv">Henderson, NV</a></li>
+          <li><a href="/city/reno-nv">Reno, NV</a></li>
+          <li><a href="/city/north-las-vegas-nv">North Las Vegas, NV</a></li>
+          <li><a href="/city/baltimore-md">Baltimore, MD</a></li>
+          <li><a href="/city/columbia-md">Columbia, MD</a></li>
+          <li><a href="/city/rockville-md">Rockville, MD</a></li>
+          <li><a href="/city/portland-or">Portland, OR</a></li>
+          <li><a href="/city/eugene-or">Eugene, OR</a></li>
+          <li><a href="/city/salem-or">Salem, OR</a></li>
+          <li><a href="/city/gresham-or">Gresham, OR</a></li>
+          <li><a href="/city/oklahoma-city-ok">Oklahoma City, OK</a></li>
+          <li><a href="/city/tulsa-ok">Tulsa, OK</a></li>
+          <li><a href="/city/broken-arrow-ok">Broken Arrow, OK</a></li>
+          <li><a href="/city/louisville-ky">Louisville, KY</a></li>
+          <li><a href="/city/lexington-ky">Lexington, KY</a></li>
+          <li><a href="/city/new-orleans-la">New Orleans, LA</a></li>
+          <li><a href="/city/baton-rouge-la">Baton Rouge, LA</a></li>
+          <li><a href="/city/shreveport-la">Shreveport, LA</a></li>
+          <li><a href="/city/columbia-sc">Columbia, SC</a></li>
+          <li><a href="/city/charleston-sc">Charleston, SC</a></li>
+          <li><a href="/city/north-charleston-sc">North Charleston, SC</a></li>
+          <li><a href="/city/birmingham-al">Birmingham, AL</a></li>
+          <li><a href="/city/montgomery-al">Montgomery, AL</a></li>
+          <li><a href="/city/huntsville-al">Huntsville, AL</a></li>
+          <li><a href="/city/mobile-al">Mobile, AL</a></li>
+          <li><a href="/city/bridgeport-ct">Bridgeport, CT</a></li>
+          <li><a href="/city/new-haven-ct">New Haven, CT</a></li>
+          <li><a href="/city/hartford-ct">Hartford, CT</a></li>
+          <li><a href="/city/stamford-ct">Stamford, CT</a></li>
+          <li><a href="/city/des-moines-ia">Des Moines, IA</a></li>
+          <li><a href="/city/cedar-rapids-ia">Cedar Rapids, IA</a></li>
+          <li><a href="/city/wichita-ks">Wichita, KS</a></li>
+          <li><a href="/city/overland-park-ks">Overland Park, KS</a></li>
+          <li><a href="/city/omaha-ne">Omaha, NE</a></li>
+          <li><a href="/city/lincoln-ne">Lincoln, NE</a></li>
+          <li><a href="/city/salt-lake-city-ut">Salt Lake City, UT</a></li>
+          <li><a href="/city/west-valley-city-ut">West Valley City, UT</a></li>
+          <li><a href="/city/provo-ut">Provo, UT</a></li>
+          <li><a href="/city/albuquerque-nm">Albuquerque, NM</a></li>
+          <li><a href="/city/las-cruces-nm">Las Cruces, NM</a></li>
+          <li><a href="/city/honolulu-hi">Honolulu, HI</a></li>
+          <li><a href="/city/east-honolulu-hi">East Honolulu, HI</a></li>
+          <li><a href="/city/anchorage-ak">Anchorage, AK</a></li>
+          <li><a href="/city/fairbanks-ak">Fairbanks, AK</a></li>
+          <li><a href="/city/little-rock-ar">Little Rock, AR</a></li>
+          <li><a href="/city/fort-smith-ar">Fort Smith, AR</a></li>
+          <li><a href="/city/jackson-ms">Jackson, MS</a></li>
+          <li><a href="/city/gulfport-ms">Gulfport, MS</a></li>
+          <li><a href="/city/boise-id">Boise, ID</a></li>
+          <li><a href="/city/nampa-id">Nampa, ID</a></li>
+          <li><a href="/city/billings-mt">Billings, MT</a></li>
+          <li><a href="/city/missoula-mt">Missoula, MT</a></li>
+          <li><a href="/city/cheyenne-wy">Cheyenne, WY</a></li>
+          <li><a href="/city/casper-wy">Casper, WY</a></li>
+          <li><a href="/city/fargo-nd">Fargo, ND</a></li>
+          <li><a href="/city/bismarck-nd">Bismarck, ND</a></li>
+          <li><a href="/city/sioux-falls-sd">Sioux Falls, SD</a></li>
+          <li><a href="/city/rapid-city-sd">Rapid City, SD</a></li>
+          <li><a href="/city/providence-ri">Providence, RI</a></li>
+          <li><a href="/city/cranston-ri">Cranston, RI</a></li>
+          <li><a href="/city/burlington-vt">Burlington, VT</a></li>
+          <li><a href="/city/manchester-nh">Manchester, NH</a></li>
+          <li><a href="/city/nashua-nh">Nashua, NH</a></li>
+          <li><a href="/city/portland-me">Portland, ME</a></li>
+          <li><a href="/city/wilmington-de">Wilmington, DE</a></li>
+          <li><a href="/city/charleston-wv">Charleston, WV</a></li>
+          <li><a href="/city/huntington-wv">Huntington, WV</a></li>
+        </ul>
+
+        <h3>Top Carrier Tracking Pages</h3>
+        <ul>
+          <li><a href="/tracking/usps">USPS Tracking</a></li>
+          <li><a href="/tracking/fedex">FedEx Tracking</a></li>
+          <li><a href="/tracking/ups">UPS Tracking</a></li>
+          <li><a href="/tracking/dhl">DHL Tracking</a></li>
+          <li><a href="/tracking/amazon-logistics">Amazon Logistics Tracking</a></li>
+          <li><a href="/tracking/ontrac">OnTrac Tracking</a></li>
+          <li><a href="/tracking/lasership">LaserShip Tracking</a></li>
+          <li><a href="/tracking/canada-post">Canada Post Tracking</a></li>
+          <li><a href="/tracking/royal-mail">Royal Mail Tracking</a></li>
+          <li><a href="/tracking/australia-post">Australia Post Tracking</a></li>
+          <li><a href="/tracking/japan-post">Japan Post Tracking</a></li>
+          <li><a href="/tracking/china-post">China Post Tracking</a></li>
+          <li><a href="/tracking/india-post">India Post Tracking</a></li>
+          <li><a href="/tracking/deutsche-post">Deutsche Post Tracking</a></li>
+          <li><a href="/tracking/la-poste">La Poste Tracking</a></li>
+          <li><a href="/tracking/correos">Correos Tracking</a></li>
+          <li><a href="/tracking/poste-italiane">Poste Italiane Tracking</a></li>
+          <li><a href="/tracking/swiss-post">Swiss Post Tracking</a></li>
+          <li><a href="/tracking/postnl">PostNL Tracking</a></li>
+          <li><a href="/tracking/bpost">bpost Tracking</a></li>
+          <li><a href="/tracking/dpd">DPD Tracking</a></li>
+          <li><a href="/tracking/gls">GLS Tracking</a></li>
+          <li><a href="/tracking/hermes">Hermes Tracking</a></li>
+          <li><a href="/tracking/yodel">Yodel Tracking</a></li>
+          <li><a href="/tracking/tnt">TNT Tracking</a></li>
+          <li><a href="/tracking/aramex">Aramex Tracking</a></li>
+          <li><a href="/tracking/sf-express">SF Express Tracking</a></li>
+          <li><a href="/tracking/yanwen">Yanwen Tracking</a></li>
+          <li><a href="/tracking/cainiao">Cainiao Tracking</a></li>
+          <li><a href="/tracking/4px">4PX Tracking</a></li>
+          <li><a href="/tracking/pitney-bowes">Pitney Bowes Tracking</a></li>
+          <li><a href="/tracking/spee-dee">Spee-Dee Tracking</a></li>
+          <li><a href="/tracking/purolator">Purolator Tracking</a></li>
+          <li><a href="/tracking/toll-group">Toll Group Tracking</a></li>
+          <li><a href="/tracking/singapore-post">Singapore Post Tracking</a></li>
+          <li><a href="/tracking/thailand-post">Thailand Post Tracking</a></li>
+          <li><a href="/tracking/korea-post">Korea Post Tracking</a></li>
+          <li><a href="/tracking/pos-malaysia">Pos Malaysia Tracking</a></li>
+          <li><a href="/tracking/correos-de-mexico">Correos de Mexico Tracking</a></li>
+          <li><a href="/tracking/correios">Correios Brazil Tracking</a></li>
+        </ul>
+
+        <h3>USPS Tracking Articles</h3>
+        <ul>
+          <li><a href="/article/usps-tracking-not-updating-for-3-days">USPS Tracking Not Updating for 3 Days</a></li>
+          <li><a href="/article/usps-tracking-not-updating-for-24-hours">USPS Tracking Not Updating for 24 Hours</a></li>
+          <li><a href="/article/usps-tracking-not-updating-for-a-week">USPS Tracking Not Updating for a Week</a></li>
+          <li><a href="/article/usps-package-stuck-in-transit">USPS Package Stuck in Transit</a></li>
+          <li><a href="/article/usps-package-stuck-in-transit-for-2-weeks">USPS Package Stuck in Transit for 2 Weeks</a></li>
+          <li><a href="/article/usps-tracking-shows-delivered-but-no-package">USPS Tracking Shows Delivered But No Package</a></li>
+          <li><a href="/article/usps-tracking-number-not-found">USPS Tracking Number Not Found</a></li>
+          <li><a href="/article/usps-tracking-number-not-working">USPS Tracking Number Not Working</a></li>
+          <li><a href="/article/usps-package-lost-in-transit">USPS Package Lost in Transit</a></li>
+          <li><a href="/article/usps-package-delayed">USPS Package Delayed</a></li>
+          <li><a href="/article/usps-priority-mail-tracking">USPS Priority Mail Tracking</a></li>
+          <li><a href="/article/usps-first-class-mail-tracking">USPS First Class Mail Tracking</a></li>
+          <li><a href="/article/usps-media-mail-tracking">USPS Media Mail Tracking</a></li>
+          <li><a href="/article/usps-certified-mail-tracking">USPS Certified Mail Tracking</a></li>
+          <li><a href="/article/usps-registered-mail-tracking">USPS Registered Mail Tracking</a></li>
+          <li><a href="/article/usps-express-mail-tracking">USPS Express Mail Tracking</a></li>
+          <li><a href="/article/usps-flat-rate-box-tracking">USPS Flat Rate Box Tracking</a></li>
+          <li><a href="/article/usps-international-tracking">USPS International Tracking</a></li>
+          <li><a href="/article/usps-tracking-number-format">USPS Tracking Number Format</a></li>
+          <li><a href="/article/how-to-track-usps-package-without-number">How to Track USPS Package Without Number</a></li>
+          <li><a href="/article/usps-informed-delivery-tracking">USPS Informed Delivery Tracking</a></li>
+          <li><a href="/article/usps-package-out-for-delivery-but-not-delivered">USPS Package Out for Delivery But Not Delivered</a></li>
+          <li><a href="/article/usps-tracking-in-transit-arriving-late">USPS Tracking In Transit Arriving Late</a></li>
+          <li><a href="/article/usps-package-arrived-at-facility">USPS Package Arrived at Facility</a></li>
+          <li><a href="/article/usps-package-departed-facility">USPS Package Departed Facility</a></li>
+          <li><a href="/article/usps-package-accepted-at-facility">USPS Package Accepted at Facility</a></li>
+          <li><a href="/article/usps-package-awaiting-delivery-scan">USPS Package Awaiting Delivery Scan</a></li>
+          <li><a href="/article/usps-package-held-at-post-office">USPS Package Held at Post Office</a></li>
+          <li><a href="/article/usps-redelivery-tracking">USPS Redelivery Tracking</a></li>
+          <li><a href="/article/usps-package-return-to-sender">USPS Package Return to Sender</a></li>
+          <li><a href="/article/usps-package-forwarded">USPS Package Forwarded</a></li>
+          <li><a href="/article/usps-tracking-update-frequency">USPS Tracking Update Frequency</a></li>
+          <li><a href="/article/usps-package-in-customs">USPS Package in Customs</a></li>
+          <li><a href="/article/usps-international-package-stuck-in-customs">USPS International Package Stuck in Customs</a></li>
+          <li><a href="/article/usps-package-delivered-to-wrong-address">USPS Package Delivered to Wrong Address</a></li>
+          <li><a href="/article/usps-package-stolen">USPS Package Stolen</a></li>
+          <li><a href="/article/usps-insurance-claim-tracking">USPS Insurance Claim Tracking</a></li>
+          <li><a href="/article/usps-priority-mail-express-tracking">USPS Priority Mail Express Tracking</a></li>
+          <li><a href="/article/usps-ground-advantage-tracking">USPS Ground Advantage Tracking</a></li>
+          <li><a href="/article/usps-parcel-select-tracking">USPS Parcel Select Tracking</a></li>
+          <li><a href="/article/usps-tracking-9400">USPS Tracking 9400</a></li>
+          <li><a href="/article/usps-tracking-9205">USPS Tracking 9205</a></li>
+          <li><a href="/article/usps-tracking-9270">USPS Tracking 9270</a></li>
+          <li><a href="/article/usps-tracking-9300">USPS Tracking 9300</a></li>
+          <li><a href="/article/usps-tracking-9361">USPS Tracking 9361</a></li>
+          <li><a href="/article/usps-how-long-does-priority-mail-take">How Long Does Priority Mail Take</a></li>
+          <li><a href="/article/usps-how-long-does-first-class-take">How Long Does First Class Take</a></li>
+          <li><a href="/article/usps-how-long-does-media-mail-take">How Long Does Media Mail Take</a></li>
+          <li><a href="/article/usps-how-long-does-ground-advantage-take">How Long Does Ground Advantage Take</a></li>
+          <li><a href="/article/usps-delivery-time-estimate">USPS Delivery Time Estimate</a></li>
+          <li><a href="/article/usps-package-not-moving">USPS Package Not Moving</a></li>
+          <li><a href="/article/usps-tracking-alert">USPS Tracking Alert</a></li>
+          <li><a href="/article/usps-tracking-exception">USPS Tracking Exception</a></li>
+          <li><a href="/article/usps-delivery-exception">USPS Delivery Exception</a></li>
+          <li><a href="/article/usps-package-intercepted">USPS Package Intercepted</a></li>
+          <li><a href="/article/usps-package-damaged">USPS Package Damaged</a></li>
+          <li><a href="/article/usps-attempted-delivery">USPS Attempted Delivery</a></li>
+          <li><a href="/article/usps-notice-left">USPS Notice Left</a></li>
+          <li><a href="/article/usps-package-available-for-pickup">USPS Package Available for Pickup</a></li>
+          <li><a href="/article/usps-mail-forwarding-tracking">USPS Mail Forwarding Tracking</a></li>
+          <li><a href="/article/usps-hold-mail-tracking">USPS Hold Mail Tracking</a></li>
+          <li><a href="/article/usps-military-mail-tracking">USPS Military Mail Tracking</a></li>
+          <li><a href="/article/usps-delivery-confirmation">USPS Delivery Confirmation</a></li>
+          <li><a href="/article/usps-signature-required-tracking">USPS Signature Required Tracking</a></li>
+          <li><a href="/article/usps-priority-mail-vs-first-class">USPS Priority Mail vs First Class</a></li>
+          <li><a href="/article/usps-ground-advantage-vs-priority">USPS Ground Advantage vs Priority</a></li>
+          <li><a href="/article/usps-shipping-rates-2025">USPS Shipping Rates 2025</a></li>
+          <li><a href="/article/usps-package-size-limits">USPS Package Size Limits</a></li>
+          <li><a href="/article/usps-weight-limits">USPS Weight Limits</a></li>
+          <li><a href="/article/usps-tracking-not-updating-for-5-days">USPS Tracking Not Updating for 5 Days</a></li>
+          <li><a href="/article/usps-tracking-not-updating-for-2-weeks">USPS Tracking Not Updating for 2 Weeks</a></li>
+          <li><a href="/article/usps-package-stuck-at-distribution-center">USPS Package Stuck at Distribution Center</a></li>
+          <li><a href="/article/usps-package-in-transit-for-10-days">USPS Package in Transit for 10 Days</a></li>
+          <li><a href="/article/usps-tracking-says-delivered-but-mailbox-empty">USPS Tracking Says Delivered But Mailbox Empty</a></li>
+          <li><a href="/article/usps-package-delivered-to-wrong-house">USPS Package Delivered to Wrong House</a></li>
+          <li><a href="/article/usps-package-missing-after-delivery">USPS Package Missing After Delivery</a></li>
+          <li><a href="/article/usps-filing-a-claim-for-lost-package">USPS Filing a Claim for Lost Package</a></li>
+          <li><a href="/article/usps-sunday-delivery-tracking">USPS Sunday Delivery Tracking</a></li>
+          <li><a href="/article/usps-same-day-delivery-tracking">USPS Same Day Delivery Tracking</a></li>
+          <li><a href="/article/usps-click-n-ship-tracking">USPS Click-N-Ship Tracking</a></li>
+          <li><a href="/article/usps-ebay-tracking-not-updating">USPS eBay Tracking Not Updating</a></li>
+          <li><a href="/article/usps-amazon-tracking-not-updating">USPS Amazon Tracking Not Updating</a></li>
+          <li><a href="/article/usps-flat-rate-envelope-tracking">USPS Flat Rate Envelope Tracking</a></li>
+          <li><a href="/article/usps-tracking-number-lookup-by-address">USPS Tracking Number Lookup by Address</a></li>
+          <li><a href="/article/usps-lost-tracking-number-how-to-find">USPS Lost Tracking Number How to Find</a></li>
+          <li><a href="/article/usps-departed-usps-facility">USPS Departed USPS Facility</a></li>
+          <li><a href="/article/usps-arrived-at-usps-facility">USPS Arrived at USPS Facility</a></li>
+          <li><a href="/article/usps-processed-through-usps-facility">USPS Processed Through USPS Facility</a></li>
+        </ul>
+
+        <h3>Legal</h3>
+        <ul>
+          <li><a href="/privacy-policy">Privacy Policy</a></li>
+          <li><a href="/terms-of-service">Terms of Service</a></li>
+          <li><a href="/disclaimer">Disclaimer</a></li>
+          <li><a href="/dmca">DMCA</a></li>
+        </ul>
+      </nav>
+    </noscript>
+  </body>
+</html>

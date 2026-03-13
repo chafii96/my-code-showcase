@@ -7,8 +7,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
-dist
+
+# DO NOT ignore dist/ — Hostinger needs the built files
+# dist
+
 dist-ssr
 *.local
 

@@ -1,0 +1,1 @@
+import{j as t}from"./vendor-query-DKeyzi4J.js";import{k as e,l as r,n as a}from"./index-D4Zii221.js";function l(){if(!e("inArticle"))return null;const l=r("inArticle");return t.jsx("div",{className:"flex justify-center my-6",children:t.jsx(a,{adSlot:l?.slotId,adFormat:"auto",adLayout:"in-article",style:{textAlign:"center"},className:"w-full max-w-2xl"})})}export{l as I};
