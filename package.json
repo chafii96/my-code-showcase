@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5000 --host 0.0.0.0",
-    "build": "node scripts/generate-all.cjs && vite build && node scripts/prerender.cjs",
+    "start": "node server-prod.cjs",
+    "build": "vite build",
+    "build:full": "node scripts/generate-all.cjs && vite build && node scripts/prerender.cjs",
     "build:client-only": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
