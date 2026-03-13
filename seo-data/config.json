@@ -1,9 +1,9 @@
 {
   "site": {
     "siteName": "US Postal Tracking",
-    "siteUrl": "",
-    "siteDescription": "",
-    "contactEmail": "",
+    "siteUrl": "https://uspostaltracking.com",
+    "siteDescription": "Free USPS tracking tool. Track USPS packages, mail, and shipments by tracking number. Real-time delivery status updates.",
+    "contactEmail": "support@uspostaltracking.com",
     "twitterHandle": "",
     "facebookPage": "",
     "timezone": "America/New_York",
@@ -12,9 +12,9 @@
   },
   "seo": {
     "defaultTitle": "USPS Package Tracking",
-    "defaultDescription": "",
+    "defaultDescription": "Free USPS tracking tool. Track USPS packages, mail, and shipments by tracking number. Real-time delivery status updates.",
     "defaultKeywords": "usps tracking",
-    "canonicalDomain": "",
+    "canonicalDomain": "uspostaltracking.com",
     "robotsIndex": true,
     "robotsFollow": true,
     "structuredDataEnabled": true,
@@ -49,83 +49,83 @@
     "adSlots": [
       {
         "id": "header-ad",
-        "name": "📢 إعلان الهيدر (728×90)",
+        "name": "\ud83d\udce2 \u0625\u0639\u0644\u0627\u0646 \u0627\u0644\u0647\u064a\u062f\u0631 (728\u00d790)",
         "position": "header",
         "type": "adsense",
         "slotId": "",
         "enabled": false,
         "htmlCode": "",
-        "description": "يظهر أعلى كل صفحة مباشرةً تحت الـ Navbar"
+        "description": "\u064a\u0638\u0647\u0631 \u0623\u0639\u0644\u0649 \u0643\u0644 \u0635\u0641\u062d\u0629 \u0645\u0628\u0627\u0634\u0631\u0629\u064b \u062a\u062d\u062a \u0627\u0644\u0640 Navbar"
       },
       {
         "id": "footer-ad",
-        "name": "📢 إعلان الفوتر (728×90)",
+        "name": "\ud83d\udce2 \u0625\u0639\u0644\u0627\u0646 \u0627\u0644\u0641\u0648\u062a\u0631 (728\u00d790)",
         "position": "footer",
         "type": "adsense",
         "slotId": "",
         "enabled": false,
         "htmlCode": "",
-        "description": "يظهر أسفل كل صفحة فوق الـ Footer"
+        "description": "\u064a\u0638\u0647\u0631 \u0623\u0633\u0641\u0644 \u0643\u0644 \u0635\u0641\u062d\u0629 \u0641\u0648\u0642 \u0627\u0644\u0640 Footer"
       },
       {
         "id": "content-ad",
-        "name": "📰 إعلان وسط المحتوى (336×280)",
+        "name": "\ud83d\udcf0 \u0625\u0639\u0644\u0627\u0646 \u0648\u0633\u0637 \u0627\u0644\u0645\u062d\u062a\u0648\u0649 (336\u00d7280)",
         "position": "content",
         "type": "adsense",
         "slotId": "",
         "enabled": false,
         "htmlCode": "",
-        "description": "يظهر في منتصف الصفحة الرئيسية وصفحات المقالات"
+        "description": "\u064a\u0638\u0647\u0631 \u0641\u064a \u0645\u0646\u062a\u0635\u0641 \u0627\u0644\u0635\u0641\u062d\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629 \u0648\u0635\u0641\u062d\u0627\u062a \u0627\u0644\u0645\u0642\u0627\u0644\u0627\u062a"
       },
       {
         "id": "in-article-ad",
-        "name": "📄 إعلان داخل المقال (468×60)",
+        "name": "\ud83d\udcc4 \u0625\u0639\u0644\u0627\u0646 \u062f\u0627\u062e\u0644 \u0627\u0644\u0645\u0642\u0627\u0644 (468\u00d760)",
         "position": "in-article",
         "type": "adsense",
         "slotId": "",
         "enabled": false,
         "htmlCode": "",
-        "description": "يظهر بعد الـ FAQ في صفحات المقالات"
+        "description": "\u064a\u0638\u0647\u0631 \u0628\u0639\u062f \u0627\u0644\u0640 FAQ \u0641\u064a \u0635\u0641\u062d\u0627\u062a \u0627\u0644\u0645\u0642\u0627\u0644\u0627\u062a"
       },
       {
         "id": "sidebar-ad",
-        "name": "📌 إعلان الشريط الجانبي (300×250)",
+        "name": "\ud83d\udccc \u0625\u0639\u0644\u0627\u0646 \u0627\u0644\u0634\u0631\u064a\u0637 \u0627\u0644\u062c\u0627\u0646\u0628\u064a (300\u00d7250)",
         "position": "sidebar",
         "type": "adsense",
         "slotId": "",
         "enabled": false,
         "htmlCode": "",
-        "description": "يظهر في الشريط الجانبي"
+        "description": "\u064a\u0638\u0647\u0631 \u0641\u064a \u0627\u0644\u0634\u0631\u064a\u0637 \u0627\u0644\u062c\u0627\u0646\u0628\u064a"
       },
       {
         "id": "top-banner-ad",
-        "name": "🔝 بانر علوي ضخم (970×90)",
+        "name": "\ud83d\udd1d \u0628\u0627\u0646\u0631 \u0639\u0644\u0648\u064a \u0636\u062e\u0645 (970\u00d790)",
         "position": "top-banner",
         "type": "adsense",
         "slotId": "",
         "enabled": false,
         "htmlCode": "",
-        "description": "بانر ضخم فوق المحتوى الرئيسي"
+        "description": "\u0628\u0627\u0646\u0631 \u0636\u062e\u0645 \u0641\u0648\u0642 \u0627\u0644\u0645\u062d\u062a\u0648\u0649 \u0627\u0644\u0631\u0626\u064a\u0633\u064a"
       },
       {
         "id": "mobile-ad",
-        "name": "📱 إعلان الجوال (320×50)",
+        "name": "\ud83d\udcf1 \u0625\u0639\u0644\u0627\u0646 \u0627\u0644\u062c\u0648\u0627\u0644 (320\u00d750)",
         "position": "mobile",
         "type": "adsense",
         "slotId": "",
         "enabled": false,
         "htmlCode": "",
-        "description": "يظهر فقط على الأجهزة المحمولة"
+        "description": "\u064a\u0638\u0647\u0631 \u0641\u0642\u0637 \u0639\u0644\u0649 \u0627\u0644\u0623\u062c\u0647\u0632\u0629 \u0627\u0644\u0645\u062d\u0645\u0648\u0644\u0629"
       },
       {
         "id": "popup-ad",
-        "name": "🪟 إعلان Popup (300×250)",
+        "name": "\ud83e\ude9f \u0625\u0639\u0644\u0627\u0646 Popup (300\u00d7250)",
         "position": "popup",
         "type": "html",
         "slotId": "",
         "enabled": false,
         "htmlCode": "",
-        "description": "نافذة منبثقة — يدعم HTML فقط"
+        "description": "\u0646\u0627\u0641\u0630\u0629 \u0645\u0646\u0628\u062b\u0642\u0629 \u2014 \u064a\u062f\u0639\u0645 HTML \u0641\u0642\u0637"
       }
     ]
   },
