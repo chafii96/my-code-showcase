@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite --port 5000 --host 0.0.0.0",
     "start": "node app.js",
-    "build": "vite build",
+    "build": "vite build --config vite.config.prod.js",
     "build:full": "node scripts/generate-all.cjs && vite build && node scripts/prerender.cjs",
     "build:client-only": "vite build",
     "build:dev": "vite build --mode development",
