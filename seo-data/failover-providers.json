@@ -9,18 +9,18 @@
     "accounts": [
       {
         "id": "ship24-1772876023081",
-        "usedToday": 5,
-        "successCount": 2,
-        "errorCount": 3,
+        "usedToday": 8,
+        "successCount": 3,
+        "errorCount": 5,
         "avgResponseTime": 0,
-        "lastUsed": "2026-03-08T01:27:05.873Z",
+        "lastUsed": "2026-03-13T06:01:58.992Z",
         "status": "active",
         "providerId": "ship24",
         "name": "Ship24 - حساب 1",
         "apiKey": "apik_APnKWGA1EbhweHsu6C5gNEav6wYKNM",
         "dailyQuota": 1000,
         "enabled": true,
-        "usedThisMonth": 5,
+        "usedThisMonth": 8,
         "monthReset": "2026-3",
         "monthlyQuota": 100
       }
@@ -79,7 +79,7 @@
   {
     "id": "scraper",
     "name": "Custom Scraper",
-    "enabled": false,
+    "enabled": true,
     "priority": 4,
     "icon": "🕷️",
     "color": "#8b5cf6",
@@ -91,12 +91,12 @@
         "apiKey": "N/A",
         "dailyQuota": 10000,
         "usedToday": 0,
-        "enabled": false,
+        "enabled": true,
         "lastUsed": "",
         "successCount": 0,
         "errorCount": 0,
         "avgResponseTime": 0,
-        "status": "disabled",
+        "status": "active",
         "monthlyQuota": 10000
       }
     ]

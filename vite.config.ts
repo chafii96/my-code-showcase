@@ -1952,7 +1952,9 @@ function adminApiPlugin() {
             } catch {}
           };
           const isAccountActive = (a: any) => {
-            if (!a.enabled || !a.apiKey || !a.apiKey.trim() || a.apiKey === 'N/A') return false;
+            if (!a.enabled) return false;
+            const isBuiltin = a.providerId === 'scraper' || a.providerId === 'usps';
+            if (!isBuiltin && (!a.apiKey || !a.apiKey.trim() || a.apiKey === 'N/A')) return false;
             const mk = getMonthKey();
             const usedThisMonth = a.monthReset !== mk ? 0 : (a.usedThisMonth || 0);
             const monthlyLimit = a.monthlyQuota || a.dailyQuota || 9999;
@@ -1978,7 +1980,7 @@ function adminApiPlugin() {
               const inferFromMilestone = (milestone: string) => { if (!milestone) return null; const m = milestone.toLowerCase(); if (m === 'delivered') return 'delivered'; if (m === 'out_for_delivery') return 'out-for-delivery'; if (m === 'label_created' || m === 'pre_transit') return 'label-created'; if (m === 'in_transit' || m === 'available_for_pickup' || m === 'return_to_sender' || m === 'exception') return 'in-transit'; return null; };
               for (const account of accounts) {
                 try {
-                  const ship24Body: any = { trackingNumber, courierCode: ['us-post'], destinationCountryCode: 'US' };
+                  const ship24Body: any = { trackingNumber };
                   const r = await fetch('https://api.ship24.com/public/v1/tracking/search', { method: 'POST', headers: { 'Authorization': `Bearer ${account.apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(ship24Body), signal: AbortSignal.timeout(60000) });
                   if (r.status === 402 || r.status === 429 || r.status === 403) { updateAccountUsage(provider.id, account.id, false, true); continue; }
                   if (r.status === 201 || r.ok) {
@@ -1987,8 +1989,8 @@ function adminApiPlugin() {
                     const shipment = tracking?.shipment;
                     const rawEvts: any[] = tracking?.events || [];
                     const evts = rawEvts.map((e: any) => ({ status: e.status || '', detail: e.status || '', location: typeof e.location === 'string' ? e.location : [e.location?.city, e.location?.state, e.location?.countryCode].filter(Boolean).join(', '), date: e.occurrenceDatetime ? fmtDate(e.occurrenceDatetime) : '', time: e.occurrenceDatetime ? fmtTime(e.occurrenceDatetime) : '', milestone: e.statusMilestone || '' }));
-                    updateAccountUsage(provider.id, account.id, true);
                     if (evts.length > 0) {
+                      updateAccountUsage(provider.id, account.id, true);
                       const latestEvt = evts[0];
                       const latestRaw = rawEvts[0];
                       const status = inferFromMilestone(latestRaw?.statusMilestone) || inferStatus(latestEvt.status);
@@ -1997,7 +1999,7 @@ function adminApiPlugin() {
                       const destCC = shipment?.destinationCountryCode || '';
                       trackingResult = { ok: true, trackingNumber, status, statusLabel: latestEvt.status || 'In Transit', service: 'USPS Package', origin: originCC, destination: destCC, estimatedDelivery: estDelivery, weight: '—', events: evts };
                       usedProvider = 'Ship24'; usedAccount = account.name; break;
-                    }
+                    } else { updateAccountUsage(provider.id, account.id, false); }
                   } else { updateAccountUsage(provider.id, account.id, false); }
                 } catch { updateAccountUsage(provider.id, account.id, false); }
               }
